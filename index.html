@@ -1,791 +1,298 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weapon System Motor Sizing Tool</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-    <script>
-        tailwind.config = {
-            theme: { extend: { fontFamily: {
-                sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
-                mono: ['JetBrains Mono', 'SF Mono', 'Consolas', 'monospace'],
-            }}}
-        }
-    </script>
-    <style>
-        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: #060A13; }
-        input[type="number"] { -moz-appearance: textfield; }
-        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-track { background: #0a0f1a; }
-        ::-webkit-scrollbar-thumb { background: #2d3748; border-radius: 3px; }
-        .inp {
-            width: 5.5rem; padding: 0.35rem 0.5rem; background: rgba(15, 23, 42, 0.9);
-            border: 1px solid rgba(55, 65, 81, 0.5); border-radius: 0.375rem;
-            text-align: right; font-size: 0.8125rem; font-family: 'JetBrains Mono', monospace;
-            color: #e2e8f0; outline: none; transition: border-color 0.15s, box-shadow 0.15s;
-        }
-        .inp:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59,130,246,0.15); }
-        .inp:hover { border-color: rgba(75, 85, 99, 0.8); }
-        .card { background: #0C1222; border: 1px solid rgba(30, 41, 59, 0.7); border-radius: 0.75rem; overflow: hidden; }
-        .card-header { padding: 0.6rem 1rem; border-bottom: 1px solid rgba(30, 41, 59, 0.5); background: rgba(15, 23, 42, 0.5); }
-        .param-row {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 0.4rem 0; border-bottom: 1px solid rgba(30, 41, 59, 0.25);
-        }
-        .param-row:last-child { border-bottom: none; }
-        .param-label { font-size: 0.8rem; color: #94a3b8; font-weight: 500; }
-        .param-sym { color: #64748b; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; margin-left: 0.25rem; }
-        .param-unit { font-size: 0.65rem; color: #475569; width: 4.5rem; text-align: right; white-space: nowrap; }
-        .result-row {
-            display: flex; align-items: baseline; justify-content: space-between;
-            padding: 0.45rem 0; border-bottom: 1px solid rgba(30, 41, 59, 0.25);
-        }
-        .result-row:last-child { border-bottom: none; }
-        .result-label { font-size: 0.775rem; color: #94a3b8; }
-        .result-val { font-family: 'JetBrains Mono', monospace; font-weight: 600; font-size: 0.85rem; color: #f1f5f9; }
-        .result-unit { font-weight: 400; font-size: 0.7rem; color: #64748b; margin-left: 0.25rem; }
-        .badge-ok { border-left: 3px solid #22c55e; }
-        .badge-warn { border-left: 3px solid #f59e0b; }
-        .badge-danger { border-left: 3px solid #ef4444; }
-        .icon-ok { background: rgba(34,197,94,0.15); color: #4ade80; }
-        .icon-warn { background: rgba(245,158,11,0.15); color: #fbbf24; }
-        .icon-danger { background: rgba(239,68,68,0.15); color: #f87171; }
-        @keyframes pulse-danger { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
-        .animate-pulse-danger { animation: pulse-danger 2s ease-in-out infinite; }
-        .tab-active { background: #2563eb; color: white; box-shadow: 0 4px 12px rgba(37,99,235,0.25); }
-        .tab-inactive { color: #94a3b8; }
-        .tab-inactive:hover { color: #e2e8f0; background: rgba(55,65,81,0.4); }
-        .svg-schematic text { font-family: 'Inter', -apple-system, sans-serif; }
-        .js-plotly-plot .plotly .modebar { top: 4px !important; right: 4px !important; }
-        .js-plotly-plot .plotly .modebar-btn { color: #475569 !important; }
-        .js-plotly-plot .plotly .modebar-btn:hover { color: #94a3b8 !important; }
-    </style>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Weapon System Motor Sizing Tool</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script>tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','sans-serif'],mono:['JetBrains Mono','monospace']}}}}</script>
+<style>
+body{font-family:'Inter',sans-serif;background:#060A13}
+input[type="number"]{-moz-appearance:textfield}input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:#0a0f1a}::-webkit-scrollbar-thumb{background:#2d3748;border-radius:3px}
+.inp{width:5.2rem;padding:.25rem .4rem;background:rgba(15,23,42,.9);border:1px solid rgba(55,65,81,.5);border-radius:.35rem;text-align:right;font-size:.78rem;font-family:'JetBrains Mono',monospace;color:#e2e8f0;outline:none;transition:border-color .15s}
+.inp:focus{border-color:#3b82f6;box-shadow:0 0 0 2px rgba(59,130,246,.15)}
+.card{background:#0C1222;border:1px solid rgba(30,41,59,.7);border-radius:.7rem;overflow:hidden}
+.ch{padding:.45rem .8rem;border-bottom:1px solid rgba(30,41,59,.5);background:rgba(15,23,42,.5)}
+.cn{font-size:.5rem;color:#475569;margin-top:.1rem;letter-spacing:.03em}
+.pr{display:flex;align-items:center;justify-content:space-between;padding:.25rem 0;border-bottom:1px solid rgba(30,41,59,.18)}.pr:last-child{border-bottom:none}
+.pl{font-size:.72rem;color:#94a3b8;font-weight:500}.ps{color:#64748b;font-family:'JetBrains Mono',monospace;font-size:.62rem;margin-left:.15rem}
+.pu{font-size:.58rem;color:#475569;width:4rem;text-align:right;white-space:nowrap}
+.rr{display:flex;align-items:baseline;justify-content:space-between;padding:.35rem 0;border-bottom:1px solid rgba(30,41,59,.18)}.rr:last-child{border-bottom:none}
+.rl{font-size:.72rem;color:#94a3b8}.rv{font-family:'JetBrains Mono',monospace;font-weight:600;font-size:.8rem;color:#f1f5f9}.ru{font-weight:400;font-size:.62rem;color:#64748b;margin-left:.2rem}
+.badge-ok{border-left:3px solid #22c55e}.badge-warn{border-left:3px solid #f59e0b}.badge-danger{border-left:3px solid #ef4444}
+.icon-ok{background:rgba(34,197,94,.15);color:#4ade80}.icon-warn{background:rgba(245,158,11,.15);color:#fbbf24}.icon-danger{background:rgba(239,68,68,.15);color:#f87171}
+@keyframes pd{0%,100%{opacity:1}50%{opacity:.6}}.animate-pulse-danger{animation:pd 2s ease-in-out infinite}
+.tab-active{background:#2563eb;color:white;box-shadow:0 4px 12px rgba(37,99,235,.25)}.tab-inactive{color:#94a3b8}.tab-inactive:hover{color:#e2e8f0;background:rgba(55,65,81,.4)}
+.sl{font-size:.48rem;color:#536175;text-transform:uppercase;letter-spacing:.1em;font-weight:700;padding:.3rem 0 .1rem;border-top:1px solid rgba(30,41,59,.25);margin-top:.15rem}
+.js-plotly-plot .plotly .modebar{top:2px!important;right:2px!important}.js-plotly-plot .plotly .modebar-btn{color:#475569!important}
+</style>
 </head>
 <body class="text-gray-100 min-h-screen">
 
-    <!-- ===== HEADER ===== -->
-    <header class="bg-[#0A1020] border-b border-slate-800/80 sticky top-0 z-50">
-        <div class="max-w-[1680px] mx-auto px-5 py-3 flex items-center justify-between">
-            <div class="flex items-center gap-3.5">
-                <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center shadow-lg shadow-blue-600/20">
-                    <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                        <circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="1.5"/><path d="M12 2v5M12 17v5M2 12h5M17 12h5"/>
-                    </svg>
-                </div>
-                <div>
-                    <h1 class="text-sm font-bold tracking-wider text-gray-100">WEAPON SYSTEM MOTOR SIZING</h1>
-                    <p class="text-[10px] text-slate-500 tracking-widest uppercase">Servo Drive Analysis &amp; Sizing Platform</p>
-                </div>
-            </div>
-            <div class="flex bg-slate-800/40 rounded-lg p-0.5 border border-slate-700/40">
-                <button id="tab-elevation" onclick="switchAxis('elevation')"
-                    class="axis-tab tab-active px-4 py-1.5 rounded-md text-xs font-bold tracking-wider transition-all duration-200 flex items-center gap-2">
-                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 19V5M5 12l7-7 7 7"/>
-                    </svg>ELEVATION
-                </button>
-                <button id="tab-traverse" onclick="switchAxis('traverse')"
-                    class="axis-tab tab-inactive px-4 py-1.5 rounded-md text-xs font-bold tracking-wider transition-all duration-200 flex items-center gap-2">
-                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M5 12h14M13 5l7 7-7 7"/>
-                    </svg>TRAVERSE
-                </button>
-            </div>
-        </div>
-    </header>
-
-    <!-- ===== MAIN ===== -->
-    <main class="max-w-[1680px] mx-auto p-5">
-
-        <!-- ===== TOP ROW: BADGES + SVG SCHEMATIC ===== -->
-        <div class="flex items-stretch gap-4 mb-5">
-
-            <!-- ANALYSIS BADGES -->
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 flex-1" id="badges">
-                <div class="card badge-ok px-4 py-3" id="bdg-inertia">
-                    <div class="flex items-center justify-between mb-1.5">
-                        <span class="text-[10px] font-bold tracking-widest uppercase text-slate-500">Inertia Ratio</span>
-                        <span class="w-5 h-5 rounded-full icon-ok flex items-center justify-center text-[10px] font-bold" id="bdg-inertia-ic">OK</span>
-                    </div>
-                    <div class="text-xl font-bold font-mono text-slate-100" id="bdg-inertia-val">--</div>
-                    <div class="text-[10px] mt-1 text-slate-500" id="bdg-inertia-sub">J<sub>tot</sub> = -- kg&middot;m&sup2;</div>
-                </div>
-                <div class="card badge-ok px-4 py-3" id="bdg-voltage">
-                    <div class="flex items-center justify-between mb-1.5">
-                        <span class="text-[10px] font-bold tracking-widest uppercase text-slate-500">Voltage Margin</span>
-                        <span class="w-5 h-5 rounded-full icon-ok flex items-center justify-center text-[10px] font-bold" id="bdg-voltage-ic">OK</span>
-                    </div>
-                    <div class="text-xl font-bold font-mono text-slate-100" id="bdg-voltage-val">--</div>
-                    <div class="text-[10px] mt-1 text-slate-500" id="bdg-voltage-sub">--</div>
-                </div>
-                <div class="card badge-ok px-4 py-3" id="bdg-peak">
-                    <div class="flex items-center justify-between mb-1.5">
-                        <span class="text-[10px] font-bold tracking-widest uppercase text-slate-500">Peak Torque</span>
-                        <span class="w-5 h-5 rounded-full icon-ok flex items-center justify-center text-[10px] font-bold" id="bdg-peak-ic">OK</span>
-                    </div>
-                    <div class="text-xl font-bold font-mono text-slate-100" id="bdg-peak-val">--</div>
-                    <div class="text-[10px] mt-1 text-slate-500" id="bdg-peak-sub">--</div>
-                </div>
-                <div class="card badge-ok px-4 py-3" id="bdg-cont">
-                    <div class="flex items-center justify-between mb-1.5">
-                        <span class="text-[10px] font-bold tracking-widest uppercase text-slate-500">Thermal (Mission RMS)</span>
-                        <span class="w-5 h-5 rounded-full icon-ok flex items-center justify-center text-[10px] font-bold" id="bdg-cont-ic">OK</span>
-                    </div>
-                    <div class="text-xl font-bold font-mono text-slate-100" id="bdg-cont-val">--</div>
-                    <div class="text-[10px] mt-1 text-slate-500" id="bdg-cont-sub">--</div>
-                </div>
-            </div>
-
-            <!-- ===== SVG SYSTEM SCHEMATIC ===== -->
-            <div class="card flex-shrink-0 hidden lg:block" style="width:380px;">
-                <div class="card-header flex items-center gap-2">
-                    <div class="w-1 h-4 rounded-full bg-slate-500"></div>
-                    <h2 class="text-[10px] font-bold tracking-widest uppercase text-slate-400">System Topology</h2>
-                </div>
-                <div class="p-2">
-                    <svg viewBox="0 0 360 175" class="svg-schematic w-full" xmlns="http://www.w3.org/2000/svg">
-                        <defs>
-                            <marker id="aR" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#475569"/></marker>
-                            <marker id="aB" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#38bdf8"/></marker>
-                            <marker id="aP" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#a78bfa"/></marker>
-                        </defs>
-
-                        <!-- Power flow label -->
-                        <text x="142" y="18" text-anchor="middle" fill="#334155" font-size="6.5" font-style="italic" letter-spacing="0.5">POWER FLOW</text>
-                        <line x1="172" y1="15" x2="195" y2="15" stroke="#334155" stroke-width="1" marker-end="url(#aR)"/>
-
-                        <!-- MOTOR block -->
-                        <rect x="8" y="30" width="88" height="62" rx="5" fill="#0B1120" stroke="#3b82f6" stroke-width="1.5"/>
-                        <text x="52" y="47" text-anchor="middle" fill="#3b82f6" font-size="9.5" font-weight="700">MOTOR</text>
-                        <line x1="18" y1="53" x2="86" y2="53" stroke="#1e293b" stroke-width="0.5"/>
-                        <text x="52" y="66" text-anchor="middle" fill="#94a3b8" font-size="7">Jm  Kt  Ke</text>
-                        <text x="52" y="78" text-anchor="middle" fill="#94a3b8" font-size="7">R  Vbus</text>
-                        <!-- Motor symbol -->
-                        <circle cx="52" cy="66" r="0" fill="none"/>
-
-                        <!-- Connection 1 -->
-                        <line x1="96" y1="61" x2="122" y2="61" stroke="#475569" stroke-width="2" marker-end="url(#aR)"/>
-
-                        <!-- GEARBOX block -->
-                        <rect x="125" y="30" width="78" height="62" rx="5" fill="#0B1120" stroke="#f59e0b" stroke-width="1.5"/>
-                        <text x="164" y="47" text-anchor="middle" fill="#f59e0b" font-size="9.5" font-weight="700">GEARBOX</text>
-                        <line x1="135" y1="53" x2="193" y2="53" stroke="#1e293b" stroke-width="0.5"/>
-                        <text x="164" y="67" text-anchor="middle" fill="#94a3b8" font-size="8">i = ratio</text>
-                        <text x="164" y="80" text-anchor="middle" fill="#94a3b8" font-size="8">&eta; = eff.</text>
-
-                        <!-- Connection 2 -->
-                        <line x1="203" y1="61" x2="229" y2="61" stroke="#475569" stroke-width="2" marker-end="url(#aR)"/>
-
-                        <!-- WEAPON / LOAD block -->
-                        <rect x="232" y="30" width="120" height="62" rx="5" fill="#0B1120" stroke="#22c55e" stroke-width="1.5"/>
-                        <text x="292" y="47" text-anchor="middle" fill="#22c55e" font-size="9.5" font-weight="700">WEAPON / LOAD</text>
-                        <line x1="242" y1="53" x2="342" y2="53" stroke="#1e293b" stroke-width="0.5"/>
-                        <text x="292" y="67" text-anchor="middle" fill="#94a3b8" font-size="7.5">JL = load inertia</text>
-                        <text x="292" y="80" text-anchor="middle" fill="#94a3b8" font-size="7.5">Tf = friction torque</text>
-
-                        <!-- Platform / Hull -->
-                        <rect x="50" y="108" width="250" height="14" rx="3" fill="#111827" stroke="#1e293b" stroke-width="1"/>
-                        <text x="175" y="118" text-anchor="middle" fill="#475569" font-size="6.5" font-weight="600" letter-spacing="1.5">PLATFORM / HULL</text>
-
-                        <!-- Connection to platform -->
-                        <line x1="175" y1="92" x2="175" y2="108" stroke="#1e293b" stroke-width="1" stroke-dasharray="2,2"/>
-
-                        <!-- ELEVATION axis (vertical arc + arrows) -->
-                        <path d="M 340 35 A 30 30 0 0 1 340 87" fill="none" stroke="#a78bfa" stroke-width="1.2" stroke-dasharray="3,2"/>
-                        <polygon points="337,38 340,28 343,38" fill="#a78bfa"/>
-                        <polygon points="337,84 340,94 343,84" fill="#a78bfa"/>
-                        <text x="352" y="65" text-anchor="middle" fill="#a78bfa" font-size="7" font-weight="700" writing-mode="tb">ELEV</text>
-
-                        <!-- TRAVERSE axis (horizontal arrows) -->
-                        <line x1="80" y1="140" x2="268" y2="140" stroke="#38bdf8" stroke-width="1.2" stroke-dasharray="3,2"/>
-                        <polygon points="84,137 74,140 84,143" fill="#38bdf8"/>
-                        <polygon points="264,137 274,140 264,143" fill="#38bdf8"/>
-                        <text x="175" y="156" text-anchor="middle" fill="#38bdf8" font-size="7.5" font-weight="700" letter-spacing="2">TRAVERSE</text>
-
-                        <!-- Turret rotation arc -->
-                        <path d="M 82 132 A 12 12 0 0 1 82 148" fill="none" stroke="#38bdf8" stroke-width="0.8"/>
-                        <polygon points="80.5,134 82,129 84,134" fill="#38bdf8"/>
-
-                        <!-- Highlight: active axis indicator -->
-                        <rect id="svg-elev-highlight" x="335" y="26" width="24" height="72" rx="4" fill="rgba(167,139,250,0.08)" stroke="none"/>
-                        <rect id="svg-trav-highlight" x="72" y="131" width="210" height="30" rx="4" fill="none" stroke="none"/>
-                    </svg>
-                </div>
-            </div>
-        </div>
-
-        <!-- ===== PARAMETERS: 3-column compact grid ===== -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
-            <!-- MECHANICAL -->
-            <div class="card">
-                <div class="card-header flex items-center gap-2">
-                    <div class="w-1 h-4 rounded-full bg-blue-500"></div>
-                    <h2 class="text-[10px] font-bold tracking-widest uppercase text-slate-400">Mechanical Parameters</h2>
-                </div>
-                <div class="px-4 py-2">
-                    <div class="param-row"><span class="param-label">Gear Ratio<span class="param-sym"> i</span></span><div class="flex items-center gap-1.5"><input type="number" class="inp" data-key="mechanical.gearRatio" step="1" min="1"><span class="param-unit">[-]</span></div></div>
-                    <div class="param-row"><span class="param-label">Efficiency<span class="param-sym"> &eta;</span></span><div class="flex items-center gap-1.5"><input type="number" class="inp" data-key="mechanical.efficiency" step="0.01" min="0.01" max="1"><span class="param-unit">[-]</span></div></div>
-                    <div class="param-row"><span class="param-label">Load Inertia<span class="param-sym"> J<sub>L</sub></span></span><div class="flex items-center gap-1.5"><input type="number" class="inp" data-key="mechanical.loadInertia" step="0.1" min="0"><span class="param-unit">kg&middot;m&sup2;</span></div></div>
-                    <div class="param-row"><span class="param-label">Friction Torque<span class="param-sym"> T<sub>f</sub></span></span><div class="flex items-center gap-1.5"><input type="number" class="inp" data-key="mechanical.frictionTorque" step="0.1" min="0"><span class="param-unit">Nm (motor)</span></div></div>
-                </div>
-            </div>
-            <!-- PERFORMANCE -->
-            <div class="card">
-                <div class="card-header flex items-center gap-2">
-                    <div class="w-1 h-4 rounded-full bg-amber-500"></div>
-                    <h2 class="text-[10px] font-bold tracking-widest uppercase text-slate-400">Performance Requirements</h2>
-                </div>
-                <div class="px-4 py-2">
-                    <div class="param-row"><span class="param-label">Target Speed</span><div class="flex items-center gap-1.5"><input type="number" class="inp" data-key="performance.targetSpeed" step="1" min="0"><span class="param-unit">deg/s</span></div></div>
-                    <div class="param-row"><span class="param-label">Target Acceleration</span><div class="flex items-center gap-1.5"><input type="number" class="inp" data-key="performance.targetAccel" step="1" min="0"><span class="param-unit">deg/s&sup2;</span></div></div>
-                    <div class="param-row"><span class="param-label">Stab Amplitude</span><div class="flex items-center gap-1.5"><input type="number" class="inp" data-key="performance.stabAmplitude" step="0.1" min="0"><span class="param-unit">mrad</span></div></div>
-                    <div class="param-row"><span class="param-label">Stab Frequency</span><div class="flex items-center gap-1.5"><input type="number" class="inp" data-key="performance.stabFrequency" step="0.5" min="0"><span class="param-unit">Hz</span></div></div>
-                    <div class="param-row"><span class="param-label">Laying Duty Cycle</span><div class="flex items-center gap-1.5"><input type="number" class="inp" data-key="performance.layingDuty" step="1" min="0" max="100"><span class="param-unit">%</span></div></div>
-                    <div class="param-row"><span class="param-label">Stab Duty Cycle</span><div class="flex items-center gap-1.5"><input type="number" class="inp" data-key="performance.stabDuty" step="1" min="0" max="100"><span class="param-unit">%</span></div></div>
-                </div>
-            </div>
-            <!-- MOTOR -->
-            <div class="card">
-                <div class="card-header flex items-center gap-2">
-                    <div class="w-1 h-4 rounded-full bg-emerald-500"></div>
-                    <h2 class="text-[10px] font-bold tracking-widest uppercase text-slate-400">Motor Parameters</h2>
-                </div>
-                <div class="px-4 py-2">
-                    <div class="param-row"><span class="param-label">Torque Constant<span class="param-sym"> K<sub>t</sub></span></span><div class="flex items-center gap-1.5"><input type="number" class="inp" data-key="motor.kt" step="0.01" min="0.001"><span class="param-unit">Nm/A</span></div></div>
-                    <div class="param-row"><span class="param-label">Voltage Constant<span class="param-sym"> K<sub>e</sub></span></span><div class="flex items-center gap-1.5"><input type="number" class="inp" data-key="motor.ke" step="0.01" min="0.001"><span class="param-unit">V/(rad/s)</span></div></div>
-                    <div class="param-row"><span class="param-label">Phase Resistance<span class="param-sym"> R</span></span><div class="flex items-center gap-1.5"><input type="number" class="inp" data-key="motor.resistance" step="0.01" min="0.001"><span class="param-unit">&Omega;</span></div></div>
-                    <div class="param-row"><span class="param-label">Rotor Inertia<span class="param-sym"> J<sub>m</sub></span></span><div class="flex items-center gap-1.5"><input type="number" class="inp" data-key="motor.rotorInertia" step="0.00001" min="0"><span class="param-unit">kg&middot;m&sup2;</span></div></div>
-                    <div class="param-row"><span class="param-label">Peak Torque Limit</span><div class="flex items-center gap-1.5"><input type="number" class="inp" data-key="motor.peakTorque" step="0.1" min="0"><span class="param-unit">Nm</span></div></div>
-                    <div class="param-row"><span class="param-label">Continuous Torque Limit</span><div class="flex items-center gap-1.5"><input type="number" class="inp" data-key="motor.contTorque" step="0.1" min="0"><span class="param-unit">Nm</span></div></div>
-                    <div class="param-row"><span class="param-label">Bus Voltage<span class="param-sym"> V<sub>bus</sub></span></span><div class="flex items-center gap-1.5"><input type="number" class="inp" data-key="motor.busVoltage" step="1" min="1"><span class="param-unit">V DC</span></div></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- ===== GUN LAYING & STABILIZATION RESULTS ===== -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
-            <!-- GUN LAYING -->
-            <div class="card border-l-2 border-l-blue-500">
-                <div class="card-header flex items-center gap-2 bg-blue-500/5">
-                    <div class="w-2.5 h-2.5 rounded-full bg-blue-500"></div>
-                    <h3 class="text-xs font-bold tracking-widest uppercase text-blue-400">Gun Laying (Slew)</h3>
-                </div>
-                <div class="px-4 py-2">
-                    <div class="result-row"><span class="result-label">Motor Speed</span><span><span class="result-val" id="r-lay-speed">--</span><span class="result-unit">rad/s</span></span></div>
-                    <div class="result-row"><span class="result-label"></span><span><span class="result-val text-sm opacity-60" id="r-lay-rpm">--</span><span class="result-unit">RPM</span></span></div>
-                    <div class="result-row"><span class="result-label">Motor Acceleration</span><span><span class="result-val" id="r-lay-accel">--</span><span class="result-unit">rad/s&sup2;</span></span></div>
-                    <div class="result-row"><span class="result-label">Peak Torque Required</span><span><span class="result-val text-blue-400" id="r-lay-torque">--</span><span class="result-unit">Nm</span></span></div>
-                    <div class="result-row"><span class="result-label">Peak Current</span><span><span class="result-val" id="r-lay-current">--</span><span class="result-unit">A</span></span></div>
-                    <div class="result-row"><span class="result-label">Required Voltage</span><span><span class="result-val" id="r-lay-voltage">--</span><span class="result-unit">V</span></span></div>
-                    <div class="result-row"><span class="result-label">Laying RMS Torque</span><span><span class="result-val opacity-70" id="r-lay-rms">--</span><span class="result-unit">Nm</span></span></div>
-                </div>
-            </div>
-            <!-- STABILIZATION -->
-            <div class="card border-l-2 border-l-red-500">
-                <div class="card-header flex items-center gap-2 bg-red-500/5">
-                    <div class="w-2.5 h-2.5 rounded-full bg-red-500"></div>
-                    <h3 class="text-xs font-bold tracking-widest uppercase text-red-400">Stabilization</h3>
-                </div>
-                <div class="px-4 py-2">
-                    <div class="result-row"><span class="result-label">Peak Motor Speed</span><span><span class="result-val" id="r-stab-speed">--</span><span class="result-unit">rad/s</span></span></div>
-                    <div class="result-row"><span class="result-label">Peak Acceleration</span><span><span class="result-val" id="r-stab-accel">--</span><span class="result-unit">rad/s&sup2;</span></span></div>
-                    <div class="result-row"><span class="result-label">Peak Stab Torque</span><span><span class="result-val text-red-400" id="r-stab-peak">--</span><span class="result-unit">Nm</span></span></div>
-                    <div class="result-row"><span class="result-label">RMS Stab Torque</span><span><span class="result-val text-red-300" id="r-stab-rms">--</span><span class="result-unit">Nm</span></span></div>
-                    <div class="result-row"><span class="result-label">RMS Current</span><span><span class="result-val" id="r-stab-current">--</span><span class="result-unit">A</span></span></div>
-                    <div class="result-row"><span class="result-label">Required Voltage</span><span><span class="result-val" id="r-stab-voltage">--</span><span class="result-unit">V</span></span></div>
-                    <div class="result-row"><span class="result-label">Mission RMS Torque</span><span><span class="result-val text-violet-400" id="r-mission-rms">--</span><span class="result-unit">Nm</span></span></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- ===== PLOTLY CHART + INERTIA BAR + FORMULAS ===== -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-
-            <!-- TORQUE-SPEED CHART (2/3) -->
-            <div class="card lg:col-span-2">
-                <div class="card-header flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <div class="w-1 h-4 rounded-full bg-violet-500"></div>
-                        <h3 class="text-[10px] font-bold tracking-widest uppercase text-slate-400">Torque &ndash; Speed Operating Diagram</h3>
-                    </div>
-                    <span class="text-[10px] text-slate-600 font-mono" id="chart-axis-label">ELEVATION</span>
-                </div>
-                <div class="p-3">
-                    <div id="tsChart" style="width:100%;height:400px;"></div>
-                </div>
-
-                <!-- INERTIA MATCH PROGRESS BAR -->
-                <div class="px-5 pb-4">
-                    <div class="flex items-center justify-between mb-1.5">
-                        <span class="text-[10px] font-bold tracking-widest uppercase text-slate-500">
-                            Inertia Match &mdash; J<sub>reflected</sub> / J<sub>motor</sub>
-                        </span>
-                        <span class="text-xs font-mono font-bold transition-colors duration-300" id="inertia-bar-val" style="color:#22c55e;">-- : 1</span>
-                    </div>
-                    <div class="relative w-full h-3.5 bg-slate-800/80 rounded-full overflow-hidden border border-slate-700/30">
-                        <!-- Tick marks at 5:1 and 10:1 -->
-                        <div class="absolute top-0 h-full w-px bg-slate-500/40 z-10" style="left:33.33%"></div>
-                        <div class="absolute top-0 h-full w-px bg-red-500/30 z-10" style="left:66.66%"></div>
-                        <!-- Fill -->
-                        <div id="inertia-bar-fill" class="h-full rounded-full transition-all duration-500 ease-out" style="width:0%;background:linear-gradient(90deg,#22c55e,#22c55e);"></div>
-                    </div>
-                    <div class="flex justify-between mt-1 text-[9px] font-mono">
-                        <span class="text-slate-600">0:1</span>
-                        <span class="text-green-600/70">5:1 IDEAL</span>
-                        <span class="text-red-600/70">10:1 LIMIT</span>
-                        <span class="text-slate-600">15+</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- FORMULAS REFERENCE (1/3) -->
-            <div class="card">
-                <div class="card-header flex items-center gap-2">
-                    <div class="w-1 h-4 rounded-full bg-slate-600"></div>
-                    <h3 class="text-[10px] font-bold tracking-widest uppercase text-slate-400">Formulas Reference</h3>
-                </div>
-                <div class="p-4 space-y-3 text-[11px] font-mono text-slate-500">
-                    <div>J<sub>tot</sub> = J<sub>m</sub> + J<sub>L</sub> / (&eta; &middot; i&sup2;)</div>
-                    <div>T<sub>peak</sub> = (J<sub>tot</sub> &middot; &alpha;<sub>max</sub> + T<sub>f</sub>) / &eta;</div>
-                    <div>T<sub>stab,peak</sub> = J<sub>tot</sub> &middot; A<sub>m</sub> &middot; (2&pi;f)&sup2;</div>
-                    <div>T<sub>stab,rms</sub> = T<sub>stab,peak</sub> / &radic;2</div>
-                    <div>V<sub>req</sub> = I &middot; R + K<sub>e</sub> &middot; &omega;<sub>max</sub></div>
-                    <div>T<sub>mission</sub> = &radic;(DC<sub>lay</sub>&middot;T<sub>lay,rms</sub>&sup2; + DC<sub>stab</sub>&middot;T<sub>stab,rms</sub>&sup2;)</div>
-                </div>
-                <!-- LEGEND -->
-                <div class="px-4 pb-4 pt-2 border-t border-slate-800/50">
-                    <div class="text-[10px] font-bold tracking-widest uppercase text-slate-500 mb-2">Chart Legend</div>
-                    <div class="space-y-1.5 text-[11px]">
-                        <div class="flex items-center gap-2"><div class="w-3 h-0.5 bg-red-500"></div><span class="text-slate-400">Peak Torque Envelope</span></div>
-                        <div class="flex items-center gap-2"><div class="w-3 h-0.5 bg-blue-500 border-dashed"></div><span class="text-slate-400">Continuous Torque Envelope</span></div>
-                        <div class="flex items-center gap-2"><div class="w-2.5 h-2.5 rounded-full bg-blue-500"></div><span class="text-slate-400">Gun Laying Op. Point</span></div>
-                        <div class="flex items-center gap-2"><svg class="w-3 h-3" viewBox="0 0 10 10"><polygon points="5,1 9,9 1,9" fill="#ef4444"/></svg><span class="text-slate-400">Stabilization Op. Point</span></div>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-    </main>
-
-    <!-- FOOTER -->
-    <footer class="border-t border-slate-800/50 mt-6 py-4 text-center text-[10px] text-slate-600 tracking-wider">
-        WEAPON SYSTEM MOTOR SIZING TOOL v2.0 &mdash; Defense-Grade Servo Drive Analysis Platform
-    </footer>
-
-    <!-- ===== JAVASCRIPT ===== -->
-    <script>
-    // ============================================================
-    // DEFAULT PARAMETERS
-    // ============================================================
-    const DEFAULTS = {
-        elevation: {
-            mechanical: { gearRatio: 150, efficiency: 0.85, loadInertia: 5, frictionTorque: 0.5 },
-            performance: { targetSpeed: 45, targetAccel: 90, stabAmplitude: 3, stabFrequency: 5, layingDuty: 20, stabDuty: 70 },
-            motor: { kt: 0.12, ke: 0.12, resistance: 0.25, rotorInertia: 0.00015, peakTorque: 8, contTorque: 3, busVoltage: 28 }
-        },
-        traverse: {
-            mechanical: { gearRatio: 180, efficiency: 0.80, loadInertia: 25, frictionTorque: 1.2 },
-            performance: { targetSpeed: 60, targetAccel: 100, stabAmplitude: 2.5, stabFrequency: 4, layingDuty: 15, stabDuty: 75 },
-            motor: { kt: 0.15, ke: 0.15, resistance: 0.2, rotorInertia: 0.0003, peakTorque: 10, contTorque: 3.5, busVoltage: 28 }
-        }
-    };
-
-    // ============================================================
-    // STATE
-    // ============================================================
-    let activeAxis = 'elevation';
-    const axisParams = {
-        elevation: JSON.parse(JSON.stringify(DEFAULTS.elevation)),
-        traverse: JSON.parse(JSON.stringify(DEFAULTS.traverse))
-    };
-    let plotInitialized = false;
-
-    // ============================================================
-    // CALCULATION ENGINE
-    // ============================================================
-    function calculate(p) {
-        const i   = Math.max(p.mechanical.gearRatio, 1);
-        const eta = Math.max(p.mechanical.efficiency, 0.01);
-        const JL  = Math.max(p.mechanical.loadInertia, 0);
-        const Tf  = Math.max(p.mechanical.frictionTorque, 0);
-        const wTgt = Math.max(p.performance.targetSpeed, 0);
-        const aTgt = Math.max(p.performance.targetAccel, 0);
-        const Astab = Math.max(p.performance.stabAmplitude, 0);
-        const fstab = Math.max(p.performance.stabFrequency, 0);
-        const dcLay  = Math.min(Math.max(p.performance.layingDuty, 0), 100) / 100;
-        const dcStab = Math.min(Math.max(p.performance.stabDuty, 0), 100) / 100;
-        const Kt   = Math.max(p.motor.kt, 0.001);
-        const Ke   = Math.max(p.motor.ke, 0.001);
-        const R    = Math.max(p.motor.resistance, 0.001);
-        const Jm   = Math.max(p.motor.rotorInertia, 0);
-        const Tpk  = Math.max(p.motor.peakTorque, 0.001);
-        const Tco  = Math.max(p.motor.contTorque, 0.001);
-        const Vbus = Math.max(p.motor.busVoltage, 1);
-
-        const Jtot = Jm + JL / (eta * i * i);
-        const Jref = JL / (eta * i * i);
-        const Jratio = Jm > 0 ? Jref / Jm : Infinity;
-
-        // GUN LAYING
-        const wLoad = wTgt * Math.PI / 180;
-        const aLoad = aTgt * Math.PI / 180;
-        const wMotor = wLoad * i;
-        const aMotor = aLoad * i;
-        const Tlay = (Jtot * aMotor + Tf) / eta;
-        const Ilay = Tlay / Kt;
-        const Vlay = Ilay * R + Ke * wMotor;
-        const wMotorRPM = wMotor * 60 / (2 * Math.PI);
-        const TlayRms = Tlay * Math.sqrt(2 / 3);
-
-        // STABILIZATION
-        const Am = (Astab / 1000) * i;
-        const ws = 2 * Math.PI * fstab;
-        const wStabPeak = Am * ws;
-        const aStabPeak = Am * ws * ws;
-        const TstabPeak = Jtot * aStabPeak;
-        const TstabRms  = TstabPeak / Math.sqrt(2);
-        const IstabPeak = TstabPeak / Kt;
-        const IstabRms  = TstabRms / Kt;
-        const Vstab = IstabPeak * R + Ke * wStabPeak;
-
-        // MISSION RMS
-        const TmissionRms = Math.sqrt(dcLay * TlayRms * TlayRms + dcStab * TstabRms * TstabRms);
-
-        // ANALYSIS
-        const voltMargin    = Vbus - Vlay;
-        const voltMarginPct = (voltMargin / Vbus) * 100;
-        const peakUsage     = (Tlay / Tpk) * 100;
-        const contUsage     = (TmissionRms / Tco) * 100;
-        const wNoLoad       = Vbus / Ke;
-
-        return {
-            Jtot, Jratio, Jref, JL, Jm: Jm,
-            wMotor, aMotor, Tlay, Ilay, Vlay, wMotorRPM, TlayRms,
-            wStabPeak, aStabPeak, TstabPeak, TstabRms, IstabPeak, IstabRms, Vstab,
-            TmissionRms, voltMargin, voltMarginPct, peakUsage, contUsage, wNoLoad,
-            Tpk, Tco, Kt, Ke, R, Vbus, i, eta
-        };
-    }
-
-    // ============================================================
-    // FORMAT HELPERS
-    // ============================================================
-    function fmtSci(v, d) { return v.toExponential(d === undefined ? 3 : d); }
-    function fmtF(v, d) { return v.toFixed(d === undefined ? 2 : d); }
-    function fmtAuto(v) {
-        if (v === Infinity || v === -Infinity || isNaN(v)) return '--';
-        if (Math.abs(v) < 0.01 && v !== 0) return v.toExponential(3);
-        if (Math.abs(v) >= 10000) return v.toFixed(0);
-        if (Math.abs(v) >= 100) return v.toFixed(1);
-        if (Math.abs(v) >= 1) return v.toFixed(3);
-        return v.toFixed(4);
-    }
-
-    function lerpColor(a, b, t) {
-        const ah = parseInt(a.replace('#',''), 16), bh = parseInt(b.replace('#',''), 16);
-        const ar = (ah >> 16) & 0xff, ag = (ah >> 8) & 0xff, ab2 = ah & 0xff;
-        const br = (bh >> 16) & 0xff, bg = (bh >> 8) & 0xff, bb = bh & 0xff;
-        const rr = Math.round(ar + (br - ar) * t);
-        const rg = Math.round(ag + (bg - ag) * t);
-        const rb = Math.round(ab2 + (bb - ab2) * t);
-        return '#' + ((1 << 24) + (rr << 16) + (rg << 8) + rb).toString(16).slice(1);
-    }
-
-    // ============================================================
-    // UI UPDATE
-    // ============================================================
-    function setText(id, txt) { const el = document.getElementById(id); if (el) el.textContent = txt; }
-    function setHtml(id, html) { const el = document.getElementById(id); if (el) el.innerHTML = html; }
-
-    function getStatus(val, goodBelow, warnBelow) {
-        if (val <= goodBelow) return 'ok';
-        if (val <= warnBelow) return 'warn';
-        return 'danger';
-    }
-    function getStatusHigher(val, goodAbove, warnAbove) {
-        if (val >= goodAbove) return 'ok';
-        if (val >= warnAbove) return 'warn';
-        return 'danger';
-    }
-
-    function applyBadge(id, status, mainVal, subHtml) {
-        const card = document.getElementById(id);
-        const icon = document.getElementById(id + '-ic');
-        card.className = card.className.replace(/badge-\w+/g, '');
-        card.classList.add('badge-' + status);
-        icon.className = icon.className.replace(/icon-\w+/g, '');
-        icon.classList.add('icon-' + status);
-        card.classList.remove('animate-pulse-danger');
-        const labels = { ok: 'OK', warn: '!!', danger: 'XX' };
-        icon.textContent = labels[status];
-        if (status === 'danger') card.classList.add('animate-pulse-danger');
-        setText(id + '-val', mainVal);
-        setHtml(id + '-sub', subHtml);
-    }
-
-    function updateResults(r) {
-        setText('r-lay-speed', fmtF(r.wMotor, 1));
-        setText('r-lay-rpm', fmtF(r.wMotorRPM, 0));
-        setText('r-lay-accel', fmtF(r.aMotor, 1));
-        setText('r-lay-torque', fmtAuto(r.Tlay));
-        setText('r-lay-current', fmtF(r.Ilay, 2));
-        setText('r-lay-voltage', fmtF(r.Vlay, 1));
-        setText('r-lay-rms', fmtAuto(r.TlayRms));
-
-        setText('r-stab-speed', fmtF(r.wStabPeak, 2));
-        setText('r-stab-accel', fmtF(r.aStabPeak, 1));
-        setText('r-stab-peak', fmtAuto(r.TstabPeak));
-        setText('r-stab-rms', fmtAuto(r.TstabRms));
-        setText('r-stab-current', fmtF(r.IstabRms, 3));
-        setText('r-stab-voltage', fmtF(r.Vstab, 2));
-        setText('r-mission-rms', fmtAuto(r.TmissionRms));
-
-        const iSt = getStatus(r.Jratio, 5, 10);
-        applyBadge('bdg-inertia', iSt, fmtF(r.Jratio, 2) + ' : 1',
-            'J<sub>tot</sub> = ' + fmtSci(r.Jtot, 3) + ' kg&middot;m&sup2;');
-
-        const vSt = getStatusHigher(r.voltMarginPct, 15, 5);
-        const vSign = r.voltMargin >= 0 ? '+' : '';
-        applyBadge('bdg-voltage', vSt, vSign + fmtF(r.voltMargin, 1) + ' V',
-            fmtF(r.voltMarginPct, 1) + '% margin &mdash; V<sub>req</sub>=' + fmtF(r.Vlay, 1) + 'V / V<sub>bus</sub>=' + fmtF(r.Vbus, 0) + 'V');
-
-        const pSt = getStatus(r.peakUsage, 70, 90);
-        applyBadge('bdg-peak', pSt, fmtF(r.peakUsage, 1) + '%',
-            fmtAuto(r.Tlay) + ' / ' + fmtF(r.Tpk, 1) + ' Nm');
-
-        const cSt = getStatus(r.contUsage, 70, 90);
-        applyBadge('bdg-cont', cSt, fmtF(r.contUsage, 1) + '%',
-            fmtAuto(r.TmissionRms) + ' / ' + fmtF(r.Tco, 1) + ' Nm (mission RMS)');
-    }
-
-    // ============================================================
-    // INERTIA PROGRESS BAR
-    // ============================================================
-    function updateInertiaBar(ratio) {
-        const bar = document.getElementById('inertia-bar-fill');
-        const label = document.getElementById('inertia-bar-val');
-        if (!bar || !label) return;
-
-        const clamped = Math.min(Math.max(ratio, 0), 15);
-        const pct = (clamped / 15) * 100;
-        bar.style.width = pct + '%';
-
-        let color;
-        if (ratio <= 5) {
-            color = lerpColor('#22c55e', '#22c55e', 0);
-        } else if (ratio <= 10) {
-            color = lerpColor('#22c55e', '#f59e0b', (ratio - 5) / 5);
-        } else {
-            color = lerpColor('#f59e0b', '#ef4444', Math.min((ratio - 10) / 5, 1));
-        }
-
-        bar.style.background = 'linear-gradient(90deg, #22c55e, ' + color + ')';
-        label.textContent = (ratio === Infinity ? '---' : fmtF(ratio, 1)) + ' : 1';
-        label.style.color = color;
-    }
-
-    // ============================================================
-    // SVG SCHEMATIC HIGHLIGHT
-    // ============================================================
-    function updateSvgHighlight(axis) {
-        const elH = document.getElementById('svg-elev-highlight');
-        const trH = document.getElementById('svg-trav-highlight');
-        if (!elH || !trH) return;
-        if (axis === 'elevation') {
-            elH.setAttribute('fill', 'rgba(167,139,250,0.08)');
-            elH.setAttribute('stroke', 'rgba(167,139,250,0.3)');
-            trH.setAttribute('fill', 'none');
-            trH.setAttribute('stroke', 'none');
-        } else {
-            elH.setAttribute('fill', 'none');
-            elH.setAttribute('stroke', 'none');
-            trH.setAttribute('fill', 'rgba(56,189,248,0.06)');
-            trH.setAttribute('stroke', 'rgba(56,189,248,0.25)');
-        }
-    }
-
-    // ============================================================
-    // PLOTLY CHART
-    // ============================================================
-    function updateChart(r) {
-        const wMax = Math.max(r.wNoLoad, r.wMotor) * 1.25;
-        const N = 120;
-
-        const wPeak = [], tPeak = [], wCont = [], tCont = [];
-        for (let j = 0; j <= N; j++) {
-            const w = (j / N) * wMax;
-            const Tvlim = r.Kt * Math.max(0, (r.Vbus - r.Ke * w)) / r.R;
-            wPeak.push(w); tPeak.push(Math.max(0, Math.min(r.Tpk, Tvlim)));
-            wCont.push(w); tCont.push(Math.max(0, Math.min(r.Tco, Tvlim)));
-        }
-
-        const traces = [
-            {
-                x: wPeak, y: tPeak, type: 'scatter', mode: 'lines',
-                name: 'Peak Torque Envelope', fill: 'tozeroy',
-                line: { color: 'rgba(239,68,68,0.75)', width: 2.5 },
-                fillcolor: 'rgba(239,68,68,0.07)',
-                hovertemplate: '<b>Peak Envelope</b><br>%{x:.1f} rad/s<br>%{y:.3f} Nm<extra></extra>'
-            },
-            {
-                x: wCont, y: tCont, type: 'scatter', mode: 'lines',
-                name: 'Continuous Torque Envelope', fill: 'tozeroy',
-                line: { color: 'rgba(59,130,246,0.75)', width: 2, dash: 'dash' },
-                fillcolor: 'rgba(59,130,246,0.06)',
-                hovertemplate: '<b>Cont. Envelope</b><br>%{x:.1f} rad/s<br>%{y:.3f} Nm<extra></extra>'
-            },
-            {
-                x: [r.wMotor], y: [r.Tlay], type: 'scatter', mode: 'markers+text',
-                name: 'Gun Laying (Peak)',
-                text: ['GUN LAYING'], textposition: 'top center',
-                textfont: { size: 10, color: '#93c5fd', family: 'Inter, sans-serif' },
-                marker: { color: '#3b82f6', size: 16, symbol: 'circle',
-                          line: { color: '#93c5fd', width: 3 } },
-                hovertemplate: '<b>Gun Laying</b><br>Speed: %{x:.1f} rad/s<br>Torque: %{y:.4f} Nm<extra></extra>'
-            },
-            {
-                x: [r.wStabPeak], y: [r.TstabRms], type: 'scatter', mode: 'markers+text',
-                name: 'Stabilization (RMS)',
-                text: ['STABILIZATION'], textposition: 'top center',
-                textfont: { size: 10, color: '#fca5a5', family: 'Inter, sans-serif' },
-                marker: { color: '#ef4444', size: 16, symbol: 'diamond',
-                          line: { color: '#fca5a5', width: 3 } },
-                hovertemplate: '<b>Stabilization</b><br>Speed: %{x:.2f} rad/s<br>Torque: %{y:.4f} Nm<extra></extra>'
-            }
-        ];
-
-        const yMax = Math.max(r.Tpk, r.Tlay, r.TstabPeak) * 1.4;
-
-        const layout = {
-            paper_bgcolor: 'rgba(0,0,0,0)',
-            plot_bgcolor: '#080d1a',
-            font: { family: 'Inter, sans-serif', color: '#94a3b8', size: 11 },
-            margin: { t: 35, r: 25, b: 55, l: 65 },
-            xaxis: {
-                title: { text: 'Motor Speed (rad/s)', font: { size: 12 } },
-                tickfont: { family: 'JetBrains Mono, monospace', size: 10, color: '#64748b' },
-                gridcolor: 'rgba(30,41,59,0.5)', zerolinecolor: 'rgba(30,41,59,0.8)',
-                linecolor: '#1e293b', range: [0, wMax]
-            },
-            yaxis: {
-                title: { text: 'Motor Torque (Nm)', font: { size: 12 } },
-                tickfont: { family: 'JetBrains Mono, monospace', size: 10, color: '#64748b' },
-                gridcolor: 'rgba(30,41,59,0.5)', zerolinecolor: 'rgba(30,41,59,0.8)',
-                linecolor: '#1e293b', range: [0, yMax]
-            },
-            legend: {
-                x: 0.01, y: 0.99, bgcolor: 'rgba(12,18,34,0.85)',
-                bordercolor: '#1e293b', borderwidth: 1,
-                font: { size: 10, family: 'Inter, sans-serif' }
-            },
-            hovermode: 'closest',
-            shapes: [
-                {
-                    type: 'line', x0: 0, x1: wMax, y0: r.Tpk, y1: r.Tpk,
-                    line: { color: 'rgba(239,68,68,0.25)', width: 1, dash: 'dot' }
-                },
-                {
-                    type: 'line', x0: 0, x1: wMax, y0: r.Tco, y1: r.Tco,
-                    line: { color: 'rgba(59,130,246,0.25)', width: 1, dash: 'dot' }
-                }
-            ],
-            annotations: [
-                {
-                    x: wMax * 0.02, y: r.Tpk, xanchor: 'left', yanchor: 'bottom',
-                    text: 'T<sub>peak limit</sub> = ' + fmtF(r.Tpk, 1) + ' Nm',
-                    showarrow: false, font: { size: 9, color: 'rgba(239,68,68,0.5)', family: 'JetBrains Mono' }
-                },
-                {
-                    x: wMax * 0.02, y: r.Tco, xanchor: 'left', yanchor: 'bottom',
-                    text: 'T<sub>cont limit</sub> = ' + fmtF(r.Tco, 1) + ' Nm',
-                    showarrow: false, font: { size: 9, color: 'rgba(59,130,246,0.5)', family: 'JetBrains Mono' }
-                }
-            ]
-        };
-
-        const config = {
-            responsive: true, displaylogo: false,
-            modeBarButtonsToRemove: ['lasso2d', 'select2d', 'autoScale2d'],
-            toImageButtonOptions: { format: 'png', filename: 'torque_speed_' + activeAxis, scale: 2 }
-        };
-
-        if (!plotInitialized) {
-            Plotly.newPlot('tsChart', traces, layout, config);
-            plotInitialized = true;
-        } else {
-            Plotly.react('tsChart', traces, layout, config);
-        }
-
-        setText('chart-axis-label', activeAxis.toUpperCase());
-    }
-
-    // ============================================================
-    // FORM <-> STATE SYNC
-    // ============================================================
-    function populateForm() {
-        const params = axisParams[activeAxis];
-        document.querySelectorAll('input.inp').forEach(el => {
-            const keys = el.dataset.key.split('.');
-            const val = params[keys[0]][keys[1]];
-            if (val !== undefined) el.value = val;
-        });
-    }
-
-    function readFormToState() {
-        const params = axisParams[activeAxis];
-        document.querySelectorAll('input.inp').forEach(el => {
-            const keys = el.dataset.key.split('.');
-            const v = parseFloat(el.value);
-            if (!isNaN(v)) params[keys[0]][keys[1]] = v;
-        });
-    }
-
-    // ============================================================
-    // RECALCULATE
-    // ============================================================
-    function recalculate() {
-        readFormToState();
-        const r = calculate(axisParams[activeAxis]);
-        updateResults(r);
-        updateChart(r);
-        updateInertiaBar(r.Jratio);
-    }
-
-    // ============================================================
-    // AXIS SWITCH
-    // ============================================================
-    function switchAxis(axis) {
-        readFormToState();
-        activeAxis = axis;
-        document.querySelectorAll('.axis-tab').forEach(btn => {
-            btn.classList.remove('tab-active');
-            btn.classList.add('tab-inactive');
-        });
-        document.getElementById('tab-' + axis).classList.remove('tab-inactive');
-        document.getElementById('tab-' + axis).classList.add('tab-active');
-        updateSvgHighlight(axis);
-        populateForm();
-        recalculate();
-    }
-
-    // ============================================================
-    // INIT
-    // ============================================================
-    document.addEventListener('DOMContentLoaded', () => {
-        populateForm();
-        updateSvgHighlight(activeAxis);
-        recalculate();
-
-        document.querySelectorAll('input.inp').forEach(el => {
-            el.addEventListener('input', recalculate);
-        });
-    });
-    </script>
-
-</body>
-</html>
+<header class="bg-[#0A1020] border-b border-slate-800/80 sticky top-0 z-50">
+<div class="max-w-[1750px] mx-auto px-4 py-2 flex items-center justify-between">
+<div class="flex items-center gap-3"><div class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center shadow-lg shadow-blue-600/20"><svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="1.5"/><path d="M12 2v5M12 17v5M2 12h5M17 12h5"/></svg></div><div><h1 class="text-xs font-bold tracking-wider">WEAPON SYSTEM MOTOR SIZING</h1><p class="text-[9px] text-slate-500 tracking-widest uppercase">v4.0 — Dual-Axis Servo Analysis</p></div></div>
+<div class="flex bg-slate-800/40 rounded-lg p-0.5 border border-slate-700/40">
+<button id="tab-elevation" onclick="sw('elevation')" class="axis-tab tab-active px-3 py-1 rounded-md text-[10px] font-bold tracking-wider flex items-center gap-1"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 19V5M5 12l7-7 7 7"/></svg>ELEVATION</button>
+<button id="tab-traverse" onclick="sw('traverse')" class="axis-tab tab-inactive px-3 py-1 rounded-md text-[10px] font-bold tracking-wider flex items-center gap-1"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg>TRAVERSE</button>
+</div></div></header>
+
+<main class="max-w-[1750px] mx-auto p-4">
+<!-- BADGES -->
+<div class="grid grid-cols-3 gap-3 mb-4">
+<div class="card badge-ok px-3 py-2" id="bdg-inertia"><div class="flex items-center justify-between mb-1"><span class="text-[9px] font-bold tracking-widest uppercase text-slate-500">Inertia Ratio</span><span class="w-4 h-4 rounded-full icon-ok flex items-center justify-center text-[8px] font-bold" id="bdg-inertia-ic">OK</span></div><div class="text-lg font-bold font-mono" id="bdg-inertia-val">--</div><div class="text-[9px] text-slate-500" id="bdg-inertia-sub">--</div></div>
+<div class="card badge-ok px-3 py-2" id="bdg-voltage"><div class="flex items-center justify-between mb-1"><span class="text-[9px] font-bold tracking-widest uppercase text-slate-500">Voltage Margin</span><span class="w-4 h-4 rounded-full icon-ok flex items-center justify-center text-[8px] font-bold" id="bdg-voltage-ic">OK</span></div><div class="text-lg font-bold font-mono" id="bdg-voltage-val">--</div><div class="text-[9px] text-slate-500" id="bdg-voltage-sub">--</div></div>
+<div class="card badge-ok px-3 py-2" id="bdg-peak"><div class="flex items-center justify-between mb-1"><span class="text-[9px] font-bold tracking-widest uppercase text-slate-500">Peak Torque / Motor</span><span class="w-4 h-4 rounded-full icon-ok flex items-center justify-center text-[8px] font-bold" id="bdg-peak-ic">OK</span></div><div class="text-lg font-bold font-mono" id="bdg-peak-val">--</div><div class="text-[9px] text-slate-500" id="bdg-peak-sub">--</div></div>
+</div>
+
+<!-- PARAMS -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+<!-- MECHANICAL -->
+<div class="card"><div class="ch flex items-center gap-2"><div class="w-1 h-3.5 rounded-full bg-blue-500"></div><div><h2 class="text-[9px] font-bold tracking-widest uppercase text-slate-400">Mechanical &amp; Load</h2><p class="cn" id="mn">Linear actuator drive</p></div></div>
+<div class="px-3 py-1">
+<!-- ELEV -->
+<div class="sl elev-only" style="border-top:none;margin-top:0">Transmission (Rollerscrew)</div>
+<div class="pr elev-only"><span class="pl">Screw Lead<span class="ps">h</span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.screwLead" step="1" min="0.1"><span class="pu">mm/rev</span></div></div>
+<div class="pr elev-only"><span class="pl">Lever Arm<span class="ps">L</span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.leverArm" step="0.01" min="0.001"><span class="pu">m</span></div></div>
+<div class="pr elev-only"><span class="pl">Motor-Screw Ratio<span class="ps">i<sub>gk</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.motorScrewRatio" step="0.1" min="1"><span class="pu">[-]</span></div></div>
+<div class="pr elev-only"><span class="pl">Screw Eff.<span class="ps">&eta;<sub>s</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.screwEfficiency" step="0.01" min="0.01" max="1"><span class="pu">[-]</span></div></div>
+<div class="pr elev-only"><span class="pl">Gear Eff.<span class="ps">&eta;<sub>gk</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.gearEfficiency" step="0.01" min="0.01" max="1"><span class="pu">[-]</span></div></div>
+<div class="pr elev-only"><span class="pl">Gearbox Inertia<span class="ps">J<sub>gb</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.gearboxInertia" step="0.0001" min="0"><span class="pu">kg&middot;m&sup2;</span></div></div>
+<!-- TRAV -->
+<div class="sl trav-only" style="border-top:none;margin-top:0">Ring Gear &amp; Gearbox</div>
+<div class="pr trav-only"><span class="pl">Ring Gear Teeth<span class="ps">z<sub>1</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.ringTeeth" step="1" min="1"><span class="pu">[-]</span></div></div>
+<div class="pr trav-only"><span class="pl">Pinion Teeth<span class="ps">z<sub>2</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.pinionTeeth" step="1" min="1"><span class="pu">[-]</span></div></div>
+<div class="pr trav-only"><span class="pl">Gearbox Ratio<span class="ps">i<sub>gb</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.gearboxRatio" step="1" min="1"><span class="pu">[-]</span></div></div>
+<div class="pr trav-only"><span class="pl">Total Efficiency<span class="ps">&eta;<sub>tot</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.efficiency" step="0.01" min="0.01" max="1"><span class="pu">[-]</span></div></div>
+<div class="pr trav-only"><span class="pl">Gearbox Inertia<span class="ps">J<sub>gb</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.gearboxInertia" step="0.001" min="0"><span class="pu">kg&middot;m&sup2;</span></div></div>
+<!-- COMMON: Load -->
+<div class="sl">Load &amp; Disturbances</div>
+<div class="pr"><span class="pl">Load Inertia<span class="ps">J<sub>L</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.loadInertia" step="10" min="0"><span class="pu">kg&middot;m&sup2;</span></div></div>
+<div class="pr"><span class="pl">Unbalance<span class="ps">T<sub>ub</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.unbalanceTorque" step="10" min="0"><span class="pu">Nm</span></div></div>
+<div class="pr"><span class="pl">Friction<span class="ps">T<sub>fr</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.frictionTorque" step="10" min="0"><span class="pu">Nm</span></div></div>
+<div class="pr elev-only"><span class="pl">Wind<span class="ps">T<sub>w</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.windTorque" step="5" min="0"><span class="pu">Nm</span></div></div>
+<div class="pr elev-only"><span class="pl">Firing<span class="ps">T<sub>fire</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.firingTorque" step="10" min="0"><span class="pu">Nm</span></div></div>
+</div></div>
+<!-- PERFORMANCE -->
+<div class="card"><div class="ch flex items-center gap-2"><div class="w-1 h-3.5 rounded-full bg-amber-500"></div><div><h2 class="text-[9px] font-bold tracking-widest uppercase text-slate-400">Performance &amp; Duty Cycle</h2><p class="cn">Slewing profile and stabilization specs</p></div></div>
+<div class="px-3 py-1">
+<div class="sl" style="border-top:none;margin-top:0">Gun Laying Profile</div>
+<div class="pr"><span class="pl">Target Speed</span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="performance.targetSpeed" step="1" min="0"><span class="pu">deg/s</span></div></div>
+<div class="pr"><span class="pl">Target Accel</span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="performance.targetAccel" step="1" min="0"><span class="pu">deg/s&sup2;</span></div></div>
+<div class="pr"><span class="pl">Travel Angle</span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="performance.travelAngle" step="1" min="0"><span class="pu">deg</span></div></div>
+<div class="pr"><span class="pl">Dwell Time</span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="performance.dwellTime" step="0.5" min="0"><span class="pu">s</span></div></div>
+<div class="sl">Stabilization</div>
+<div class="pr"><span class="pl">Stab Amplitude<span class="ps">&phi;<sub>max</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="performance.stabAmplitude" step="0.1" min="0"><span class="pu">mrad</span></div></div>
+<div class="pr"><span class="pl">Stab Frequency<span class="ps">f</span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="performance.stabFrequency" step="0.5" min="0"><span class="pu">Hz</span></div></div>
+</div></div>
+<!-- MOTOR -->
+<div class="card"><div class="ch flex items-center gap-2"><div class="w-1 h-3.5 rounded-full bg-emerald-500"></div><div><h2 class="text-[9px] font-bold tracking-widest uppercase text-slate-400">Motor Parameters</h2><p class="cn">Per-motor values; parallel operation supported</p></div></div>
+<div class="px-3 py-1">
+<div class="pr" style="background:rgba(59,130,246,.04);border-radius:.3rem;padding:.3rem;margin-bottom:.15rem"><span class="pl font-bold text-blue-300">Motor Count<span class="ps">n</span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="motor.motorCount" step="1" min="1" max="8" style="width:3.5rem;font-weight:700;color:#93c5fd"><span class="pu">parallel</span></div></div>
+<div class="pr"><span class="pl">Torque Const.<span class="ps">K<sub>t</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="motor.kt" step="0.001" min="0.001"><span class="pu">Nm/A</span></div></div>
+<div class="pr"><span class="pl">Back-EMF Const.<span class="ps">K<sub>e</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="motor.ke" step="0.001" min="0.001"><span class="pu">V/(rad/s)</span></div></div>
+<div class="pr"><span class="pl">Resistance<span class="ps">R<sub>mt</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="motor.resistance" step="0.001" min="0.001"><span class="pu">&Omega;/motor</span></div></div>
+<div class="pr"><span class="pl">Rotor Inertia<span class="ps">J<sub>m</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="motor.rotorInertia" step="0.0001" min="0"><span class="pu">kg&middot;m&sup2;</span></div></div>
+<div class="pr"><span class="pl">Peak Torque Limit</span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="motor.peakTorque" step="1" min="0"><span class="pu">Nm/motor</span></div></div>
+<div class="pr"><span class="pl">Cont. Torque Limit</span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="motor.contTorque" step="1" min="0"><span class="pu">Nm/motor</span></div></div>
+<div class="pr"><span class="pl">Bus Voltage<span class="ps">V<sub>dc</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="motor.busVoltage" step="1" min="1"><span class="pu">V DC</span></div></div>
+</div></div>
+</div>
+
+<!-- RESULTS -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+<div class="card border-l-2 border-l-blue-500"><div class="ch flex items-center gap-2 bg-blue-500/5"><div class="w-2 h-2 rounded-full bg-blue-500"></div><div><h3 class="text-[10px] font-bold tracking-widest uppercase text-blue-400">Gun Laying (Slew)</h3><p class="cn">Trapezoidal profile &mdash; peak &amp; RMS</p></div></div>
+<div class="px-3 py-1">
+<div class="rr"><span class="rl">i<sub>tot</sub> (total ratio)</span><span><span class="rv text-violet-300" id="r-itot">--</span></span></div>
+<div class="rr"><span class="rl">Motor Speed</span><span><span class="rv" id="r-wm">--</span><span class="ru">rad/s</span><span class="rv text-xs opacity-40 ml-2" id="r-rpm">--</span><span class="ru">RPM</span></span></div>
+<div class="rr elev-only"><span class="rl">Linear Speed</span><span><span class="rv text-violet-300" id="r-vl">--</span><span class="ru">mm/s</span></span></div>
+<div class="rr"><span class="rl">T<sub>acc</sub></span><span><span class="rv text-sky-300" id="r-ta">--</span><span class="ru">Nm</span></span></div>
+<div class="rr"><span class="rl">T<sub>dist</sub></span><span><span class="rv text-amber-300" id="r-td">--</span><span class="ru">Nm</span></span></div>
+<div class="rr"><span class="rl">T<sub>peak</sub> (total)</span><span><span class="rv text-blue-400" id="r-tp">--</span><span class="ru">Nm</span></span></div>
+<div class="rr"><span class="rl">T<sub>peak</sub> /motor</span><span><span class="rv" id="r-tpm">--</span><span class="ru">Nm</span></span></div>
+<div class="rr"><span class="rl">I<sub>peak</sub> /motor</span><span><span class="rv" id="r-ip">--</span><span class="ru">A</span></span></div>
+<div class="rr"><span class="rl">V<sub>req</sub></span><span><span class="rv" id="r-vr">--</span><span class="ru">V</span></span></div>
+<div class="rr" style="border-top:1px solid rgba(59,130,246,.15);margin-top:.15rem;padding-top:.4rem"><span class="rl font-semibold">M<sub>rms</sub> (total)</span><span><span class="rv text-blue-300" id="r-mr">--</span><span class="ru">Nm</span></span></div>
+<div class="rr"><span class="rl">M<sub>rms</sub> /motor</span><span><span class="rv" id="r-mrm">--</span><span class="ru">Nm</span></span></div>
+<div class="rr"><span class="rl">I<sub>rms</sub> /motor</span><span><span class="rv" id="r-ir">--</span><span class="ru">A</span></span></div>
+<div class="rr elev-only"><span class="rl">Peak Force</span><span><span class="rv text-violet-300" id="r-fp">--</span><span class="ru">N</span></span></div>
+<div class="rr"><span class="rl text-[9px] text-slate-600">Profile</span><span class="text-[8px] font-mono text-slate-600" id="r-pf">--</span></div>
+</div></div>
+<div class="card border-l-2 border-l-red-500"><div class="ch flex items-center gap-2 bg-red-500/5"><div class="w-2 h-2 rounded-full bg-red-500"></div><div><h3 class="text-[10px] font-bold tracking-widest uppercase text-red-400">Stabilization</h3><p class="cn">&phi;(t) = &phi;<sub>max</sub>&middot;sin(2&pi;ft)</p></div></div>
+<div class="px-3 py-1">
+<div class="rr"><span class="rl">Peak Motor Speed</span><span><span class="rv" id="r-ss">--</span><span class="ru">rad/s</span></span></div>
+<div class="rr"><span class="rl">Peak Stab Torque (total)</span><span><span class="rv text-red-400" id="r-sp">--</span><span class="ru">Nm</span></span></div>
+<div class="rr"><span class="rl">RMS Stab Torque (total)</span><span><span class="rv text-red-300" id="r-sr">--</span><span class="ru">Nm</span></span></div>
+<div class="rr"><span class="rl">T<sub>hold</sub> (unbalance)</span><span><span class="rv text-amber-300" id="r-th">--</span><span class="ru">Nm</span></span></div>
+<div class="rr"><span class="rl">RMS /motor</span><span><span class="rv" id="r-srm">--</span><span class="ru">Nm</span></span></div>
+<div class="rr"><span class="rl">I<sub>rms</sub> /motor</span><span><span class="rv" id="r-si">--</span><span class="ru">A</span></span></div>
+<div class="rr"><span class="rl">V<sub>req</sub> (stab)</span><span><span class="rv" id="r-sv">--</span><span class="ru">V</span></span></div>
+<div class="rr" style="border-top:1px solid rgba(239,68,68,.12);margin-top:.15rem;padding-top:.4rem"><span class="rl">E<sub>cycle</sub> (energy)</span><span><span class="rv text-amber-200" id="r-en">--</span><span class="ru">Ws</span></span></div>
+</div></div>
+</div>
+
+<!-- CHARTS -->
+<div class="grid grid-cols-1 lg:grid-cols-5 gap-3">
+<div class="card lg:col-span-3">
+<div class="ch flex items-center justify-between"><div class="flex items-center gap-2"><div class="w-1 h-3.5 rounded-full bg-violet-500"></div><h3 class="text-[9px] font-bold tracking-widest uppercase text-slate-400">Torque &ndash; Speed Diagram</h3></div><span class="text-[9px] text-slate-600 font-mono" id="cl">ELEVATION</span></div>
+<div class="p-2"><div id="tsC" style="width:100%;height:340px"></div></div>
+<div class="px-4 pb-3"><div class="flex items-center justify-between mb-1"><span class="text-[9px] font-bold tracking-widest uppercase text-slate-500">Inertia Match</span><span class="text-xs font-mono font-bold" id="ibv" style="color:#22c55e">--</span></div><div class="relative w-full h-3 bg-slate-800/80 rounded-full overflow-hidden border border-slate-700/30"><div class="absolute top-0 h-full w-px bg-slate-500/40 z-10" style="left:33.33%"></div><div class="absolute top-0 h-full w-px bg-red-500/30 z-10" style="left:66.66%"></div><div id="ibf" class="h-full rounded-full transition-all duration-500" style="width:0%;background:#22c55e"></div></div><div class="flex justify-between mt-0.5 text-[8px] font-mono"><span class="text-slate-600">0:1</span><span class="text-green-600/70">5:1</span><span class="text-red-600/70">10:1</span><span class="text-slate-600">15+</span></div></div>
+</div>
+<div class="card lg:col-span-2">
+<div class="ch flex items-center gap-2"><div class="w-1 h-3.5 rounded-full bg-cyan-500"></div><h3 class="text-[9px] font-bold tracking-widest uppercase text-slate-400">Duty Cycle Profile</h3></div>
+<div class="p-2"><div id="dcC" style="width:100%;height:340px"></div></div>
+<div class="px-3 pb-2 text-[10px] font-mono text-slate-500 space-y-1">
+<div>i<sub>tot</sub> = <span class="trav-only-inline">z<sub>1</sub>/z<sub>2</sub> &middot; i<sub>gb</sub></span><span class="elev-only-inline">i<sub>gk</sub>&middot;2&pi;L/h</span></div>
+<div>J<sub>eff</sub> = n&middot;J<sub>m</sub> + J<sub>gb</sub> + J<sub>L</sub>/(&eta;&middot;i&sup2;)</div>
+<div>T<sub>acc</sub> = J<sub>eff</sub>&middot;&alpha;<sub>load</sub>&middot;i<sub>tot</sub></div>
+<div>M<sub>rms</sub> = &radic;(&Sigma;T<sub>i</sub>&sup2;t<sub>i</sub> / &Sigma;t<sub>i</sub>)</div>
+</div></div>
+</div>
+</main>
+<footer class="border-t border-slate-800/50 mt-3 py-2 text-center text-[8px] text-slate-600 tracking-wider">WEAPON SYSTEM MOTOR SIZING v4.0</footer>
+
+<script>
+const D={
+elevation:{
+ mechanical:{screwLead:25,leverArm:0.30,motorScrewRatio:3,screwEfficiency:0.90,gearEfficiency:0.95,gearboxInertia:0.0005,loadInertia:3500,unbalanceTorque:1500,frictionTorque:400,windTorque:80,firingTorque:400},
+ performance:{targetSpeed:40,targetAccel:80,travelAngle:25,dwellTime:1.5,stabAmplitude:2,stabFrequency:3},
+ motor:{motorCount:1,kt:0.126,ke:0.126,resistance:0.012,rotorInertia:0.005,peakTorque:80,contTorque:50,busVoltage:24}
+},
+traverse:{
+ mechanical:{ringTeeth:294,pinionTeeth:25,gearboxRatio:33,efficiency:0.855,gearboxInertia:0.01,loadInertia:35000,unbalanceTorque:0,frictionTorque:1200},
+ performance:{targetSpeed:20,targetAccel:20,travelAngle:30,dwellTime:2,stabAmplitude:2,stabFrequency:1},
+ motor:{motorCount:2,kt:0.062,ke:0.062,resistance:0.004,rotorInertia:0.001,peakTorque:25,contTorque:12,busVoltage:24}
+}};
+let ax='elevation';const AP={elevation:JSON.parse(JSON.stringify(D.elevation)),traverse:JSON.parse(JSON.stringify(D.traverse))};let pi=false;
+
+function calc(p,at){
+const isL=at==='elevation';
+const n=Math.max(Math.round(p.motor.motorCount),1);
+const Kt=Math.max(p.motor.kt,.001),Ke=Math.max(p.motor.ke,.001),R=Math.max(p.motor.resistance,.001);
+const Jm=Math.max(p.motor.rotorInertia,0),Tpk=Math.max(p.motor.peakTorque,.001),Tco=Math.max(p.motor.contTorque,.001),Vb=Math.max(p.motor.busVoltage,1);
+const ws_=Math.max(p.performance.targetSpeed,0),as_=Math.max(p.performance.targetAccel,0);
+const thT=Math.max(p.performance.travelAngle,0),tDw=Math.max(p.performance.dwellTime,0);
+const As=Math.max(p.performance.stabAmplitude,0),fs=Math.max(p.performance.stabFrequency,0);
+const JL=Math.max(p.mechanical.loadInertia,0),Tub=Math.max(p.mechanical.unbalanceTorque,0),Tfr=Math.max(p.mechanical.frictionTorque,0);
+const Jgb=Math.max(p.mechanical.gearboxInertia||0,0);
+let iT,eT,Td,Th,vL=0,Fp=0;
+if(isL){
+ const h=Math.max(p.mechanical.screwLead,.1)/1000,L=Math.max(p.mechanical.leverArm,.001);
+ const ig=Math.max(p.mechanical.motorScrewRatio,1),es=Math.max(p.mechanical.screwEfficiency,.01),eg=Math.max(p.mechanical.gearEfficiency,.01);
+ const Tw=Math.max(p.mechanical.windTorque||0,0),Tfi=Math.max(p.mechanical.firingTorque||0,0);
+ iT=ig*2*Math.PI*L/h;eT=es*eg;
+ Td=(Tw+Tfi+Tfr+Tub)/(eT*iT);Th=Tub/(eT*iT);
+ vL=(ws_*Math.PI/180)*L*1000;
+}else{
+ const z1=Math.max(p.mechanical.ringTeeth||1,1),z2=Math.max(p.mechanical.pinionTeeth||1,1),igb=Math.max(p.mechanical.gearboxRatio||1,1);
+ eT=Math.max(p.mechanical.efficiency||.8,.01);
+ iT=(z1/z2)*igb;
+ Td=(Tfr+Tub)/(eT*iT);Th=(Tub||0)/(eT*iT)+Tfr/(eT*iT)*.1;
+}
+const Je=n*Jm+Jgb+JL/(eT*iT*iT);
+const Jr=JL/(eT*iT*iT),Jrat=(n*Jm)>0?Jr/(n*Jm):Infinity;
+const wL=ws_*Math.PI/180,aL=as_*Math.PI/180;
+const wM=wL*iT,aM=aL*iT,rpm=wM*60/(2*Math.PI);
+const Ta=Je*aM,Tp=Ta+Td;
+const Tpm=Tp/n,Ipm=Tpm/Kt;
+const Vr=Ipm*R+Ke*wM;
+if(isL){const h=Math.max(p.mechanical.screwLead,.1)/1000;Fp=Tp*2*Math.PI*eT/h;}
+// RMS
+const tA=as_>0?ws_/as_:0,thA=.5*as_*tA*tA;
+let t1,t2,t3;
+if(2*thA<=thT){t1=tA;t3=tA;t2=ws_>0?(thT-2*thA)/ws_:0}else{t1=as_>0?Math.sqrt(thT/as_):0;t3=t1;t2=0}
+const t4=tDw,tC=t1+t2+t3+t4;
+const T1=Ta+Td,T2=Td,T3=Math.abs(Ta-Td),T4=Th;
+const Mr=tC>0?Math.sqrt((T1*T1*t1+T2*T2*t2+T3*T3*t3+T4*T4*t4)/tC):0;
+const Mrm=Mr/n,Irm=Mrm/Kt;
+// Energy
+let En=0;
+{const w1=wM,I1=T1/(n*Kt),I2=T2/(n*Kt),I3=T3/(n*Kt),I4=T4/(n*Kt);
+const P1=n*(T1/n*w1*.5+I1*I1*R),P2=n*(T2/n*w1+I2*I2*R),P3=n*(T3/n*w1*.5+I3*I3*R),P4=n*I4*I4*R;
+En=P1*t1+P2*t2+P3*t3+P4*t4;}
+// Stab
+const Am=(As/1000)*iT,wsf=2*Math.PI*fs;
+const wSp=Am*wsf,aSp=Am*wsf*wsf;
+const TsD=Je*aSp,TsP=TsD+Math.abs(Th),TsR=Math.sqrt((TsD/Math.sqrt(2))**2+Th*Th);
+const TsRm=TsR/n,IsRm=TsRm/Kt;
+const Vs=(TsP/(n*Kt))*R+Ke*wSp;
+const vM=Vb-Vr,vP=(vM/Vb)*100,pU=(Tpm/Tpk)*100;
+const wNL=Vb/Ke;
+return{isL,n,iT,eT,Je,Jgb,Jr,Jrat,wM,aM,rpm,vL,Ta,Td,Th,Tp,Tpm,Ipm,Vr,Fp,
+Mr,Mrm,Irm,t1,t2,t3,t4,tC,T1,T2,T3,T4,En,
+wSp,aSp,TsP,TsR,TsRm,IsRm,Vs,
+vM,vP,pU,wNL,Tpk,Tco,Kt,Ke,R,Vb};}
+
+function f(v,d){return v.toFixed(d??2)}function fA(v){if(!isFinite(v))return'--';if(Math.abs(v)<.01&&v!==0)return v.toExponential(3);if(Math.abs(v)>=1e4)return v.toFixed(0);if(Math.abs(v)>=100)return v.toFixed(1);if(Math.abs(v)>=1)return v.toFixed(3);return v.toFixed(4)}
+function lC(a,b,t){const ah=parseInt(a.replace('#',''),16),bh=parseInt(b.replace('#',''),16);const ar=(ah>>16)&0xff,ag=(ah>>8)&0xff,ab=ah&0xff,br=(bh>>16)&0xff,bg=(bh>>8)&0xff,bb=bh&0xff;return'#'+((1<<24)+(Math.round(ar+(br-ar)*t)<<16)+(Math.round(ag+(bg-ag)*t)<<8)+Math.round(ab+(bb-ab)*t)).toString(16).slice(1)}
+function sT(i,t){const e=document.getElementById(i);if(e)e.textContent=t}function sH(i,h){const e=document.getElementById(i);if(e)e.innerHTML=h}
+function gS(v,g,w){return v<=g?'ok':v<=w?'warn':'danger'}function gSH(v,g,w){return v>=g?'ok':v>=w?'warn':'danger'}
+function aB(i,s,v,u){const c=document.getElementById(i),ic=document.getElementById(i+'-ic');c.className=c.className.replace(/badge-\w+/g,'');c.classList.add('badge-'+s);ic.className=ic.className.replace(/icon-\w+/g,'');ic.classList.add('icon-'+s);c.classList.remove('animate-pulse-danger');ic.textContent={ok:'OK',warn:'!!',danger:'XX'}[s];if(s==='danger')c.classList.add('animate-pulse-danger');sT(i+'-val',v);sH(i+'-sub',u)}
+
+function uR(r){
+sT('r-itot',f(r.iT,1));sT('r-wm',f(r.wM,1));sT('r-rpm',f(r.rpm,0));sT('r-vl',f(r.vL,1));
+sT('r-ta',fA(r.Ta));sT('r-td',fA(r.Td));sT('r-tp',fA(r.Tp));sT('r-tpm',fA(r.Tpm));
+sT('r-ip',f(r.Ipm,1));sT('r-vr',f(r.Vr,1));sT('r-fp',f(r.Fp,0));
+sT('r-mr',fA(r.Mr));sT('r-mrm',fA(r.Mrm));sT('r-ir',f(r.Irm,1));
+sT('r-pf','t1='+f(r.t1,2)+'s t2='+f(r.t2,2)+'s t3='+f(r.t3,2)+'s t4='+f(r.t4,1)+'s T='+f(r.tC,2)+'s');
+sT('r-ss',f(r.wSp,2));sT('r-sp',fA(r.TsP));sT('r-sr',fA(r.TsR));sT('r-th',fA(r.Th));
+sT('r-srm',fA(r.TsRm));sT('r-si',f(r.IsRm,2));sT('r-sv',f(r.Vs,1));sT('r-en',f(r.En,1));
+aB('bdg-inertia',gS(r.Jrat,5,10),f(r.Jrat,1)+':1','J<sub>eff</sub>='+r.Je.toExponential(3)+' &mdash; i<sub>tot</sub>='+f(r.iT,1)+' &mdash; n='+r.n);
+aB('bdg-voltage',gSH(r.vP,15,5),(r.vM>=0?'+':'')+f(r.vM,1)+'V',f(r.vP,1)+'% &mdash; '+f(r.Vr,1)+'V/'+f(r.Vb,0)+'V');
+aB('bdg-peak',gS(r.pU,70,90),f(r.pU,1)+'%',fA(r.Tpm)+'/'+f(r.Tpk,1)+' Nm per motor');}
+
+function uB(r){const b=document.getElementById('ibf'),l=document.getElementById('ibv');if(!b)return;b.style.width=Math.min(r,15)/15*100+'%';let c=r<=5?'#22c55e':r<=10?lC('#22c55e','#f59e0b',(r-5)/5):lC('#f59e0b','#ef4444',Math.min((r-10)/5,1));b.style.background='linear-gradient(90deg,#22c55e,'+c+')';l.textContent=(isFinite(r)?f(r,1):'---')+':1';l.style.color=c}
+
+function uC(r){
+const wX=Math.max(r.wNL,r.wM)*1.25,N=100;const wP=[],tP=[],wC=[],tC=[];
+for(let j=0;j<=N;j++){const w=(j/N)*wX,Tv=r.Kt*Math.max(0,(r.Vb-r.Ke*w))/r.R;wP.push(w);tP.push(Math.max(0,Math.min(r.Tpk,Tv)));wC.push(w);tC.push(Math.max(0,Math.min(r.Tco,Tv)))}
+const dl=r.isL?'Linear':'Ring Gear';
+const tr=[
+{x:wP,y:tP,type:'scatter',mode:'lines',name:'Peak Env.',fill:'tozeroy',line:{color:'rgba(239,68,68,.65)',width:2},fillcolor:'rgba(239,68,68,.05)',hovertemplate:'%{x:.1f} rad/s, %{y:.2f} Nm<extra>Peak</extra>'},
+{x:wC,y:tC,type:'scatter',mode:'lines',name:'Cont. Env.',fill:'tozeroy',line:{color:'rgba(96,165,250,.55)',width:1.5,dash:'dash'},fillcolor:'rgba(59,130,246,.03)',hovertemplate:'%{x:.1f} rad/s, %{y:.2f} Nm<extra>Cont</extra>'},
+{x:[r.wM],y:[r.Tpm],type:'scatter',mode:'markers+text',name:'Laying/motor',text:['LAYING'],textposition:'top center',textfont:{size:9,color:'#93c5fd'},marker:{color:'#3b82f6',size:14,line:{color:'#93c5fd',width:2}},hovertemplate:'Laying: %{x:.1f} rad/s, %{y:.3f} Nm<extra></extra>'},
+{x:[r.wSp],y:[r.TsRm],type:'scatter',mode:'markers+text',name:'Stab RMS/motor',text:['STAB'],textposition:'top center',textfont:{size:9,color:'#fca5a5'},marker:{color:'#ef4444',size:14,symbol:'diamond',line:{color:'#fca5a5',width:2}},hovertemplate:'Stab: %{x:.2f} rad/s, %{y:.4f} Nm<extra></extra>'}
+];
+const yX=Math.max(r.Tpk,r.Tpm,r.TsRm)*1.4;
+const lo={paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'#080d1a',font:{family:'Inter',color:'#94a3b8',size:10},margin:{t:25,r:15,b:45,l:55},
+xaxis:{title:'Motor Speed (rad/s)',tickfont:{family:'JetBrains Mono',size:9,color:'#64748b'},gridcolor:'rgba(30,41,59,.4)',range:[0,wX]},
+yaxis:{title:'Torque/Motor (Nm)',tickfont:{family:'JetBrains Mono',size:9,color:'#64748b'},gridcolor:'rgba(30,41,59,.4)',range:[0,yX]},
+legend:{x:.01,y:.99,bgcolor:'rgba(12,18,34,.85)',bordercolor:'#1e293b',font:{size:8}},hovermode:'closest',
+shapes:[{type:'line',x0:0,x1:wX,y0:r.Tpk,y1:r.Tpk,line:{color:'rgba(239,68,68,.2)',width:1,dash:'dot'}},{type:'line',x0:0,x1:wX,y0:r.Tco,y1:r.Tco,line:{color:'rgba(96,165,250,.2)',width:1,dash:'dot'}}]};
+const cf={responsive:true,displaylogo:false,modeBarButtonsToRemove:['lasso2d','select2d','autoScale2d']};
+if(!pi){Plotly.newPlot('tsC',tr,lo,cf);pi=true}else Plotly.react('tsC',tr,lo,cf);
+sT('cl',ax.toUpperCase()+' ('+dl+', n='+r.n+')');
+// Duty cycle chart
+const tArr=[],TArr=[],wArr=[];let tc=0;const dt=0.02;
+for(let tt=0;tt<r.t1;tt+=dt){tArr.push(tc+tt);TArr.push(r.T1/r.n);wArr.push(r.wM*(tt/Math.max(r.t1,.001)))}tc+=r.t1;
+for(let tt=0;tt<r.t2;tt+=dt){tArr.push(tc+tt);TArr.push(r.T2/r.n);wArr.push(r.wM)}tc+=r.t2;
+for(let tt=0;tt<r.t3;tt+=dt){tArr.push(tc+tt);TArr.push(r.T3/r.n);wArr.push(r.wM*(1-tt/Math.max(r.t3,.001)))}tc+=r.t3;
+for(let tt=0;tt<r.t4;tt+=dt){tArr.push(tc+tt);TArr.push(r.T4/r.n);wArr.push(0)}
+const dcTr=[
+{x:tArr,y:TArr,type:'scatter',mode:'lines',name:'Torque/motor',fill:'tozeroy',line:{color:'rgba(59,130,246,.7)',width:2},fillcolor:'rgba(59,130,246,.08)'},
+{x:tArr,y:wArr,type:'scatter',mode:'lines',name:'Speed (rad/s)',yaxis:'y2',line:{color:'rgba(245,158,11,.5)',width:1.5,dash:'dot'}}
+];
+const dcLo={paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'#080d1a',font:{family:'Inter',color:'#94a3b8',size:10},margin:{t:25,r:50,b:45,l:55},
+xaxis:{title:'Time (s)',tickfont:{family:'JetBrains Mono',size:9,color:'#64748b'},gridcolor:'rgba(30,41,59,.4)'},
+yaxis:{title:'Torque/Motor (Nm)',tickfont:{family:'JetBrains Mono',size:9,color:'#64748b'},gridcolor:'rgba(30,41,59,.4)',rangemode:'tozero'},
+yaxis2:{title:'Speed (rad/s)',overlaying:'y',side:'right',tickfont:{family:'JetBrains Mono',size:9,color:'#f59e0b40'},showgrid:false,rangemode:'tozero'},
+legend:{x:.01,y:.99,bgcolor:'rgba(12,18,34,.85)',bordercolor:'#1e293b',font:{size:8}},hovermode:'x unified',
+shapes:[{type:'line',x0:0,x1:r.tC,y0:r.Mrm,y1:r.Mrm,line:{color:'rgba(34,197,94,.5)',width:2,dash:'dash'}}],
+annotations:[{x:r.tC*.95,y:r.Mrm,text:'M<sub>rms</sub>/motor='+fA(r.Mrm),showarrow:false,yanchor:'bottom',font:{size:8,color:'#4ade80',family:'JetBrains Mono'}}]};
+Plotly.react('dcC',dcTr,dcLo,cf);}
+
+function pop(){const p=AP[ax];document.querySelectorAll('input.inp').forEach(e=>{const[c,k]=e.dataset.key.split('.');if(p[c]&&p[c].hasOwnProperty(k))e.value=p[c][k]})}
+function rd(){const p=AP[ax];document.querySelectorAll('input.inp').forEach(e=>{if(e.offsetParent===null)return;const[c,k]=e.dataset.key.split('.');if(!p[c]||!p[c].hasOwnProperty(k))return;const v=parseFloat(e.value);if(!isNaN(v))p[c][k]=v})}
+function rc(){rd();const r=calc(AP[ax],ax);uR(r);uC(r);uB(r.Jrat)}
+function uV(a){const isE=a==='elevation';
+document.querySelectorAll('.elev-only').forEach(e=>e.style.display=isE?'flex':'none');
+document.querySelectorAll('.trav-only').forEach(e=>e.style.display=isE?'none':'flex');
+document.querySelectorAll('.elev-only-inline').forEach(e=>e.style.display=isE?'inline':'none');
+document.querySelectorAll('.trav-only-inline').forEach(e=>e.style.display=isE?'none':'inline');
+const mn=document.getElementById('mn');if(mn)mn.textContent=isE?'Linear actuator: rollerscrew + gear + lever':'Ring gear + gearbox drive system'}
+function sw(a){rd();ax=a;document.querySelectorAll('.axis-tab').forEach(b=>{b.classList.remove('tab-active');b.classList.add('tab-inactive')});document.getElementById('tab-'+a).classList.remove('tab-inactive');document.getElementById('tab-'+a).classList.add('tab-active');uV(a);pop();rc()}
+document.addEventListener('DOMContentLoaded',()=>{uV(ax);pop();rc();document.querySelectorAll('input.inp').forEach(e=>e.addEventListener('input',rc))});
+</script>
+</body></html>
