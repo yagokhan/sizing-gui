@@ -5,6 +5,7 @@
 <title>Weapon System Motor Sizing Tool</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','sans-serif'],mono:['JetBrains Mono','monospace']}}}}</script>
 <style>
@@ -33,6 +34,11 @@ input[type="number"]{-moz-appearance:textfield;box-sizing:border-box}input::-web
 .btn-solve{padding:.55rem 1.4rem;background:linear-gradient(135deg,#059669,#10b981);color:#fff;border-radius:.45rem;font-size:.78rem;font-weight:800;letter-spacing:.15em;box-shadow:0 4px 16px rgba(16,185,129,.3),0 0 0 1px rgba(52,211,153,.2);transition:all .2s;display:inline-flex;align-items:center;gap:.5rem}.btn-solve:hover{background:linear-gradient(135deg,#047857,#059669);box-shadow:0 6px 20px rgba(16,185,129,.45);transform:translateY(-1px)}.btn-solve:active{transform:translateY(0)}
 .btn-back{padding:.4rem 1rem;background:rgba(30,41,59,.6);color:#94a3b8;border-radius:.4rem;font-size:.7rem;font-weight:600;letter-spacing:.1em;border:1px solid rgba(51,65,85,.5);transition:all .15s;display:inline-flex;align-items:center;gap:.4rem}.btn-back:hover{background:rgba(51,65,85,.8);color:#e2e8f0}
 .pill-status{padding:.25rem .7rem;border-radius:9999px;font-size:.6rem;font-weight:700;letter-spacing:.1em;font-family:'JetBrains Mono',monospace}.pill-ready{background:rgba(245,158,11,.15);color:#fbbf24;border:1px solid rgba(245,158,11,.3)}.pill-solved{background:rgba(34,197,94,.15);color:#4ade80;border:1px solid rgba(34,197,94,.3)}
+.stab{padding:.35rem .8rem;border-radius:.35rem;font-size:.65rem;font-weight:700;letter-spacing:.08em;color:#64748b;border:1px solid rgba(51,65,85,.3);background:rgba(15,23,42,.3);transition:all .15s}.stab:hover{color:#cbd5e1;background:rgba(30,41,59,.5)}.stab-active{color:#fff;background:#1e40af;border-color:#3b82f6;box-shadow:0 2px 6px rgba(59,130,246,.25)}
+.gauge-ring{transform-origin:center;transform:rotate(-90deg)}
+@keyframes spin-slow{from{transform:rotate(0)}to{transform:rotate(360deg)}}.anim-spin{animation:spin-slow 3s linear infinite}
+@keyframes dash-flow{from{stroke-dashoffset:20}to{stroke-dashoffset:0}}.anim-dash{stroke-dasharray:4 4;animation:dash-flow 1.2s linear infinite}
+@media print{header,.no-print,#view-inputs,#view-compare,.js-plotly-plot .modebar{display:none!important}body{background:#fff!important;color:#000!important}.card{background:#fff!important;border:1px solid #999!important;break-inside:avoid}.rv,.rl{color:#000!important}}
 .sl{font-size:.48rem;color:#536175;text-transform:uppercase;letter-spacing:.1em;font-weight:700;padding:.3rem 0 .1rem;border-top:1px solid rgba(30,41,59,.25);margin-top:.15rem}
 .btn-sm{padding:.3rem .6rem;border-radius:.3rem;font-size:.65rem;font-weight:600;transition:all .15s}
 .js-plotly-plot .plotly .modebar{top:2px!important;right:2px!important}.js-plotly-plot .plotly .modebar-btn{color:#475569!important}
@@ -51,7 +57,7 @@ input[type="number"]{-moz-appearance:textfield;box-sizing:border-box}input::-web
 <body class="text-gray-100 min-h-screen">
 <header class="bg-[#0A1020] border-b border-slate-800/80 sticky top-0 z-50">
 <div class="max-w-[1750px] mx-auto px-4 py-2 flex items-center justify-between">
-<div class="flex items-center gap-3"><div class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center shadow-lg shadow-blue-600/20"><svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="1.5"/><path d="M12 2v5M12 17v5M2 12h5M17 12h5"/></svg></div><div><h1 class="text-xs font-bold tracking-wider">WEAPON SYSTEM MOTOR SIZING</h1><p class="text-[9px] text-slate-500 tracking-widest uppercase">v5.0 — Profile Import &amp; Waveform Analysis</p></div></div>
+<div class="flex items-center gap-3"><div class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center shadow-lg shadow-blue-600/20"><svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="1.5"/><path d="M12 2v5M12 17v5M2 12h5M17 12h5"/></svg></div><div><h1 class="text-xs font-bold tracking-wider">WEAPON SYSTEM MOTOR SIZING</h1><p class="text-[9px] text-slate-500 tracking-widest uppercase">v7.0 — Power · Bandwidth · Energy · Precision · Compare</p></div></div>
 <div class="flex bg-slate-800/40 rounded-lg p-0.5 border border-slate-700/40">
 <button id="tab-elevation" onclick="sw('elevation')" class="axis-tab tab-active px-3 py-1 rounded-md text-[10px] font-bold tracking-wider flex items-center gap-1"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 19V5M5 12l7-7 7 7"/></svg>ELEVATION</button>
 <button id="tab-traverse" onclick="sw('traverse')" class="axis-tab tab-inactive px-3 py-1 rounded-md text-[10px] font-bold tracking-wider flex items-center gap-1"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg>TRAVERSE</button>
@@ -59,13 +65,19 @@ input[type="number"]{-moz-appearance:textfield;box-sizing:border-box}input::-web
 <input type="file" id="csvFile" accept=".csv,.json,.txt" style="display:none" onchange="handleImport(event)">
 
 <!-- VIEW NAV -->
-<div class="max-w-[1750px] mx-auto px-4 pt-3 pb-1 flex items-center justify-between gap-3">
+<div class="max-w-[1750px] mx-auto px-4 pt-3 pb-1 flex items-center justify-between gap-3 no-print">
  <div class="flex items-center gap-2">
   <button id="vtab-inputs" onclick="swView('inputs')" class="vtab vtab-active"><span class="inline-flex items-center gap-1.5"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 6h16M4 12h10M4 18h16"/></svg>INPUTS</span></button>
   <button id="vtab-results" onclick="swView('results')" class="vtab vtab-inactive"><span class="inline-flex items-center gap-1.5"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 3v18h18M7 14l3-3 4 4 5-5"/></svg>RESULTS</span></button>
+  <button id="vtab-compare" onclick="swView('compare')" class="vtab vtab-inactive"><span class="inline-flex items-center gap-1.5"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8 3v18M16 3v18M3 8h18M3 16h18"/></svg>COMPARE A/B</span></button>
   <span id="statusPill" class="pill-status pill-ready ml-2">NOT SOLVED</span>
  </div>
- <button id="solveBtn" onclick="solve()" class="btn-solve"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>SOLVE</button>
+ <div class="flex items-center gap-2">
+  <button onclick="saveScn()" title="Save scenario" class="btn-back"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>SAVE</button>
+  <select id="scnLoad" onchange="loadScn(this.value)" class="sel" style="width:10rem"><option value="">Load Scenario…</option></select>
+  <button onclick="window.print()" title="Print report" class="btn-back"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 14h12v8H6z"/></svg>PRINT</button>
+  <button id="solveBtn" onclick="solve()" class="btn-solve"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>SOLVE</button>
+ </div>
 </div>
 
 <main class="max-w-[1750px] mx-auto p-4 pt-2">
@@ -164,6 +176,10 @@ input[type="number"]{-moz-appearance:textfield;box-sizing:border-box}input::-web
 <div class="pr"><span class="pl">Peak Torque Limit</span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="motor.peakTorque" step="1" min="0"><span class="pu">Nm/mot</span></div></div>
 <div class="pr"><span class="pl">Cont. Torque Limit</span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="motor.contTorque" step="1" min="0"><span class="pu">Nm/mot</span></div></div>
 <div class="pr"><span class="pl">V<sub>dc</sub></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="motor.busVoltage" step="1" min="1"><span class="pu">V DC</span></div></div>
+<div class="sl">Encoder / Mission</div>
+<div class="pr"><span class="pl">Encoder Bits<span class="ps">N</span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="motor.encoderBits" step="1" min="8" max="28"><span class="pu">bit/rev</span></div></div>
+<div class="pr"><span class="pl">Mission Duration</span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="motor.missionTime" step="60" min="1"><span class="pu">s</span></div></div>
+<div class="pr"><span class="pl">Target Pos. BW</span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="motor.targetBW" step="1" min="0.1"><span class="pu">Hz</span></div></div>
 </div></div>
 </div>
 
@@ -179,11 +195,23 @@ input[type="number"]{-moz-appearance:textfield;box-sizing:border-box}input::-web
 <!-- ============== RESULTS VIEW ============== -->
 <section id="view-results" style="display:none">
 <!-- BACK BAR -->
-<div class="flex items-center justify-between mb-3">
+<div class="flex items-center justify-between mb-3 no-print">
  <button onclick="swView('inputs')" class="btn-back"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>EDIT INPUTS</button>
  <div class="text-[10px] text-slate-500 font-mono tracking-wider" id="solveStamp">--</div>
 </div>
 
+<!-- SUB-TABS -->
+<div class="flex items-center gap-1 mb-4 flex-wrap no-print">
+ <button id="stab-overview" onclick="swSub('overview')" class="stab stab-active">OVERVIEW</button>
+ <button id="stab-power"    onclick="swSub('power')"    class="stab">POWER &amp; BANDWIDTH</button>
+ <button id="stab-energy"   onclick="swSub('energy')"   class="stab">ENERGY &amp; BATTERY</button>
+ <button id="stab-precision" onclick="swSub('precision')" class="stab">PRECISION</button>
+ <button id="stab-charts"   onclick="swSub('charts')"   class="stab">ANALYSIS CHARTS</button>
+ <button id="stab-visuals"  onclick="swSub('visuals')"  class="stab">VISUALS</button>
+</div>
+
+<!-- ============== SUB: OVERVIEW ============== -->
+<div id="sub-overview" class="subview">
 <!-- BADGES -->
 <div class="grid grid-cols-3 gap-3 mb-4">
 <div class="card badge-ok px-3 py-2" id="bdg-inertia"><div class="flex items-center justify-between mb-1"><span class="text-[9px] font-bold tracking-widest uppercase text-slate-500">Inertia Ratio</span><span class="w-4 h-4 rounded-full icon-ok flex items-center justify-center text-[8px] font-bold" id="bdg-inertia-ic">OK</span></div><div class="text-lg font-bold font-mono" id="bdg-inertia-val">--</div><div class="text-[9px] text-slate-500" id="bdg-inertia-sub">--</div></div>
@@ -198,6 +226,7 @@ input[type="number"]{-moz-appearance:textfield;box-sizing:border-box}input::-web
 <div class="rr"><span class="rl">i<sub>tot</sub></span><span><span class="rv text-violet-300" id="r-itot">--</span></span></div>
 <div class="rr"><span class="rl">Motor Speed</span><span><span class="rv" id="r-wm">--</span><span class="ru">rad/s</span><span class="rv text-xs opacity-40 ml-2" id="r-rpm">--</span><span class="ru">RPM</span></span></div>
 <div class="rr elev-only"><span class="rl">Linear Speed</span><span><span class="rv text-violet-300" id="r-vl">--</span><span class="ru">mm/s</span></span></div>
+<div class="rr elev-only"><span class="rl">Actuator Force<span class="ps">F<sub>p</sub></span></span><span><span class="rv text-violet-300" id="r-fp">--</span><span class="ru">kN</span></span></div>
 <div class="rr"><span class="rl">T<sub>peak</sub> (total)</span><span><span class="rv text-blue-400" id="r-tp">--</span><span class="ru">Nm</span></span></div>
 <div class="rr"><span class="rl">T<sub>peak</sub> /motor</span><span><span class="rv" id="r-tpm">--</span><span class="ru">Nm</span></span></div>
 <div class="rr"><span class="rl">I<sub>peak</sub> /motor</span><span><span class="rv" id="r-ip">--</span><span class="ru">A</span></span></div>
@@ -215,7 +244,10 @@ input[type="number"]{-moz-appearance:textfield;box-sizing:border-box}input::-web
 <div class="rr"><span class="rl">RMS /motor</span><span><span class="rv" id="r-srm">--</span><span class="ru">Nm</span></span></div>
 <div class="rr"><span class="rl">I<sub>rms</sub> /motor</span><span><span class="rv" id="r-si">--</span><span class="ru">A</span></span></div>
 <div class="rr"><span class="rl">V<sub>req</sub> (stab)</span><span><span class="rv" id="r-sv">--</span><span class="ru">V</span></span></div>
-<div class="rr" style="border-top:1px solid rgba(239,68,68,.12);margin-top:.15rem;padding-top:.4rem"><span class="rl">E<sub>cycle</sub></span><span><span class="rv text-amber-200" id="r-en">--</span><span class="ru">Ws</span></span></div>
+<div class="rr" style="border-top:1px solid rgba(239,68,68,.12);margin-top:.15rem;padding-top:.4rem"><span class="rl">E<sub>cycle</sub> (total)</span><span><span class="rv text-amber-200" id="r-en">--</span><span class="ru">Ws</span></span></div>
+<div class="rr"><span class="rl text-[10px] text-slate-500">&nbsp;&nbsp;↳ Mechanical</span><span><span class="rv text-amber-200 text-xs" id="r-emot">--</span><span class="ru">Ws</span></span></div>
+<div class="rr"><span class="rl text-[10px] text-slate-500">&nbsp;&nbsp;↳ Copper loss</span><span><span class="rv text-amber-200 text-xs" id="r-ecu">--</span><span class="ru">Ws</span></span></div>
+<div class="rr"><span class="rl text-[10px] text-emerald-600">&nbsp;&nbsp;↳ Regen (available)</span><span><span class="rv text-emerald-400 text-xs" id="r-ereg">--</span><span class="ru">Ws</span></span></div>
 </div></div>
 </div>
 
@@ -231,19 +263,143 @@ input[type="number"]{-moz-appearance:textfield;box-sizing:border-box}input::-web
 <div class="p-2"><div id="dcC" style="width:100%;height:340px"></div></div>
 </div>
 </div>
+</div><!-- /sub-overview -->
+
+<!-- ============== SUB: POWER & BANDWIDTH ============== -->
+<div id="sub-power" class="subview" style="display:none">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+ <div class="card px-3 py-3"><div class="text-[9px] font-bold tracking-widest uppercase text-slate-500 mb-1">Peak Mech. Power</div><div class="text-xl font-bold font-mono text-blue-300" id="p-pmech">--<span class="text-[10px] text-slate-500"> W</span></div><div class="text-[9px] text-slate-500 mt-1">P = T<sub>peak</sub>·ω<sub>M</sub></div></div>
+ <div class="card px-3 py-3"><div class="text-[9px] font-bold tracking-widest uppercase text-slate-500 mb-1">Peak Elec. Power</div><div class="text-xl font-bold font-mono text-amber-300" id="p-pelec">--<span class="text-[10px] text-slate-500"> W</span></div><div class="text-[9px] text-slate-500 mt-1">P = n·V<sub>req</sub>·I<sub>peak</sub></div></div>
+ <div class="card px-3 py-3"><div class="text-[9px] font-bold tracking-widest uppercase text-slate-500 mb-1">System Efficiency</div><div class="text-xl font-bold font-mono text-emerald-300" id="p-eta">--<span class="text-[10px] text-slate-500"> %</span></div><div class="text-[9px] text-slate-500 mt-1">η = P<sub>mech</sub>/P<sub>elec</sub></div></div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+ <div class="card">
+  <div class="ch"><h3 class="text-[9px] font-bold tracking-widest uppercase text-slate-400">Dynamic Response (A3)</h3></div>
+  <div class="px-3 py-1">
+   <div class="rr"><span class="rl">τ<sub>m</sub> (mech. time const.)</span><span><span class="rv" id="p-taum">--</span><span class="ru">ms</span></span></div>
+   <div class="rr"><span class="rl">ω<sub>m</sub> (open-loop pole)</span><span><span class="rv" id="p-wm_freq">--</span><span class="ru">rad/s</span></span></div>
+   <div class="rr"><span class="rl">f<sub>m</sub></span><span><span class="rv" id="p-fm">--</span><span class="ru">Hz</span></span></div>
+   <div class="rr"><span class="rl">Max achievable BW</span><span><span class="rv text-violet-300" id="p-bwmax">--</span><span class="ru">Hz</span></span></div>
+   <div class="rr"><span class="rl">Target BW (user)</span><span><span class="rv" id="p-bwset">--</span><span class="ru">Hz</span></span></div>
+   <div class="rr" style="border-top:1px dashed rgba(71,85,105,.4);margin-top:.2rem;padding-top:.3rem"><span class="rl text-[10px] text-slate-500">PI (velocity loop) — K<sub>p</sub></span><span><span class="rv text-xs" id="p-kp">--</span><span class="ru">Nm·s/rad</span></span></div>
+   <div class="rr"><span class="rl text-[10px] text-slate-500">PI — K<sub>i</sub></span><span><span class="rv text-xs" id="p-ki">--</span><span class="ru">Nm/rad</span></span></div>
+  </div>
+ </div>
+ <div class="card">
+  <div class="ch flex items-center justify-between"><h3 class="text-[9px] font-bold tracking-widest uppercase text-slate-400">Power – Speed Curve (B3)</h3></div>
+  <div class="p-2"><div id="psC" style="width:100%;height:280px"></div></div>
+ </div>
+</div>
+</div><!-- /sub-power -->
+
+<!-- ============== SUB: ENERGY & BATTERY ============== -->
+<div id="sub-energy" class="subview" style="display:none">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-3">
+ <div class="card px-3 py-3"><div class="text-[9px] font-bold tracking-widest uppercase text-slate-500 mb-1">E per Cycle</div><div class="text-lg font-bold font-mono text-amber-300" id="e-cycle">--<span class="text-[10px] text-slate-500"> Wh</span></div></div>
+ <div class="card px-3 py-3"><div class="text-[9px] font-bold tracking-widest uppercase text-slate-500 mb-1">E for Mission</div><div class="text-lg font-bold font-mono text-amber-300" id="e-mission">--<span class="text-[10px] text-slate-500"> Wh</span></div></div>
+ <div class="card px-3 py-3"><div class="text-[9px] font-bold tracking-widest uppercase text-slate-500 mb-1">Battery Capacity (min)</div><div class="text-lg font-bold font-mono text-violet-300" id="e-ah">--<span class="text-[10px] text-slate-500"> Ah @V<sub>dc</sub></span></div></div>
+ <div class="card px-3 py-3"><div class="text-[9px] font-bold tracking-widest uppercase text-slate-500 mb-1">Avg. Bus Current</div><div class="text-lg font-bold font-mono text-blue-300" id="e-iavg">--<span class="text-[10px] text-slate-500"> A</span></div></div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+ <div class="card">
+  <div class="ch"><h3 class="text-[9px] font-bold tracking-widest uppercase text-slate-400">Energy Breakdown (B1 alt)</h3></div>
+  <div class="p-2"><div id="ebC" style="width:100%;height:300px"></div></div>
+ </div>
+ <div class="card">
+  <div class="ch"><h3 class="text-[9px] font-bold tracking-widest uppercase text-slate-400">Battery Sizing (A4)</h3></div>
+  <div class="px-3 py-2">
+   <div class="rr"><span class="rl">Peak Bus Current (inrush)</span><span><span class="rv" id="e-ipk">--</span><span class="ru">A</span></span></div>
+   <div class="rr"><span class="rl">Mission Time</span><span><span class="rv" id="e-tmis">--</span><span class="ru">s</span></span></div>
+   <div class="rr"><span class="rl">Cycles/Mission</span><span><span class="rv" id="e-ncyc">--</span></span></div>
+   <div class="rr"><span class="rl">Regen Recoverable</span><span><span class="rv text-emerald-300" id="e-regm">--</span><span class="ru">Wh</span></span></div>
+   <div class="rr"><span class="rl">Net (after regen)</span><span><span class="rv" id="e-net">--</span><span class="ru">Wh</span></span></div>
+   <div class="rr"><span class="rl">Battery (with 30% DoD margin)</span><span><span class="rv text-amber-300" id="e-batrec">--</span><span class="ru">Ah</span></span></div>
+   <div class="rr"><span class="rl">Continuous Heat Dissipation</span><span><span class="rv text-red-300" id="e-heat">--</span><span class="ru">W</span></span></div>
+  </div>
+ </div>
+</div>
+</div><!-- /sub-energy -->
+
+<!-- ============== SUB: PRECISION ============== -->
+<div id="sub-precision" class="subview" style="display:none">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-3">
+ <div class="card px-3 py-3"><div class="text-[9px] font-bold tracking-widest uppercase text-slate-500 mb-1">Encoder Resolution</div><div class="text-lg font-bold font-mono" id="pr-cpr">--<span class="text-[10px] text-slate-500"> counts/rev</span></div></div>
+ <div class="card px-3 py-3"><div class="text-[9px] font-bold tracking-widest uppercase text-slate-500 mb-1">Δθ at Motor</div><div class="text-lg font-bold font-mono text-blue-300" id="pr-dtm">--<span class="text-[10px] text-slate-500"> μrad</span></div></div>
+ <div class="card px-3 py-3"><div class="text-[9px] font-bold tracking-widest uppercase text-slate-500 mb-1">Δθ at Load</div><div class="text-lg font-bold font-mono text-emerald-300" id="pr-dtl">--<span class="text-[10px] text-slate-500"> μrad</span></div></div>
+ <div class="card px-3 py-3"><div class="text-[9px] font-bold tracking-widest uppercase text-slate-500 mb-1">Δθ at Load</div><div class="text-lg font-bold font-mono text-emerald-300" id="pr-dtlar">--<span class="text-[10px] text-slate-500"> arcsec</span></div></div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+ <div class="card">
+  <div class="ch"><h3 class="text-[9px] font-bold tracking-widest uppercase text-slate-400">Pointing Accuracy (A5)</h3></div>
+  <div class="px-3 py-1">
+   <div class="rr"><span class="rl">Total reduction i<sub>tot</sub></span><span><span class="rv text-violet-300" id="pr-itot">--</span></span></div>
+   <div class="rr"><span class="rl">Resolution @ 1 km range</span><span><span class="rv" id="pr-range1">--</span><span class="ru">cm</span></span></div>
+   <div class="rr"><span class="rl">Resolution @ 4 km range</span><span><span class="rv" id="pr-range4">--</span><span class="ru">cm</span></span></div>
+   <div class="rr"><span class="rl">Max slew rate (encoder limited)</span><span><span class="rv" id="pr-slew">--</span><span class="ru">rad/s</span></span></div>
+   <div class="rr"><span class="rl">Quantization LSB at barrel</span><span><span class="rv" id="pr-lsb">--</span><span class="ru">mrad</span></span></div>
+  </div>
+ </div>
+ <div class="card">
+  <div class="ch"><h3 class="text-[9px] font-bold tracking-widest uppercase text-slate-400">Pointing Error Circle</h3></div>
+  <div class="p-2"><svg id="svgPoint" viewBox="0 0 320 280" style="width:100%;height:280px"></svg></div>
+ </div>
+</div>
+</div><!-- /sub-precision -->
+
+<!-- ============== SUB: ANALYSIS CHARTS ============== -->
+<div id="sub-charts" class="subview" style="display:none">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+ <div class="card"><div class="ch"><h3 class="text-[9px] font-bold tracking-widest uppercase text-slate-400">Torque Budget (B1)</h3></div><div class="p-2"><div id="tbC" style="width:100%;height:320px"></div></div></div>
+ <div class="card"><div class="ch"><h3 class="text-[9px] font-bold tracking-widest uppercase text-slate-400">Efficiency Map η(T,ω) (B2)</h3></div><div class="p-2"><div id="emC" style="width:100%;height:320px"></div></div></div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+ <div class="card"><div class="ch"><h3 class="text-[9px] font-bold tracking-widest uppercase text-slate-400">Power – Speed Overlay (B3)</h3></div><div class="p-2"><div id="ps2C" style="width:100%;height:320px"></div></div></div>
+ <div class="card"><div class="ch"><h3 class="text-[9px] font-bold tracking-widest uppercase text-slate-400">Duty Cycle FFT (B5)</h3></div><div class="p-2"><div id="fftC" style="width:100%;height:320px"></div></div></div>
+</div>
+</div><!-- /sub-charts -->
+
+<!-- ============== SUB: VISUALS ============== -->
+<div id="sub-visuals" class="subview" style="display:none">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+ <div class="card"><div class="ch"><h3 class="text-[9px] font-bold tracking-widest uppercase text-slate-400">System Block Diagram (C1) — Animated</h3></div><div class="p-3"><svg id="svgBlock" viewBox="0 0 900 220" style="width:100%;height:220px"></svg></div></div>
+ <div class="card"><div class="ch"><h3 class="text-[9px] font-bold tracking-widest uppercase text-slate-400">3D Turret Model (C2)</h3></div><div id="c2-3d" style="width:100%;height:220px"></div></div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+ <div class="card elev-only"><div class="ch"><h3 class="text-[9px] font-bold tracking-widest uppercase text-slate-400">Linear Actuator Geometry (C4)</h3></div><div class="p-2"><svg id="svgAct" viewBox="0 0 500 260" style="width:100%;height:240px"></svg></div></div>
+ <div class="card trav-only" style="display:none"><div class="ch"><h3 class="text-[9px] font-bold tracking-widest uppercase text-slate-400">Gear Train Kinematics (C3)</h3></div><div class="p-2"><svg id="svgGear" viewBox="0 0 500 260" style="width:100%;height:240px"></svg></div></div>
+ <div class="card"><div class="ch"><h3 class="text-[9px] font-bold tracking-widest uppercase text-slate-400">Margin Dashboard (C5) — Gauges</h3></div><div class="p-2"><svg id="svgGauges" viewBox="0 0 600 240" style="width:100%;height:240px"></svg></div></div>
+</div>
+</div><!-- /sub-visuals -->
+
 </section>
+
+<!-- ============== COMPARE VIEW (D4) ============== -->
+<section id="view-compare" style="display:none">
+<div class="flex items-center justify-between mb-3 no-print">
+ <div class="flex items-center gap-2">
+  <button onclick="swView('inputs')" class="btn-back">EDIT INPUTS</button>
+  <button onclick="snapSlot('A')" class="btn-back" style="background:rgba(59,130,246,.2);color:#93c5fd;border-color:rgba(59,130,246,.4)">SNAP AS A</button>
+  <button onclick="snapSlot('B')" class="btn-back" style="background:rgba(239,68,68,.2);color:#fca5a5;border-color:rgba(239,68,68,.4)">SNAP AS B</button>
+ </div>
+ <div class="text-[10px] text-slate-500 font-mono">Take snapshots of current solution to compare scenarios</div>
+</div>
+<div class="card"><div class="ch"><h3 class="text-[9px] font-bold tracking-widest uppercase text-slate-400">A vs B Comparison</h3></div>
+ <div class="p-3" id="cmpBody"><div class="text-center text-slate-500 text-xs py-8">Solve current scenario, click <b>SNAP AS A</b>, modify inputs, solve again, then click <b>SNAP AS B</b>.</div></div>
+</div>
+</section>
+
 </main>
-<footer class="border-t border-slate-800/50 mt-3 py-2 text-center text-[8px] text-slate-600 tracking-wider">WEAPON SYSTEM MOTOR SIZING v5.0</footer>
+<footer class="border-t border-slate-800/50 mt-3 py-2 text-center text-[8px] text-slate-600 tracking-wider no-print">WEAPON SYSTEM MOTOR SIZING v7.0 — Power/Energy/Precision Analysis</footer>
 
 <script>
 const D={elevation:{
  mechanical:{screwLead:25,leverArm:.3,motorScrewRatio:3,screwEfficiency:.9,gearEfficiency:.95,gearboxInertia:5e-4,loadInertia:3500,unbalanceTorque:1500,frictionTorque:400,windTorque:80,firingTorque:400},
  performance:{targetSpeed:40,targetAccel:80,travelAngle:25,dwellTime:1.5,stabAmplitude:2,stabFrequency:3,sineAmp:30,sineFreq:2,sineDur:4},
- motor:{motorCount:1,kt:.126,ke:.126,resistance:.012,rotorInertia:.005,peakTorque:80,contTorque:50,busVoltage:24}
+ motor:{motorCount:1,kt:.126,ke:.126,resistance:.012,rotorInertia:.005,peakTorque:80,contTorque:50,busVoltage:24,encoderBits:20,missionTime:600,targetBW:10}
 },traverse:{
  mechanical:{ringTeeth:294,pinionTeeth:25,gearboxRatio:33,efficiency:.855,gearboxInertia:.01,loadInertia:35e3,unbalanceTorque:0,frictionTorque:1200},
  performance:{targetSpeed:20,targetAccel:20,travelAngle:30,dwellTime:2,stabAmplitude:2,stabFrequency:1,sineAmp:15,sineFreq:1,sineDur:5},
- motor:{motorCount:2,kt:.062,ke:.062,resistance:.004,rotorInertia:.001,peakTorque:25,contTorque:12,busVoltage:24}
+ motor:{motorCount:2,kt:.062,ke:.062,resistance:.004,rotorInertia:.001,peakTorque:25,contTorque:12,busVoltage:24,encoderBits:18,missionTime:1200,targetBW:5}
 }};
 let ax='elevation';
 const AP={elevation:JSON.parse(JSON.stringify(D.elevation)),traverse:JSON.parse(JSON.stringify(D.traverse))};
@@ -257,15 +413,19 @@ function genTrap(p,r){
  const tA=as_>0?ws/as_:0,thA=.5*as_*tA*tA;let t1,t2,t3;
  if(2*thA<=thT){t1=tA;t3=tA;t2=ws>0?(thT-2*thA)/ws:0}else{t1=as_>0?Math.sqrt(thT/as_):0;t3=t1;t2=0}
  const t4=tDw,tC=t1+t2+t3+t4;
- const T1=r.Ta+r.Td,T2=r.Td,T3=Math.abs(r.Ta-r.Td),T4=r.Th;
- // Build arrays
- const tA_=[],TA_=[],wA_=[];const dt=.02;let tc=0;
- for(let t=0;t<t1;t+=dt){tA_.push(tc+t);TA_.push(T1/r.n);wA_.push(r.wM*(t/Math.max(t1,.001)))}tc+=t1;
+ // Phase torques. Sign convention: decel = motor brakes against rotation (T*w<0 = regen)
+ const T1=r.Ta+r.Td,T2=r.Td,T3d=r.Td-r.Ta,T3=Math.abs(T3d),T4=r.Th;
+ const Tfire=r.Tfire||0;const Tpeak=Math.max(T1+Tfire,T2,T3,T4);
+ // Build arrays. Fire spike injected at start of accel (brief impulse) for visual + peak.
+ const tA_=[],TA_=[],wA_=[];const dt=Math.max(.005,Math.min(t1,t2,t3||1,t4||1)/60)||.02;let tc=0;
+ const tFire=Math.min(.05,t1*.2);
+ for(let t=0;t<t1;t+=dt){const isF=(Tfire>0&&t<tFire);tA_.push(tc+t);TA_.push((T1+(isF?Tfire:0))/r.n);wA_.push(r.wM*(t/Math.max(t1,.001)))}tc+=t1;
  for(let t=0;t<t2;t+=dt){tA_.push(tc+t);TA_.push(T2/r.n);wA_.push(r.wM)}tc+=t2;
- for(let t=0;t<t3;t+=dt){tA_.push(tc+t);TA_.push(T3/r.n);wA_.push(r.wM*(1-t/Math.max(t3,.001)))}tc+=t3;
+ for(let t=0;t<t3;t+=dt){tA_.push(tc+t);TA_.push(T3d/r.n);wA_.push(r.wM*(1-t/Math.max(t3,.001)))}tc+=t3;
  for(let t=0;t<t4;t+=dt){tA_.push(tc+t);TA_.push(T4/r.n);wA_.push(0)}
+ // RMS excludes brief fire transient (assumed << duty cycle)
  const Mr=tC>0?Math.sqrt((T1*T1*t1+T2*T2*t2+T3*T3*t3+T4*T4*t4)/tC):0;
- return{tArr:tA_,TArr:TA_,wArr:wA_,Mr,Tp:T1,tC,label:'TRAP t1='+t1.toFixed(2)+'s t2='+t2.toFixed(2)+'s t3='+t3.toFixed(2)+'s t4='+t4.toFixed(1)+'s'};}
+ return{tArr:tA_,TArr:TA_,wArr:wA_,Mr,Tp:Tpeak,tC,label:'TRAP t1='+t1.toFixed(2)+'s t2='+t2.toFixed(2)+'s t3='+t3.toFixed(2)+'s t4='+t4.toFixed(1)+'s'};}
 
 function genSine(p,n){
  const amp=Math.max(p.performance.sineAmp||10,0),freq=Math.max(p.performance.sineFreq||1,.01),dur=Math.max(p.performance.sineDur||3,.1);
@@ -289,12 +449,16 @@ const Jm=Math.max(p.motor.rotorInertia,0),Tpk=Math.max(p.motor.peakTorque,.001),
 const As=Math.max(p.performance.stabAmplitude,0),fs=Math.max(p.performance.stabFrequency,0);
 const JL=Math.max(p.mechanical.loadInertia,0),Tub=Math.max(p.mechanical.unbalanceTorque,0),Tfr=Math.max(p.mechanical.frictionTorque,0);
 const Jgb=Math.max(p.mechanical.gearboxInertia||0,0);
-let iT,eT,Td,Th,vL=0;
+let iT,eT,Td,Th,Tfire=0,vL=0,igP=1,hP=1;
 if(isL){const h=Math.max(p.mechanical.screwLead,.1)/1e3,L=Math.max(p.mechanical.leverArm,.001),ig=Math.max(p.mechanical.motorScrewRatio,1),es=Math.max(p.mechanical.screwEfficiency,.01),eg=Math.max(p.mechanical.gearEfficiency,.01);
  const Tw=Math.max(p.mechanical.windTorque||0,0),Tfi=Math.max(p.mechanical.firingTorque||0,0);
- iT=ig*2*Math.PI*L/h;eT=es*eg;Td=(Tw+Tfi+Tfr+Tub)/(eT*iT);Th=Tub/(eT*iT);vL=(Math.max(p.performance.targetSpeed,0)*Math.PI/180)*L*1e3;
+ iT=ig*2*Math.PI*L/h;eT=es*eg;
+ // Continuous disturbance (steady-state) excludes firing; fire is impulsive transient
+ Td=(Tw+Tfr+Tub)/(eT*iT);Tfire=Tfi/(eT*iT);Th=Tub/(eT*iT);
+ vL=(Math.max(p.performance.targetSpeed,0)*Math.PI/180)*L*1e3;igP=ig;hP=h;
 }else{const z1=Math.max(p.mechanical.ringTeeth||1,1),z2=Math.max(p.mechanical.pinionTeeth||1,1),igb=Math.max(p.mechanical.gearboxRatio||1,1);
- eT=Math.max(p.mechanical.efficiency||.8,.01);iT=(z1/z2)*igb;Td=(Tfr+Tub)/(eT*iT);Th=Tub/(eT*iT)+Tfr/(eT*iT)*.1;}
+ eT=Math.max(p.mechanical.efficiency||.8,.01);iT=(z1/z2)*igb;
+ Td=(Tfr+Tub)/(eT*iT);Th=Tub/(eT*iT);}
 const Je=n*Jm+Jgb+JL/(eT*iT*iT),Jr=JL/(eT*iT*iT),Jrat=(n*Jm)>0?Jr/(n*Jm):Infinity;
 const ws_=Math.max(p.performance.targetSpeed,0),as_=Math.max(p.performance.targetAccel,0);
 const wL=ws_*Math.PI/180,aL=as_*Math.PI/180,wM=wL*iT,aM=aL*iT,rpm=wM*60/(2*Math.PI);
@@ -303,20 +467,70 @@ const Ta=Je*aM; // acceleration torque (math mode)
 // Profile-dependent results
 let prof,Mr,Tp,Fp=0;
 if(mode==='sine'){prof=genSine(p,n);Mr=prof.Mr;Tp=prof.Tp;}
-else if(mode==='import'){prof=genImport(n);if(!prof){prof=genTrap(p,{Ta,Td,Th,wM,n});Mr=prof.Mr;Tp=prof.Tp;}else{Mr=prof.Mr;Tp=prof.Tp;}}
-else{prof=genTrap(p,{Ta,Td,Th,wM,n});Mr=prof.Mr;Tp=prof.Tp;}
+else if(mode==='import'){prof=genImport(n);if(!prof){prof=genTrap(p,{Ta,Td,Th,Tfire,wM,n});Mr=prof.Mr;Tp=prof.Tp;}else{Mr=prof.Mr;Tp=prof.Tp;}}
+else{prof=genTrap(p,{Ta,Td,Th,Tfire,wM,n});Mr=prof.Mr;Tp=prof.Tp;}
 const Tpm=Tp/n,Ipm=Tpm/Kt,Vr=Ipm*R+Ke*wM;
-if(isL){Fp=Tp*2*Math.PI*eT/(Math.max(p.mechanical.screwLead,.1)/1e3);}
+// Actuator force: F = T_motor_total * i_gear * 2π * η / h  (ig factor was missing)
+if(isL){Fp=Tp*igP*2*Math.PI*eT/hP;}
 const Mrm=Mr/n,Irm=Mrm/Kt;
-// Energy
-let En=0;if(prof.tArr.length>1){const dt2=prof.tArr[1]-prof.tArr[0];for(let i=0;i<prof.TArr.length;i++){const T=prof.TArr[i]*n,w=prof.wArr[i]||0,I=Math.abs(T)/(n*Kt);En+=(Math.abs(T*w)+n*I*I*R)*dt2;}}
+// Energy: separate motoring (positive mech power + copper loss) from regen (negative mech power)
+let Emot=0,Ereg=0,Ecu=0;if(prof.tArr.length>1){for(let i=0;i<prof.TArr.length-1;i++){const dt2=prof.tArr[i+1]-prof.tArr[i];if(dt2<=0)continue;const T=prof.TArr[i]*n,w=prof.wArr[i]||0,I=Math.abs(T)/(n*Kt);const Pm=T*w;if(Pm>=0)Emot+=Pm*dt2;else Ereg+=Math.abs(Pm)*dt2;Ecu+=n*I*I*R*dt2;}}
+const En=Emot+Ecu; // total consumption (regen tracked separately)
 // Stab
 const Am=(As/1e3)*iT,wsf=2*Math.PI*fs,wSp=Am*wsf,aSp=Am*wsf*wsf;
 const TsD=Je*aSp,TsP=TsD+Math.abs(Th),TsR=Math.sqrt((TsD/Math.sqrt(2))**2+Th*Th);
 const TsRm=TsR/n,IsRm=TsRm/Kt,Vs=(TsP/(n*Kt))*R+Ke*wSp;
 const vM=Vb-Vr,vP=(vM/Vb)*100,pU=(Tpm/Tpk)*100,wNL=Vb/Ke;
-return{isL,n,mode,iT,eT,Je,Jgb,Jr,Jrat,wM,aM,rpm,vL,Ta,Td,Th,Tp,Tpm,Ipm,Vr,Fp,
-Mr,Mrm,Irm,En,prof,wSp,TsP,TsR,TsRm,IsRm,Vs,vM,vP,pU,wNL,Tpk,Tco,Kt,Ke,R,Vb};}
+
+// === A2: POWER METRICS ===
+const Pmech_pk=Tp*wM;                                  // W (total, peak)
+const Pelec_pk=n*Vr*Ipm;                                // W (peak electrical)
+const Ploss_cu_pk=n*Ipm*Ipm*R;                          // W (copper loss at peak)
+const etaSys=Pelec_pk>0?Math.max(0,Math.min(1,Pmech_pk/Pelec_pk)):0;
+
+// === A3: BANDWIDTH & CONTROLLER ===
+const tauM=Je*R/(Kt*Ke);                                // mechanical time constant [s]
+const wmp=1/tauM;                                        // open-loop pole [rad/s]
+const fmp=wmp/(2*Math.PI);                               // [Hz]
+const bwMax=fmp*5;                                       // achievable pos BW (rule-of-thumb: 5·f_m)
+const bwSet=Math.max(p.motor.targetBW||10,.1);
+const wc=2*Math.PI*bwSet;
+const Kp_vel=Je*wc;                                      // velocity loop P gain
+const Ki_vel=Kp_vel*wc/5;                                // I gain
+
+// === A4: BATTERY / MISSION ===
+const tMis=Math.max(p.motor.missionTime||60,1);
+const tC=prof.tC>0?prof.tC:1;
+const nCyc=tMis/tC;
+const Emis=En*nCyc;                                      // Ws (total mission)
+const Ereg_mis=Ereg*nCyc;                                // Ws (recoverable)
+const EnetMis=Math.max(Emis-Ereg_mis*.7,0);             // assume 70% regen round-trip
+const Iavg=Emis/(Vb*tMis);                               // A (avg bus current)
+const Ipk_bus=(n*Vr*Ipm)/Vb;                             // A (peak bus inrush)
+const Ah_raw=Emis/(Vb*3600);                             // Ah (min)
+const Ah_rec=Ah_raw/0.7;                                 // with 30% DoD margin
+const Qheat=Ecu/tC;                                      // continuous heat [W]
+
+// === A5: PRECISION ===
+const encBits=Math.max(p.motor.encoderBits||16,8);
+const encCPR=Math.pow(2,encBits);
+const dthM=2*Math.PI/encCPR;                             // motor res [rad]
+const dthL=dthM/iT;                                      // load res [rad]
+const dthL_urad=dthL*1e6;
+const dthL_arcsec=dthL*206264.806;
+const lsb_mrad=dthL*1e3;
+const res_1km=dthL*1000*100;                             // cm @ 1km
+const res_4km=dthL*4000*100;                             // cm @ 4km
+const slewMax=wM;                                        // use motor max speed as encoder-limited check
+
+return{isL,n,mode,iT,eT,Je,Jgb,Jr,Jrat,wM,aM,rpm,vL,Ta,Td,Tfire,Th,Tp,Tpm,Ipm,Vr,Fp,
+Mr,Mrm,Irm,En,Emot,Ereg,Ecu,prof,wSp,TsP,TsR,TsRm,IsRm,Vs,vM,vP,pU,wNL,Tpk,Tco,Kt,Ke,R,Vb,
+Pmech_pk,Pelec_pk,Ploss_cu_pk,etaSys,
+tauM,wmp,fmp,bwMax,bwSet,Kp_vel,Ki_vel,
+tMis,nCyc,Emis,Ereg_mis,EnetMis,Iavg,Ipk_bus,Ah_raw,Ah_rec,Qheat,
+encCPR,dthM,dthL,dthL_urad,dthL_arcsec,lsb_mrad,res_1km,res_4km,slewMax,Tfr,Tub,
+Tub_in:p.mechanical.unbalanceTorque||0,Tfr_in:p.mechanical.frictionTorque||0,
+Tw_in:p.mechanical.windTorque||0,Tfi_in:p.mechanical.firingTorque||0};}
 
 // === HELPERS ===
 function f(v,d){return v.toFixed(d??2)}
@@ -330,9 +544,25 @@ function aB(i,s,v,u){const c=document.getElementById(i),ic=document.getElementBy
 
 function uR(r){
 sT('r-itot',f(r.iT,1));sT('r-wm',f(r.wM,1));sT('r-rpm',f(r.rpm,0));sT('r-vl',f(r.vL,1));
+sT('r-fp',r.Fp>0?f(r.Fp/1e3,2):'--');
 sT('r-tp',fA(r.Tp));sT('r-tpm',fA(r.Tpm));sT('r-ip',f(r.Ipm,1));sT('r-vr',f(r.Vr,1));
 sT('r-mr',fA(r.Mr));sT('r-mrm',fA(r.Mrm));sT('r-ir',f(r.Irm,1));sT('r-pf',r.prof.label);
 sT('r-sp',fA(r.TsP));sT('r-sr',fA(r.TsR));sT('r-th',fA(r.Th));sT('r-srm',fA(r.TsRm));sT('r-si',f(r.IsRm,2));sT('r-sv',f(r.Vs,1));sT('r-en',f(r.En,1));
+sT('r-emot',f(r.Emot||0,1));sT('r-ecu',f(r.Ecu||0,1));sT('r-ereg',f(r.Ereg||0,1));
+// A2 Power
+sT('p-pmech',f(r.Pmech_pk,0));sT('p-pelec',f(r.Pelec_pk,0));sT('p-eta',f(r.etaSys*100,1));
+// A3 Bandwidth
+sT('p-taum',f(r.tauM*1e3,2));sT('p-wm_freq',f(r.wmp,1));sT('p-fm',f(r.fmp,2));
+sT('p-bwmax',f(r.bwMax,2));sT('p-bwset',f(r.bwSet,2));
+sT('p-kp',r.Kp_vel.toExponential(2));sT('p-ki',r.Ki_vel.toExponential(2));
+// A4 Energy/Battery
+sT('e-cycle',f(r.En/3600,3));sT('e-mission',f(r.Emis/3600,2));sT('e-ah',f(r.Ah_raw,2));sT('e-iavg',f(r.Iavg,2));
+sT('e-ipk',f(r.Ipk_bus,1));sT('e-tmis',f(r.tMis,0));sT('e-ncyc',f(r.nCyc,1));
+sT('e-regm',f(r.Ereg_mis/3600,3));sT('e-net',f(r.EnetMis/3600,2));sT('e-batrec',f(r.Ah_rec,2));sT('e-heat',f(r.Qheat,1));
+// A5 Precision
+sT('pr-cpr',f(r.encCPR,0));sT('pr-dtm',f(r.dthM*1e6,2));sT('pr-dtl',f(r.dthL_urad,2));sT('pr-dtlar',f(r.dthL_arcsec,2));
+sT('pr-itot',f(r.iT,1));sT('pr-range1',f(r.res_1km,2));sT('pr-range4',f(r.res_4km,2));
+sT('pr-slew',f(r.slewMax,1));sT('pr-lsb',f(r.lsb_mrad,4));
 const ln=document.getElementById('layNote');if(ln)ln.textContent={trap:'Trapezoidal profile',sine:'Sinusoidal profile',import:'Imported data profile'}[r.mode];
 aB('bdg-inertia',gS(r.Jrat,5,10),f(r.Jrat,1)+':1','J<sub>eff</sub>='+r.Je.toExponential(3)+' i<sub>tot</sub>='+f(r.iT,1)+' n='+r.n);
 aB('bdg-voltage',gSH(r.vP,15,5),(r.vM>=0?'+':'')+f(r.vM,1)+'V',f(r.vP,1)+'% '+f(r.Vr,1)+'V/'+f(r.Vb,0)+'V');
@@ -373,7 +603,249 @@ legend:{x:.01,y:.99,bgcolor:'rgba(12,18,34,.85)',bordercolor:'#1e293b',font:{siz
 shapes:[{type:'line',x0:pr.tArr[0]||0,x1:pr.tArr[pr.tArr.length-1]||1,y0:r.Mrm,y1:r.Mrm,line:{color:'rgba(34,197,94,.5)',width:2,dash:'dash'}}],
 annotations:[{x:(pr.tArr[pr.tArr.length-1]||1)*.9,y:r.Mrm,text:'M<sub>rms</sub>='+fA(r.Mrm),showarrow:false,yanchor:'bottom',font:{size:8,color:'#4ade80',family:'JetBrains Mono'}}]};
 Plotly.react('dcC',dcTr,dcLo,cf);
-const pb=document.getElementById('profBadge');if(pb){pb.textContent={trap:'TRAP',sine:'SINE',import:'CSV'}[r.mode];pb.style.background=r.mode==='import'?'rgba(245,158,11,.15)':r.mode==='sine'?'rgba(168,85,247,.15)':'rgba(30,41,59,.8)';pb.style.color=r.mode==='import'?'#f59e0b':r.mode==='sine'?'#a78bfa':'#94a3b8'}}
+const pb=document.getElementById('profBadge');if(pb){pb.textContent={trap:'TRAP',sine:'SINE',import:'CSV'}[r.mode];pb.style.background=r.mode==='import'?'rgba(245,158,11,.15)':r.mode==='sine'?'rgba(168,85,247,.15)':'rgba(30,41,59,.8)';pb.style.color=r.mode==='import'?'#f59e0b':r.mode==='sine'?'#a78bfa':'#94a3b8'}
+// Render extras
+drawExtras(r);}
+
+// ============ EXTRA CHARTS ============
+const pltCommon={paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'#080d1a',font:{family:'Inter',color:'#94a3b8',size:10}};
+const pltCfg={responsive:true,displaylogo:false,modeBarButtonsToRemove:['lasso2d','select2d','autoScale2d']};
+
+function drawPowerSpeed(r,divId){
+ const N=80,wX=Math.max(r.wNL,r.wM)*1.15;const ws=[],Ps=[],Ts=[],Is=[];
+ for(let i=0;i<=N;i++){const w=(i/N)*wX;const T=Math.max(0,Math.min(r.Tpk,r.Kt*(r.Vb-r.Ke*w)/r.R));ws.push(w);Ps.push(T*w/1000);Ts.push(T);Is.push(T/r.Kt)}
+ const tr=[
+  {x:ws,y:Ps,type:'scatter',mode:'lines',name:'P<sub>mech</sub> (kW)',line:{color:'#60a5fa',width:2.5},fill:'tozeroy',fillcolor:'rgba(59,130,246,.08)'},
+  {x:ws,y:Ts,type:'scatter',mode:'lines',name:'T (Nm)',yaxis:'y2',line:{color:'#f87171',width:1.8,dash:'dot'}},
+  {x:[r.wM],y:[r.Pmech_pk/1000],type:'scatter',mode:'markers+text',name:'Operating Pt',text:['OP'],textposition:'top center',textfont:{size:9,color:'#4ade80'},marker:{color:'#22c55e',size:13,line:{color:'#86efac',width:2}}}];
+ Plotly.react(divId,tr,Object.assign({},pltCommon,{margin:{t:20,r:50,b:45,l:55},xaxis:{title:'ω (rad/s)',gridcolor:'rgba(30,41,59,.4)'},yaxis:{title:'Power (kW)',gridcolor:'rgba(30,41,59,.4)'},yaxis2:{title:'Torque (Nm)',overlaying:'y',side:'right',showgrid:false},legend:{x:.01,y:.99,bgcolor:'rgba(12,18,34,.85)',font:{size:9}}}),pltCfg);
+}
+
+function drawTorqueBudget(r){
+ const comp=['Accel (inertial)','Friction','Unbalance','Wind','Firing'];
+ const mot=[r.Ta,r.Tfr_in/(r.eT*r.iT),r.Tub_in/(r.eT*r.iT),r.Tw_in/(r.eT*r.iT),r.Tfi_in/(r.eT*r.iT)];
+ const cols=['#3b82f6','#f59e0b','#ef4444','#14b8a6','#a855f7'];
+ const tr=[{x:comp,y:mot.map(v=>v/r.n),type:'bar',marker:{color:cols,line:{color:'#0f172a',width:1}},text:mot.map(v=>fA(v/r.n)),textposition:'outside',textfont:{family:'JetBrains Mono',size:10,color:'#cbd5e1'}}];
+ Plotly.react('tbC',tr,Object.assign({},pltCommon,{margin:{t:30,r:15,b:50,l:55},xaxis:{tickfont:{size:10}},yaxis:{title:'Nm / motor',gridcolor:'rgba(30,41,59,.4)'},showlegend:false,shapes:[{type:'line',x0:-.5,x1:4.5,y0:r.Tpk,y1:r.Tpk,line:{color:'rgba(239,68,68,.6)',width:1.5,dash:'dash'}},{type:'line',x0:-.5,x1:4.5,y0:r.Tco,y1:r.Tco,line:{color:'rgba(96,165,250,.6)',width:1.5,dash:'dot'}}],annotations:[{x:4.4,y:r.Tpk,text:'Peak Limit',showarrow:false,font:{size:8,color:'#f87171'},xanchor:'right',yanchor:'bottom'},{x:4.4,y:r.Tco,text:'Cont. Limit',showarrow:false,font:{size:8,color:'#60a5fa'},xanchor:'right',yanchor:'bottom'}]}),pltCfg);
+}
+
+function drawEffMap(r){
+ const NX=30,NY=30;const wMax=Math.max(r.wNL,r.wM)*1.1;const TMax=Math.min(r.Tpk*1.05,r.Kt*r.Vb/r.R);
+ const zMap=[],xs=[],ys=[];
+ for(let j=0;j<NY;j++){ys.push((j/NY)*TMax)}
+ for(let i=0;i<NX;i++){xs.push((i/NX)*wMax)}
+ for(let j=0;j<NY;j++){const row=[];const T=ys[j];for(let i=0;i<NX;i++){const w=xs[i];const I=T/r.Kt;const Pmech=T*w;const Pcu=r.n*I*I*r.R;const Ptot=Pmech+Pcu;const eta=Ptot>0?Pmech/Ptot:0;const V=I*r.R+r.Ke*w;const feasible=(V<=r.Vb*1.02)&&(T<=r.Tpk*1.02);row.push(feasible?eta*100:null)}zMap.push(row)}
+ const tr=[
+  {z:zMap,x:xs,y:ys,type:'contour',colorscale:[[0,'#1e1b4b'],[.3,'#3730a3'],[.5,'#0891b2'],[.7,'#22c55e'],[.9,'#eab308'],[1,'#f87171']],contours:{start:0,end:100,size:10,showlabels:true,labelfont:{size:9,color:'#fff'}},colorbar:{title:'η %',titlefont:{size:9},tickfont:{size:9}}},
+  {x:[r.wM],y:[r.Tpm],type:'scatter',mode:'markers+text',text:['OP'],textposition:'top center',textfont:{size:10,color:'#fff'},marker:{color:'#fff',size:12,symbol:'star',line:{color:'#000',width:1.5}},showlegend:false}
+ ];
+ Plotly.react('emC',tr,Object.assign({},pltCommon,{margin:{t:20,r:15,b:45,l:55},xaxis:{title:'ω (rad/s)',gridcolor:'rgba(30,41,59,.2)'},yaxis:{title:'T (Nm/motor)',gridcolor:'rgba(30,41,59,.2)'}}),pltCfg);
+}
+
+// Naive DFT for FFT viz (small N)
+function computeFFT(sig,dt){const N=sig.length;const res=[];const Nf=Math.min(Math.floor(N/2),128);for(let k=1;k<=Nf;k++){let re=0,im=0;for(let n=0;n<N;n++){const ang=2*Math.PI*k*n/N;re+=sig[n]*Math.cos(ang);im-=sig[n]*Math.sin(ang)}const mag=2*Math.sqrt(re*re+im*im)/N;const freq=k/(N*dt);res.push({f:freq,m:mag})}return res}
+
+function drawFFT(r){
+ const pr=r.prof;if(!pr.tArr||pr.tArr.length<4){Plotly.react('fftC',[],Object.assign({},pltCommon,{margin:{t:20,r:15,b:45,l:55},annotations:[{text:'Need more samples',xref:'paper',yref:'paper',x:.5,y:.5,showarrow:false,font:{color:'#64748b'}}]}),pltCfg);return}
+ const dtx=(pr.tArr[1]-pr.tArr[0])||.02;const sig=pr.TArr.map(v=>v);
+ const sp=computeFFT(sig,dtx);
+ const freqs=sp.map(p=>p.f),mags=sp.map(p=>p.m);
+ const mechF=r.fmp;
+ const tr=[{x:freqs,y:mags,type:'bar',marker:{color:'rgba(59,130,246,.7)',line:{color:'#3b82f6',width:.5}},name:'|T(f)|'}];
+ Plotly.react('fftC',tr,Object.assign({},pltCommon,{margin:{t:20,r:15,b:45,l:55},xaxis:{title:'Frequency (Hz)',gridcolor:'rgba(30,41,59,.4)',type:'log'},yaxis:{title:'|T| (Nm)',gridcolor:'rgba(30,41,59,.4)'},shapes:[{type:'line',x0:mechF,x1:mechF,y0:0,y1:Math.max(...mags)*1.05,line:{color:'rgba(239,68,68,.7)',width:1.5,dash:'dash'}}],annotations:[{x:Math.log10(mechF||1),y:Math.max(...mags)*1.02,text:'f<sub>m</sub>='+f(mechF,2)+' Hz',font:{size:9,color:'#fca5a5'},showarrow:false,xref:'x',yref:'y'}],showlegend:false}),pltCfg);
+}
+
+function drawEnergyBreakdown(r){
+ const labels=['Mechanical','Copper Loss','Regen Available'];
+ const vals=[r.Emot,r.Ecu,r.Ereg];
+ const cols=['#60a5fa','#f59e0b','#22c55e'];
+ const tr=[{labels:labels,values:vals,type:'pie',marker:{colors:cols,line:{color:'#0f172a',width:2}},textinfo:'label+percent',textfont:{size:10,color:'#fff'},hovertemplate:'%{label}: %{value:.1f} Ws<extra></extra>',hole:.45}];
+ Plotly.react('ebC',tr,Object.assign({},pltCommon,{margin:{t:20,r:20,b:20,l:20},showlegend:false,annotations:[{text:f(r.En/3600,3)+' Wh<br>per cycle',x:.5,y:.5,showarrow:false,font:{size:11,color:'#e2e8f0',family:'JetBrains Mono'}}]}),pltCfg);
+}
+
+// ============ SVG VISUALS ============
+function drawBlockDiagram(r){
+ const svg=document.getElementById('svgBlock');if(!svg)return;
+ const isL=r.isL;
+ const boxes=isL?[
+  {x:30,y:80,w:100,h:60,fill:'#1e40af',txt:'MOTOR',sub:'n='+r.n},
+  {x:170,y:80,w:100,h:60,fill:'#7c3aed',txt:'GEAR',sub:'i='+f(r.n>0?r.iT/6.28:1,1)},
+  {x:310,y:80,w:110,h:60,fill:'#0891b2',txt:'SCREW',sub:'h='+fA(r.vL/Math.max(r.wM,.01)*1e3*r.iT)},
+  {x:460,y:80,w:110,h:60,fill:'#ea580c',txt:'LEVER',sub:'L='+fA(r.vL/Math.max(r.wM*180/Math.PI,.01))+'m'},
+  {x:610,y:80,w:120,h:60,fill:'#be185d',txt:'BARREL',sub:'↕ Elev'},
+  {x:770,y:80,w:100,h:60,fill:'#15803d',txt:'LOAD',sub:'J='+fA(r.Je)}
+ ]:[
+  {x:30,y:80,w:100,h:60,fill:'#1e40af',txt:'MOTOR',sub:'n='+r.n},
+  {x:190,y:80,w:120,h:60,fill:'#7c3aed',txt:'GEARBOX',sub:'i='+fA(r.iT)},
+  {x:370,y:80,w:120,h:60,fill:'#0891b2',txt:'PINION',sub:'z₂'},
+  {x:550,y:80,w:130,h:60,fill:'#ea580c',txt:'RING GEAR',sub:'z₁'},
+  {x:740,y:80,w:130,h:60,fill:'#be185d',txt:'TURRET',sub:'↔ Trav, J='+fA(r.Je)}
+ ];
+ let html='<defs><marker id="arH" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#3b82f6"/></marker></defs>';
+ html+='<rect x="0" y="0" width="900" height="220" fill="#060A13"/>';
+ for(let i=0;i<boxes.length;i++){const b=boxes[i];
+  html+=`<rect x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" rx="8" fill="${b.fill}" opacity=".75" stroke="${b.fill}" stroke-width="1.5"/>`;
+  html+=`<text x="${b.x+b.w/2}" y="${b.y+28}" text-anchor="middle" font-family="Inter" font-size="13" font-weight="700" fill="#fff">${b.txt}</text>`;
+  html+=`<text x="${b.x+b.w/2}" y="${b.y+48}" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#e2e8f0">${b.sub}</text>`;
+  if(i<boxes.length-1){const nx=boxes[i+1].x;html+=`<line class="anim-dash" x1="${b.x+b.w}" y1="${b.y+b.h/2}" x2="${nx}" y2="${b.y+b.h/2}" stroke="#3b82f6" stroke-width="2.5" marker-end="url(#arH)"/>`}
+ }
+ // Labels
+ html+='<text x="30" y="40" font-family="Inter" font-size="11" font-weight="700" fill="#94a3b8" letter-spacing="2">POWER FLOW — '+(isL?'ELEVATION LINEAR ACTUATOR':'TRAVERSE RING GEAR')+'</text>';
+ html+=`<text x="30" y="180" font-family="JetBrains Mono" font-size="10" fill="#64748b">ω_M=${f(r.wM,1)} rad/s · T_pk=${fA(r.Tp)} Nm · P=${f(r.Pmech_pk,0)} W · η=${f(r.etaSys*100,1)}%</text>`;
+ svg.innerHTML=html;
+}
+
+function drawActuatorGeom(r){
+ const svg=document.getElementById('svgAct');if(!svg||!r.isL)return;
+ const h=r.vL>0?r.vL/Math.max(r.wM,.01)*1e3:25;
+ let html='<rect x="0" y="0" width="500" height="260" fill="#060A13"/>';
+ html+='<text x="20" y="25" font-family="Inter" font-size="11" font-weight="700" fill="#94a3b8" letter-spacing="2">ACTUATOR GEOMETRY</text>';
+ // Base/trunnion
+ html+='<circle cx="120" cy="200" r="8" fill="#475569" stroke="#94a3b8" stroke-width="1.5"/>';
+ html+='<text x="105" y="225" font-family="JetBrains Mono" font-size="9" fill="#64748b">Trunnion</text>';
+ // Barrel (lever arm)
+ const elAng=-35*Math.PI/180;
+ const Lpx=180;const bx=120+Lpx*Math.cos(elAng),by=200+Lpx*Math.sin(elAng);
+ html+=`<line x1="120" y1="200" x2="${bx}" y2="${by}" stroke="#3b82f6" stroke-width="10" stroke-linecap="round" opacity=".8"/>`;
+ html+=`<text x="${(120+bx)/2+10}" y="${(200+by)/2-10}" font-family="JetBrains Mono" font-size="10" fill="#60a5fa" font-weight="600">L=${f(Lpx/600,3)}m (lever)</text>`;
+ // Hinge point on barrel for actuator
+ const Lh=80;const hx=120+Lh*Math.cos(elAng),hy=200+Lh*Math.sin(elAng);
+ html+=`<circle cx="${hx}" cy="${hy}" r="5" fill="#f59e0b"/>`;
+ // Actuator base (fixed)
+ const ax=200,ay=250;
+ html+=`<rect x="${ax-25}" y="${ay-8}" width="50" height="14" fill="#64748b" stroke="#94a3b8"/>`;
+ // Actuator cylinder (line from base to hinge)
+ html+=`<line x1="${ax}" y1="${ay}" x2="${hx}" y2="${hy}" stroke="#a855f7" stroke-width="8" stroke-linecap="round" opacity=".85"/>`;
+ html+=`<line x1="${ax}" y1="${ay}" x2="${hx}" y2="${hy}" stroke="#c084fc" stroke-width="1" stroke-dasharray="2 3" opacity=".6"/>`;
+ // Screw info annotation
+ html+=`<rect x="300" y="160" width="185" height="90" rx="6" fill="rgba(30,41,59,.8)" stroke="#7c3aed" stroke-width="1"/>`;
+ html+=`<text x="310" y="180" font-family="Inter" font-size="10" font-weight="700" fill="#c084fc">ROLLERSCREW</text>`;
+ html+=`<text x="310" y="200" font-family="JetBrains Mono" font-size="10" fill="#e2e8f0">h=${f(h,1)} mm/rev</text>`;
+ html+=`<text x="310" y="215" font-family="JetBrains Mono" font-size="10" fill="#e2e8f0">F_peak=${f((r.Fp||0)/1e3,2)} kN</text>`;
+ html+=`<text x="310" y="230" font-family="JetBrains Mono" font-size="10" fill="#e2e8f0">v=${f(r.vL,1)} mm/s</text>`;
+ html+=`<text x="310" y="245" font-family="JetBrains Mono" font-size="10" fill="#e2e8f0">i_tot=${f(r.iT,1)}</text>`;
+ // Motor
+ html+=`<circle cx="${ax-40}" cy="${ay+10}" r="15" fill="#1e40af" stroke="#3b82f6" stroke-width="1.5"/>`;
+ html+=`<text x="${ax-40}" y="${ay+14}" text-anchor="middle" font-family="Inter" font-size="9" font-weight="700" fill="#fff">M</text>`;
+ html+=`<text x="${ax-65}" y="${ay+35}" font-family="JetBrains Mono" font-size="9" fill="#60a5fa">${r.n}× Motor</text>`;
+ svg.innerHTML=html;
+}
+
+function drawGearDiagram(r){
+ const svg=document.getElementById('svgGear');if(!svg||r.isL)return;
+ let html='<rect x="0" y="0" width="500" height="260" fill="#060A13"/>';
+ html+='<text x="20" y="25" font-family="Inter" font-size="11" font-weight="700" fill="#94a3b8" letter-spacing="2">GEAR TRAIN</text>';
+ // Ring gear
+ const cx=300,cy=140,R1=95,R2=25;
+ html+=`<circle cx="${cx}" cy="${cy}" r="${R1+8}" fill="none" stroke="#64748b" stroke-width="1" stroke-dasharray="2 3"/>`;
+ html+=`<g class="anim-spin" style="transform-origin:${cx}px ${cy}px;animation-duration:${8/Math.max(r.wM/r.iT,.1)}s"><circle cx="${cx}" cy="${cy}" r="${R1}" fill="rgba(59,130,246,.15)" stroke="#3b82f6" stroke-width="2"/>`;
+ for(let i=0;i<24;i++){const a=i*Math.PI/12;const tx=cx+R1*Math.cos(a),ty=cy+R1*Math.sin(a);html+=`<line x1="${cx+(R1-6)*Math.cos(a)}" y1="${cy+(R1-6)*Math.sin(a)}" x2="${tx}" y2="${ty}" stroke="#60a5fa" stroke-width="1.5"/>`}
+ html+=`<text x="${cx}" y="${cy+5}" text-anchor="middle" font-family="JetBrains Mono" font-size="11" font-weight="700" fill="#93c5fd">z₁</text></g>`;
+ // Pinion
+ const px=cx-R1-R2-2,py=cy;
+ html+=`<g class="anim-spin" style="transform-origin:${px}px ${py}px;animation-duration:${2/Math.max(r.wM,.1)}s;animation-direction:reverse"><circle cx="${px}" cy="${py}" r="${R2}" fill="rgba(245,158,11,.2)" stroke="#f59e0b" stroke-width="1.5"/>`;
+ for(let i=0;i<10;i++){const a=i*Math.PI/5;const tx=px+R2*Math.cos(a),ty=py+R2*Math.sin(a);html+=`<line x1="${px+(R2-4)*Math.cos(a)}" y1="${py+(R2-4)*Math.sin(a)}" x2="${tx}" y2="${ty}" stroke="#fbbf24" stroke-width="1"/>`}
+ html+=`<text x="${px}" y="${py+4}" text-anchor="middle" font-family="JetBrains Mono" font-size="10" font-weight="700" fill="#fbbf24">z₂</text></g>`;
+ // Motor+gearbox to pinion
+ html+=`<rect x="${px-100}" y="${py-25}" width="55" height="50" rx="6" fill="rgba(30,64,175,.4)" stroke="#3b82f6" stroke-width="1.5"/>`;
+ html+=`<text x="${px-72}" y="${py-5}" text-anchor="middle" font-family="Inter" font-size="10" font-weight="700" fill="#fff">M ×${r.n}</text>`;
+ html+=`<text x="${px-72}" y="${py+10}" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#93c5fd">GEARBOX</text>`;
+ html+=`<line x1="${px-45}" y1="${py}" x2="${px-R2}" y2="${py}" stroke="#a855f7" stroke-width="3"/>`;
+ // Info
+ html+=`<rect x="20" y="200" width="460" height="50" rx="6" fill="rgba(30,41,59,.7)" stroke="#475569"/>`;
+ html+=`<text x="30" y="220" font-family="JetBrains Mono" font-size="10" fill="#cbd5e1">i_tot = (z₁/z₂) · i_gb = ${f(r.iT,2)} · η=${f(r.eT*100,1)}%</text>`;
+ html+=`<text x="30" y="238" font-family="JetBrains Mono" font-size="10" fill="#cbd5e1">ω_load=${f(r.wM/r.iT,3)} rad/s · ω_motor=${f(r.wM,1)} rad/s · T_load=${fA(r.Tp*r.iT*r.eT)} Nm</text>`;
+ svg.innerHTML=html;
+}
+
+function drawGauges(r){
+ const svg=document.getElementById('svgGauges');if(!svg)return;
+ function gauge(cx,cy,rad,val,max,label,unit,colOk,colW,colD){
+  const pct=Math.min(Math.max(val/max,0),1.5);
+  const ang=Math.PI*(1-pct);
+  const ex=cx+rad*Math.cos(Math.PI-ang),ey=cy-rad*Math.sin(ang);
+  const col=pct<.7?colOk:pct<.9?colW:colD;
+  let s='';
+  s+=`<path d="M ${cx-rad} ${cy} A ${rad} ${rad} 0 0 1 ${cx+rad} ${cy}" fill="none" stroke="#1e293b" stroke-width="12"/>`;
+  s+=`<path d="M ${cx-rad} ${cy} A ${rad} ${rad} 0 0 1 ${ex} ${ey}" fill="none" stroke="${col}" stroke-width="12" stroke-linecap="round"/>`;
+  s+=`<text x="${cx}" y="${cy-5}" text-anchor="middle" font-family="JetBrains Mono" font-size="18" font-weight="700" fill="${col}">${f(val,1)}</text>`;
+  s+=`<text x="${cx}" y="${cy+12}" text-anchor="middle" font-family="Inter" font-size="9" fill="#64748b">${unit}</text>`;
+  s+=`<text x="${cx}" y="${cy+32}" text-anchor="middle" font-family="Inter" font-size="10" font-weight="700" fill="#94a3b8" letter-spacing="1">${label}</text>`;
+  return s;
+ }
+ let html='<rect x="0" y="0" width="600" height="240" fill="#060A13"/>';
+ html+=gauge(80,120,55,r.pU,100,'PEAK / LIMIT','%','#22c55e','#f59e0b','#ef4444');
+ html+=gauge(220,120,55,Math.max(0,100-r.vP),100,'VOLTAGE USED','%','#22c55e','#f59e0b','#ef4444');
+ html+=gauge(360,120,55,Math.min(r.Jrat,15),15,'INERTIA RATIO',':1 max15','#22c55e','#f59e0b','#ef4444');
+ html+=gauge(500,120,55,(r.Mrm/r.Tco)*100,100,'RMS / CONT.','%','#22c55e','#f59e0b','#ef4444');
+ svg.innerHTML=html;
+}
+
+function drawPointCircle(r){
+ const svg=document.getElementById('svgPoint');if(!svg)return;
+ const cx=160,cy=140;
+ let html='<rect x="0" y="0" width="320" height="280" fill="#060A13"/>';
+ // Target rings
+ for(let i=1;i<=4;i++){html+=`<circle cx="${cx}" cy="${cy}" r="${i*25}" fill="none" stroke="rgba(71,85,105,.4)" stroke-width="1"/>`}
+ html+=`<line x1="${cx-110}" y1="${cy}" x2="${cx+110}" y2="${cy}" stroke="rgba(71,85,105,.3)"/>`;
+ html+=`<line x1="${cx}" y1="${cy-110}" x2="${cx}" y2="${cy+110}" stroke="rgba(71,85,105,.3)"/>`;
+ // Pointing error circle (scaled)
+ const errRad=Math.min(100,r.lsb_mrad*50);
+ html+=`<circle cx="${cx}" cy="${cy}" r="${errRad}" fill="rgba(34,197,94,.15)" stroke="#22c55e" stroke-width="2"/>`;
+ html+=`<circle cx="${cx}" cy="${cy}" r="3" fill="#22c55e"/>`;
+ // Labels
+ html+=`<text x="20" y="20" font-family="Inter" font-size="10" font-weight="700" fill="#94a3b8" letter-spacing="1">POINTING ERROR AT LOAD</text>`;
+ html+=`<text x="20" y="260" font-family="JetBrains Mono" font-size="10" fill="#cbd5e1">LSB = ${f(r.lsb_mrad,4)} mrad = ${f(r.dthL_arcsec,2)} arcsec</text>`;
+ html+=`<text x="20" y="40" font-family="JetBrains Mono" font-size="9" fill="#64748b">${f(r.encCPR,0)} cts/rev · i=${f(r.iT,1)}</text>`;
+ // Range annotations
+ html+=`<text x="${cx+errRad+5}" y="${cy-5}" font-family="JetBrains Mono" font-size="9" fill="#4ade80">1σ</text>`;
+ svg.innerHTML=html;
+}
+
+// Three.js 3D turret
+let t3d={scene:null,camera:null,renderer:null,turret:null,barrel:null,anim:0};
+function init3D(){
+ const div=document.getElementById('c2-3d');if(!div||t3d.renderer||!window.THREE)return;
+ const w=div.clientWidth||400,h=220;
+ t3d.scene=new THREE.Scene();t3d.scene.background=new THREE.Color(0x060A13);
+ t3d.camera=new THREE.PerspectiveCamera(50,w/h,.1,100);t3d.camera.position.set(3.5,2.8,4.5);t3d.camera.lookAt(0,.5,0);
+ t3d.renderer=new THREE.WebGLRenderer({antialias:true});t3d.renderer.setSize(w,h);div.innerHTML='';div.appendChild(t3d.renderer.domElement);
+ const amb=new THREE.AmbientLight(0x404060,1);t3d.scene.add(amb);
+ const dir=new THREE.DirectionalLight(0xffffff,.9);dir.position.set(3,5,2);t3d.scene.add(dir);
+ // Ground
+ const g=new THREE.Mesh(new THREE.PlaneGeometry(6,6),new THREE.MeshStandardMaterial({color:0x0f172a,roughness:.9}));g.rotation.x=-Math.PI/2;t3d.scene.add(g);
+ // Hull
+ const hull=new THREE.Mesh(new THREE.BoxGeometry(2.4,.5,1.5),new THREE.MeshStandardMaterial({color:0x1e293b,metalness:.3,roughness:.6}));hull.position.y=.25;t3d.scene.add(hull);
+ // Turret
+ t3d.turret=new THREE.Group();t3d.turret.position.y=.5;
+ const turBody=new THREE.Mesh(new THREE.CylinderGeometry(.7,.8,.45,16),new THREE.MeshStandardMaterial({color:0x334155,metalness:.5,roughness:.5}));turBody.position.y=.25;t3d.turret.add(turBody);
+ // Barrel pivot
+ const pivot=new THREE.Group();pivot.position.y=.35;t3d.turret.add(pivot);
+ t3d.barrel=new THREE.Mesh(new THREE.CylinderGeometry(.08,.1,1.8,12),new THREE.MeshStandardMaterial({color:0x0891b2,metalness:.7,roughness:.3}));t3d.barrel.position.set(0,0,.9);t3d.barrel.rotation.x=Math.PI/2;pivot.add(t3d.barrel);
+ t3d.pivot=pivot;
+ t3d.scene.add(t3d.turret);
+ // Grid
+ const grid=new THREE.GridHelper(6,12,0x334155,0x1e293b);t3d.scene.add(grid);
+ animate3D();
+}
+function animate3D(){
+ if(!t3d.renderer)return;
+ requestAnimationFrame(animate3D);
+ t3d.anim+=.015;
+ if(t3d.turret)t3d.turret.rotation.y=Math.sin(t3d.anim*.5)*.6;
+ if(t3d.pivot)t3d.pivot.rotation.x=-Math.PI/12+Math.sin(t3d.anim*.8)*.25;
+ t3d.renderer.render(t3d.scene,t3d.camera);
+}
+function resize3D(){if(!t3d.renderer)return;const div=document.getElementById('c2-3d');if(!div)return;const w=div.clientWidth||400;t3d.camera.aspect=w/220;t3d.camera.updateProjectionMatrix();t3d.renderer.setSize(w,220)}
+
+function drawExtras(r){
+ try{
+  drawPowerSpeed(r,'psC');drawPowerSpeed(r,'ps2C');
+  drawTorqueBudget(r);drawEffMap(r);drawFFT(r);drawEnergyBreakdown(r);
+  drawBlockDiagram(r);drawGauges(r);drawPointCircle(r);
+  if(r.isL)drawActuatorGeom(r);else drawGearDiagram(r);
+ }catch(e){console.error('drawExtras:',e)}
+}
 
 // === FILE IMPORT ===
 function handleImport(e){
@@ -412,20 +884,57 @@ function rd(){const p=AP[ax];document.querySelectorAll('input.inp').forEach(e=>{
 function rc(){rd();const r=calc(AP[ax],ax);uR(r);uC(r);uB(r.Jrat)}
 
 // === VIEW SWITCHING & SOLVE ===
-let solved=false;let currentView='inputs';
+let solved=false;let currentView='inputs';let curSub='overview';
 function markStale(){solved=false;const p=document.getElementById('statusPill');if(p){p.className='pill-status pill-ready ml-2';p.textContent='NOT SOLVED'}}
 function swView(v){currentView=v;
  document.getElementById('view-inputs').style.display=v==='inputs'?'block':'none';
  document.getElementById('view-results').style.display=v==='results'?'block':'none';
+ const cmp=document.getElementById('view-compare');if(cmp)cmp.style.display=v==='compare'?'block':'none';
  document.getElementById('vtab-inputs').className='vtab '+(v==='inputs'?'vtab-active':'vtab-inactive');
  document.getElementById('vtab-results').className='vtab '+(v==='results'?'vtab-active':'vtab-inactive');
- if(v==='results'&&solved){setTimeout(()=>{try{Plotly.Plots.resize('tsC');Plotly.Plots.resize('dcC')}catch(e){}},50)}
- if(v==='results'&&!solved)solve()}
+ const vc=document.getElementById('vtab-compare');if(vc)vc.className='vtab '+(v==='compare'?'vtab-active':'vtab-inactive');
+ if(v==='results'&&solved)setTimeout(resizeAll,60);
+ if(v==='results'&&!solved)solve();
+ if(v==='compare')renderCompare()}
+function swSub(s){curSub=s;
+ ['overview','power','energy','precision','charts','visuals'].forEach(k=>{
+  const sec=document.getElementById('sub-'+k);if(sec)sec.style.display=k===s?'block':'none';
+  const b=document.getElementById('stab-'+k);if(b)b.className='stab'+(k===s?' stab-active':'');
+ });
+ setTimeout(()=>{resizeAll();if(s==='visuals')init3D()},50)}
+function resizeAll(){['tsC','dcC','psC','ps2C','tbC','emC','fftC','ebC'].forEach(id=>{try{Plotly.Plots.resize(id)}catch(e){}});resize3D()}
 function solve(){rc();solved=true;
  const now=new Date();const stamp=now.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
  const ss=document.getElementById('solveStamp');if(ss)ss.textContent='AXIS: '+ax.toUpperCase()+' · SOLVED @ '+stamp;
  const p=document.getElementById('statusPill');if(p){p.className='pill-status pill-solved ml-2';p.textContent='SOLVED'}
- swView('results');setTimeout(()=>{try{Plotly.Plots.resize('tsC');Plotly.Plots.resize('dcC')}catch(e){}},60)}
+ swView('results');setTimeout(resizeAll,80)}
+
+// === D2: SCENARIO SAVE/LOAD (localStorage) ===
+function loadScnList(){const raw=localStorage.getItem('wmsz.scn')||'{}';try{return JSON.parse(raw)}catch(e){return{}}}
+function saveScnList(obj){localStorage.setItem('wmsz.scn',JSON.stringify(obj))}
+function updScnSel(){const list=loadScnList(),sel=document.getElementById('scnLoad');if(!sel)return;sel.innerHTML='<option value="">Load Scenario…</option>'+Object.keys(list).map(k=>`<option value="${k}">${k}</option>`).join('')}
+function saveScn(){rd();const name=prompt('Scenario name?','Scenario '+(new Date().toISOString().slice(0,16).replace('T',' ')));if(!name)return;const list=loadScnList();list[name]={ax,AP:JSON.parse(JSON.stringify(AP)),PM:{...PM},ts:new Date().toISOString()};saveScnList(list);updScnSel();alert('Saved: '+name)}
+function loadScn(name){if(!name)return;const list=loadScnList(),s=list[name];if(!s)return;ax=s.ax;Object.assign(AP,s.AP);Object.assign(PM,s.PM);sw(ax);pop();markStale();document.getElementById('scnLoad').value=''}
+
+// === D4: COMPARE A/B ===
+const snap={A:null,B:null};
+function snapSlot(slot){if(!solved){solve()}const r=calc(AP[ax],ax);snap[slot]={ax,r:JSON.parse(JSON.stringify(r)),ts:new Date().toLocaleTimeString()};renderCompare()}
+function renderCompare(){const body=document.getElementById('cmpBody');if(!body)return;
+ if(!snap.A&&!snap.B){body.innerHTML='<div class="text-center text-slate-500 text-xs py-8">Solve a scenario, then click <b>SNAP AS A</b> and <b>SNAP AS B</b> above.</div>';return}
+ const rows=[
+  ['Axis',s=>s.ax.toUpperCase()],['i_tot',s=>f(s.r.iT,2)],['J_eff (kg·m²)',s=>s.r.Je.toExponential(3)],
+  ['Motor Speed (rad/s)',s=>f(s.r.wM,1)],['T_peak /motor (Nm)',s=>fA(s.r.Tpm)],['I_peak /motor (A)',s=>f(s.r.Ipm,2)],
+  ['V_req (V)',s=>f(s.r.Vr,1)],['V margin (%)',s=>f(s.r.vP,1)],['M_rms /motor (Nm)',s=>fA(s.r.Mrm)],
+  ['Peak Mech. Power (W)',s=>f(s.r.Pmech_pk,0)],['System η (%)',s=>f(s.r.etaSys*100,1)],['Mech. τ_m (ms)',s=>f(s.r.tauM*1e3,2)],
+  ['Max BW (Hz)',s=>f(s.r.bwMax,2)],['E/cycle (Wh)',s=>f(s.r.En/3600,3)],['E/mission (Wh)',s=>f(s.r.Emis/3600,2)],
+  ['Battery (Ah)',s=>f(s.r.Ah_rec,2)],['Pointing LSB (mrad)',s=>f(s.r.lsb_mrad,4)],['Inertia Ratio',s=>f(s.r.Jrat,1)+':1'],
+  ['Peak Util. (%)',s=>f(s.r.pU,1)],['Snapshot Time',s=>s.ts]
+ ];
+ let html='<table style="width:100%;border-collapse:collapse;font-size:.75rem"><thead><tr style="border-bottom:2px solid #334155"><th style="text-align:left;padding:.5rem;color:#94a3b8">Metric</th><th style="text-align:right;padding:.5rem;color:#93c5fd">Scenario A '+(snap.A?'['+snap.A.ts+']':'(empty)')+'</th><th style="text-align:right;padding:.5rem;color:#fca5a5">Scenario B '+(snap.B?'['+snap.B.ts+']':'(empty)')+'</th><th style="text-align:right;padding:.5rem;color:#94a3b8">Δ (B−A)</th></tr></thead><tbody>';
+ for(const [lbl,fn] of rows){const a=snap.A?fn(snap.A):'--',b=snap.B?fn(snap.B):'--';let d='--';if(snap.A&&snap.B){const av=parseFloat(a),bv=parseFloat(b);if(!isNaN(av)&&!isNaN(bv))d=(bv-av>=0?'+':'')+f(bv-av,3)}html+=`<tr style="border-bottom:1px solid rgba(51,65,85,.35)"><td style="padding:.4rem;color:#cbd5e1">${lbl}</td><td style="text-align:right;padding:.4rem;font-family:'JetBrains Mono',monospace;color:#93c5fd">${a}</td><td style="text-align:right;padding:.4rem;font-family:'JetBrains Mono',monospace;color:#fca5a5">${b}</td><td style="text-align:right;padding:.4rem;font-family:'JetBrains Mono',monospace;color:#fbbf24">${d}</td></tr>`}
+ html+='</tbody></table>';
+ body.innerHTML=html;
+}
 
 function uV(a){const isE=a==='elevation';
  document.querySelectorAll('.elev-only').forEach(e=>e.style.display=isE?'flex':'none');
@@ -434,7 +943,8 @@ function uV(a){const isE=a==='elevation';
  document.querySelectorAll('.trav-only-inline').forEach(e=>e.style.display=isE?'none':'inline');
  const mn=document.getElementById('mn');if(mn)mn.textContent=isE?'Linear actuator: rollerscrew + gear + lever':'Ring gear + gearbox drive system'}
 function sw(a){rd();ax=a;document.querySelectorAll('.axis-tab').forEach(b=>{b.classList.remove('tab-active');b.classList.add('tab-inactive')});document.getElementById('tab-'+a).classList.remove('tab-inactive');document.getElementById('tab-'+a).classList.add('tab-active');uV(a);pop();markStale();swView('inputs')}
-document.addEventListener('DOMContentLoaded',()=>{uV(ax);pop();document.querySelectorAll('input.inp').forEach(e=>e.addEventListener('input',markStale))});
+document.addEventListener('DOMContentLoaded',()=>{uV(ax);pop();updScnSel();document.querySelectorAll('input.inp').forEach(e=>e.addEventListener('input',markStale))});
 document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();solve()}});
+window.addEventListener('resize',()=>setTimeout(resizeAll,100));
 </script>
 </body></html>
