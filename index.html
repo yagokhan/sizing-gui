@@ -154,6 +154,14 @@ input[type="number"]{-moz-appearance:textfield;box-sizing:border-box}input::-web
 <div class="pr elev-only"><span class="pl" data-tip="Rollerscrew mechanical efficiency. Typically 0.85–0.92 for preloaded rollerscrews.">Screw Eff.<span class="ps">&eta;<sub>s</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.screwEfficiency" step="0.01" min="0.01" max="1"><span class="pu">[-]</span></div></div>
 <div class="pr elev-only"><span class="pl" data-tip="Motor-screw gear stage efficiency.">Gear Eff.<span class="ps">&eta;<sub>gk</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.gearEfficiency" step="0.01" min="0.01" max="1"><span class="pu">[-]</span></div></div>
 <div class="pr elev-only"><span class="pl" data-tip="Gearbox/drivetrain inertia reflected to motor shaft (excluding motor rotor).">Gearbox Inertia<span class="ps">J<sub>gb</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.gearboxInertia" step="0.0001" min="0"><span class="pu">kg&middot;m&sup2;</span></div></div>
+<div class="sl elev-only">Actuator Geometry</div>
+<div class="pr elev-only"><span class="pl" data-tip="Distance from trunnion (barrel pivot) to actuator hinge point on the barrel.">Hinge Offset<span class="ps">L<sub>h</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.hingeOffset" step="10" min="10"><span class="pu">mm</span></div></div>
+<div class="pr elev-only"><span class="pl" data-tip="Horizontal distance from trunnion to actuator base pivot. Positive = forward of trunnion.">Base ΔX<span class="ps">D<sub>x</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.baseDx" step="10"><span class="pu">mm</span></div></div>
+<div class="pr elev-only"><span class="pl" data-tip="Vertical distance from trunnion to actuator base pivot. Negative = below trunnion.">Base ΔY<span class="ps">D<sub>y</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.baseDy" step="10"><span class="pu">mm</span></div></div>
+<div class="pr elev-only"><span class="pl" data-tip="Fully retracted actuator length (cylinder-only). Defines the minimum geometric reach.">L<sub>min</sub> (retracted)</span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.actLmin" step="10" min="50"><span class="pu">mm</span></div></div>
+<div class="pr elev-only"><span class="pl" data-tip="Fully extended actuator length (cylinder + max rod stroke). Defines maximum geometric reach.">L<sub>max</sub> (extended)</span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.actLmax" step="10" min="100"><span class="pu">mm</span></div></div>
+<div class="pr elev-only"><span class="pl" data-tip="Minimum elevation angle the barrel travels to (e.g. depression). Used for animation sweep range.">Elev θ<sub>min</sub></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.elevMin" step="1"><span class="pu u-click u-ang" onclick="tglUnit('ang')">deg</span></div></div>
+<div class="pr elev-only"><span class="pl" data-tip="Maximum elevation angle (max barrel up). Animation sweeps from θ_min to θ_max.">Elev θ<sub>max</sub></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.elevMax" step="1"><span class="pu u-click u-ang" onclick="tglUnit('ang')">deg</span></div></div>
 <div class="sl trav-only" style="border-top:none;margin-top:0">Ring Gear &amp; Gearbox</div>
 <div class="pr trav-only"><span class="pl" data-tip="Number of teeth on the internal ring gear (driven, connected to turret).">Ring Teeth<span class="ps">z<sub>1</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.ringTeeth" step="1" min="1"><span class="pu">[-]</span></div></div>
 <div class="pr trav-only"><span class="pl" data-tip="Number of teeth on the driving pinion (attached to gearbox output).">Pinion Teeth<span class="ps">z<sub>2</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.pinionTeeth" step="1" min="1"><span class="pu">[-]</span></div></div>
@@ -464,7 +472,7 @@ input[type="number"]{-moz-appearance:textfield;box-sizing:border-box}input::-web
 
 <script>
 const D={elevation:{
- mechanical:{screwLead:25,leverArm:.3,motorScrewRatio:3,screwEfficiency:.9,gearEfficiency:.95,gearboxInertia:5e-4,loadInertia:3500,unbalanceTorque:1500,frictionTorque:400,windTorque:80,firingTorque:400,iTotSingle:226.2,etaTotSingle:.855},
+ mechanical:{screwLead:25,leverArm:.3,motorScrewRatio:3,screwEfficiency:.9,gearEfficiency:.95,gearboxInertia:5e-4,loadInertia:3500,unbalanceTorque:1500,frictionTorque:400,windTorque:80,firingTorque:400,iTotSingle:226.2,etaTotSingle:.855,hingeOffset:300,baseDx:450,baseDy:-250,actLmin:700,actLmax:1100,elevMin:-10,elevMax:60},
  performance:{targetSpeed:40,targetAccel:80,travelAngle:25,dwellTime:1.5,stabAmplitude:2,stabFrequency:3,sineAmp:30,sineFreq:2,sineDur:4},
  motor:{motorCount:1,kt:.126,ke:.126,resistance:.012,rotorInertia:.005,peakTorque:80,contTorque:50,busVoltage:24,encoderBits:20,missionTime:600,targetBW:10}
 },traverse:{
@@ -809,84 +817,122 @@ function drawBlockDiagram(r,targetId){
 
 function drawActuatorGeom(r,targetId,elPhysDeg){
  const svg=document.getElementById(targetId||'svgAct');if(!svg||!r.isL)return;
+ const m=AP.elevation.mechanical;
+ // User-supplied physical geometry (all mm except angles)
+ const Lh_mm=Math.max(m.hingeOffset||300,10);
+ const Bx_mm=m.baseDx!=null?m.baseDx:450;
+ const By_mm=m.baseDy!=null?m.baseDy:-250;
+ const Lmin_mm=Math.max(m.actLmin||700,50);
+ const Lmax_mm=Math.max(m.actLmax||1100,Lmin_mm+10);
+ // Elevation range — convert from user units (deg/rad)
  const ufn=UNITS.ang==='rad'?1:U2R;
- const travelDeg=elPhysDeg!=null?elPhysDeg:Math.max(15,(AP.elevation.performance.travelAngle||25)*ufn/U2R/2);
- const elAng=-travelDeg*Math.PI/180;
+ const elMinDeg=(m.elevMin!=null?m.elevMin:-10)*ufn/U2R;
+ const elMaxDeg=(m.elevMax!=null?m.elevMax:60)*ufn/U2R;
+ const travelDeg=elPhysDeg!=null?elPhysDeg:(elMinDeg+elMaxDeg)/2;
+ const elAng=-travelDeg*Math.PI/180; // SVG y-down flip
  const hp=r.vL>0?r.vL/Math.max(r.wM,.01)*1e3*r.iT:25;
+ // Compute actuator length at this θ (physical mm geometry)
+ //   Trunnion = origin (0,0). Hinge on barrel = (Lh*cos(θ), Lh*sin(θ)). Base = (Bx, By).  (θ measured from horizontal, +up)
+ const thRad=travelDeg*Math.PI/180;
+ const Hx_mm=Lh_mm*Math.cos(thRad),Hy_mm=Lh_mm*Math.sin(thRad);
+ const Lact_mm=Math.sqrt((Hx_mm-Bx_mm)**2+(Hy_mm-By_mm)**2);
+ const stroke_mm=Lact_mm-Lmin_mm;
+ // Validate against L_min/L_max
+ const violMin=Lact_mm<Lmin_mm-1,violMax=Lact_mm>Lmax_mm+1;
+ const validCol=violMin?'#ef4444':violMax?'#ef4444':'#22c55e';
+ const validLbl=violMin?'< L_min!':violMax?'> L_max!':'OK';
+ // SVG layout: scale physical mm → SVG px so geometry fits in viewBox (500x260)
+ const VBW=500,VBH=260;
+ const Tx_svg=130,Ty_svg=170;   // trunnion in SVG
+ // Compute extents in mm to determine scale
+ const corners=[{x:0,y:0},{x:Bx_mm,y:By_mm},{x:Math.cos(thRad)*Math.max(Lh_mm,Lmax_mm)*1.1,y:Math.sin(thRad)*Math.max(Lh_mm,Lmax_mm)*1.1},{x:Lh_mm*1.5,y:0},{x:0,y:Lh_mm*1.2}];
+ let xMin=Math.min(...corners.map(c=>c.x)),xMax=Math.max(...corners.map(c=>c.x));
+ let yMin=Math.min(...corners.map(c=>c.y)),yMax=Math.max(...corners.map(c=>c.y));
+ const padMM=Math.max(xMax-xMin,yMax-yMin)*.15;
+ xMin-=padMM;xMax+=padMM;yMin-=padMM;yMax+=padMM;
+ const drawW=320,drawH=140;
+ const scaleX=drawW/(xMax-xMin),scaleY=drawH/(yMax-yMin);
+ const scale=Math.min(scaleX,scaleY);
+ // Map physical → SVG (origin = trunnion)
+ const px=mm=>Tx_svg+(mm)*scale;
+ const py=mm=>Ty_svg-(mm)*scale; // y-up
+ const Bx_svg=px(Bx_mm),By_svg=py(By_mm);
+ const Hx_svg=px(Hx_mm),Hy_svg=py(Hy_mm);
+ // Barrel tip beyond hinge for visualization (assume barrel length = 1.6 × Lh)
+ const barLen=Lh_mm*1.6;
+ const Bex_svg=px(barLen*Math.cos(thRad)),Bey_svg=py(barLen*Math.sin(thRad));
  let html='<rect x="0" y="0" width="500" height="260" fill="#060A13"/>';
- html+='<text x="20" y="22" font-family="Inter" font-size="11" font-weight="700" fill="#94a3b8" letter-spacing="2">ACTUATOR · TWO-FORCE MEMBER · θ='+f(travelDeg,1)+'°</text>';
- // Fixed pivots
- const Tx=120,Ty=200,Ax=220,Ay=232;
- // Barrel (lever arm, rotates about trunnion)
- const Lpx=185,bx=Tx+Lpx*Math.cos(elAng),by=Ty+Lpx*Math.sin(elAng);
- html+=`<line x1="${Tx}" y1="${Ty}" x2="${bx}" y2="${by}" stroke="#3b82f6" stroke-width="11" stroke-linecap="round" opacity=".9"/>`;
- // Barrel tip
- const tipX=bx+12*Math.cos(elAng),tipY=by+12*Math.sin(elAng);
- html+=`<line x1="${bx}" y1="${by}" x2="${tipX}" y2="${tipY}" stroke="#1d4ed8" stroke-width="5" stroke-linecap="round"/>`;
- // Hinge on barrel
- const Lh=85,hx=Tx+Lh*Math.cos(elAng),hy=Ty+Lh*Math.sin(elAng);
- // Actuator axial geometry (two-force member)
- const totalLen=Math.sqrt((hx-Ax)**2+(hy-Ay)**2);
- const theta=Math.atan2(hy-Ay,hx-Ax);
- const cylLen=Math.min(90,Math.max(40,totalLen*.55));   // fixed cylinder body length
- const rodLen=Math.max(0,totalLen-cylLen);
- const cylEx=Ax+cylLen*Math.cos(theta),cylEy=Ay+cylLen*Math.sin(theta);
- // Cylinder body (outer tube — fixed length, dark purple)
- html+=`<line x1="${Ax}" y1="${Ay}" x2="${cylEx}" y2="${cylEy}" stroke="#5b21b6" stroke-width="18" stroke-linecap="round"/>`;
- // Cylinder inner highlight
- html+=`<line x1="${Ax+8*Math.cos(theta)}" y1="${Ay+8*Math.sin(theta)}" x2="${cylEx-6*Math.cos(theta)}" y2="${cylEy-6*Math.sin(theta)}" stroke="#a855f7" stroke-width="11" stroke-linecap="round" opacity=".65"/>`;
- // End cap of cylinder (where piston exits)
- html+=`<circle cx="${cylEx}" cy="${cylEy}" r="6" fill="#1e1b4b" stroke="#a855f7" stroke-width="1.5"/>`;
- // Piston rod (shiny metallic, variable length)
- if(rodLen>1){
-  html+=`<line x1="${cylEx}" y1="${cylEy}" x2="${hx}" y2="${hy}" stroke="#475569" stroke-width="7" stroke-linecap="round"/>`;
-  html+=`<line x1="${cylEx}" y1="${cylEy}" x2="${hx}" y2="${hy}" stroke="#e2e8f0" stroke-width="3.5"/>`;
-  html+=`<line x1="${cylEx}" y1="${cylEy}" x2="${hx}" y2="${hy}" stroke="#f1f5f9" stroke-width="1" opacity=".9"/>`;
+ html+='<text x="20" y="18" font-family="Inter" font-size="11" font-weight="700" fill="#94a3b8" letter-spacing="2">ACTUATOR · TWO-FORCE MEMBER · θ='+f(travelDeg,1)+'°</text>';
+ // Subtle grid mark for trunnion
+ html+=`<line x1="${Tx_svg-10}" y1="${Ty_svg}" x2="${Tx_svg+barLen*scale*.4}" y2="${Ty_svg}" stroke="rgba(71,85,105,.3)" stroke-width=".5" stroke-dasharray="2 3"/>`;
+ // Barrel
+ html+=`<line x1="${Tx_svg}" y1="${Ty_svg}" x2="${Bex_svg}" y2="${Bey_svg}" stroke="#3b82f6" stroke-width="11" stroke-linecap="round" opacity=".9"/>`;
+ // Two-force member: cylinder body fixed at L_min, rod = stroke
+ const dxS=Hx_svg-Bx_svg,dyS=Hy_svg-By_svg,actLen_svg=Math.sqrt(dxS*dxS+dyS*dyS);
+ const theta=Math.atan2(dyS,dxS);
+ const cylLen_svg=Math.max(8,actLen_svg*Math.min(1,Lmin_mm/Math.max(Lact_mm,1)));
+ const cylEx_svg=Bx_svg+cylLen_svg*Math.cos(theta),cylEy_svg=By_svg+cylLen_svg*Math.sin(theta);
+ // Cylinder body (dark mor, sabit)
+ html+=`<line x1="${Bx_svg}" y1="${By_svg}" x2="${cylEx_svg}" y2="${cylEy_svg}" stroke="#5b21b6" stroke-width="18" stroke-linecap="round"/>`;
+ html+=`<line x1="${Bx_svg+8*Math.cos(theta)}" y1="${By_svg+8*Math.sin(theta)}" x2="${cylEx_svg-6*Math.cos(theta)}" y2="${cylEy_svg-6*Math.sin(theta)}" stroke="#a855f7" stroke-width="11" opacity=".65"/>`;
+ // End cap
+ html+=`<circle cx="${cylEx_svg}" cy="${cylEy_svg}" r="6" fill="#1e1b4b" stroke="#a855f7" stroke-width="1.5"/>`;
+ // Piston rod (variable)
+ if(stroke_mm>0&&!violMin){
+  html+=`<line x1="${cylEx_svg}" y1="${cylEy_svg}" x2="${Hx_svg}" y2="${Hy_svg}" stroke="#475569" stroke-width="7" stroke-linecap="round"/>`;
+  html+=`<line x1="${cylEx_svg}" y1="${cylEy_svg}" x2="${Hx_svg}" y2="${Hy_svg}" stroke="#e2e8f0" stroke-width="3.5"/>`;
+  html+=`<line x1="${cylEx_svg}" y1="${cylEy_svg}" x2="${Hx_svg}" y2="${Hy_svg}" stroke="#f1f5f9" stroke-width="1" opacity=".9"/>`;
+ } else if(violMin){
+  html+=`<line x1="${cylEx_svg}" y1="${cylEy_svg}" x2="${Hx_svg}" y2="${Hy_svg}" stroke="#ef4444" stroke-width="3" stroke-dasharray="3 2"/>`;
  }
- // Base pivot (two-force member pinned end)
- html+=`<circle cx="${Ax}" cy="${Ay}" r="7" fill="#94a3b8" stroke="#e2e8f0" stroke-width="1.5"/>`;
- html+=`<circle cx="${Ax}" cy="${Ay}" r="2.5" fill="#060A13"/>`;
- // Hinge pivot (barrel end)
- html+=`<circle cx="${hx}" cy="${hy}" r="6.5" fill="#f59e0b" stroke="#fbbf24" stroke-width="1.5"/>`;
- html+=`<circle cx="${hx}" cy="${hy}" r="2" fill="#7c2d12"/>`;
- // Trunnion (barrel pivot)
- html+=`<circle cx="${Tx}" cy="${Ty}" r="8" fill="#475569" stroke="#94a3b8" stroke-width="1.5"/>`;
- html+=`<circle cx="${Tx}" cy="${Ty}" r="3" fill="#0f172a"/>`;
- // Ground hatching under trunnion
- html+=`<rect x="${Tx-18}" y="${Ty+10}" width="36" height="5" fill="#334155" stroke="#64748b" stroke-width=".7"/>`;
- for(let i=0;i<5;i++){const gx=Tx-18+i*9;html+=`<line x1="${gx}" y1="${Ty+15}" x2="${gx-5}" y2="${Ty+22}" stroke="#64748b" stroke-width="1"/>`}
- html+=`<text x="${Tx-2}" y="${Ty+34}" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#64748b">Trunnion</text>`;
- // Ground hatching under actuator base
- html+=`<rect x="${Ax-20}" y="${Ay+8}" width="40" height="5" fill="#334155" stroke="#64748b" stroke-width=".7"/>`;
- for(let i=0;i<5;i++){const gx=Ax-20+i*10;html+=`<line x1="${gx}" y1="${Ay+13}" x2="${gx-5}" y2="${Ay+20}" stroke="#64748b" stroke-width="1"/>`}
- html+=`<text x="${Ax}" y="${Ay+33}" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#64748b">Base pivot</text>`;
- // Motor mounted on cylinder body
- const mx=Ax-18*Math.sin(theta),my=Ay+18*Math.cos(theta);
+ // Pivot markers
+ html+=`<circle cx="${Bx_svg}" cy="${By_svg}" r="7" fill="#94a3b8" stroke="#e2e8f0" stroke-width="1.5"/>`;
+ html+=`<circle cx="${Bx_svg}" cy="${By_svg}" r="2.5" fill="#060A13"/>`;
+ html+=`<circle cx="${Hx_svg}" cy="${Hy_svg}" r="6.5" fill="#f59e0b" stroke="#fbbf24" stroke-width="1.5"/>`;
+ html+=`<circle cx="${Hx_svg}" cy="${Hy_svg}" r="2" fill="#7c2d12"/>`;
+ html+=`<circle cx="${Tx_svg}" cy="${Ty_svg}" r="8" fill="#475569" stroke="#94a3b8" stroke-width="1.5"/>`;
+ html+=`<circle cx="${Tx_svg}" cy="${Ty_svg}" r="3" fill="#0f172a"/>`;
+ // Ground hatching at fixed pivots (trunnion + base)
+ const gh=(cx,cy)=>{let s=`<rect x="${cx-18}" y="${cy+10}" width="36" height="5" fill="#334155" stroke="#64748b" stroke-width=".7"/>`;for(let i=0;i<5;i++){const gx=cx-18+i*9;s+=`<line x1="${gx}" y1="${cy+15}" x2="${gx-5}" y2="${cy+22}" stroke="#64748b" stroke-width="1"/>`}return s};
+ html+=gh(Tx_svg,Ty_svg);
+ html+=gh(Bx_svg,By_svg);
+ html+=`<text x="${Tx_svg-2}" y="${Ty_svg+34}" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#64748b">Trunnion (0,0)</text>`;
+ html+=`<text x="${Bx_svg}" y="${By_svg+34}" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#64748b">Base (${f(Bx_mm,0)},${f(By_mm,0)})</text>`;
+ // Motor mount on cylinder
+ const mx=Bx_svg-15*Math.sin(theta),my=By_svg+15*Math.cos(theta);
  html+=`<rect x="${mx-12}" y="${my-8}" width="24" height="16" rx="3" fill="#1e40af" stroke="#60a5fa" stroke-width="1"/>`;
  html+=`<text x="${mx}" y="${my+3}" text-anchor="middle" font-family="Inter" font-size="8" font-weight="700" fill="#fff">M×${r.n}</text>`;
- // Dimension labels — cylinder
- const lbCX=(Ax+cylEx)/2-18*Math.sin(theta),lbCY=(Ay+cylEy)/2+18*Math.cos(theta);
- html+=`<text x="${lbCX}" y="${lbCY}" font-family="JetBrains Mono" font-size="8" font-weight="700" fill="#c084fc" text-anchor="middle">cyl=${f(cylLen,0)}</text>`;
- // Dimension label — rod (variable)
- if(rodLen>5){const lbRX=(cylEx+hx)/2-18*Math.sin(theta),lbRY=(cylEy+hy)/2+18*Math.cos(theta);html+=`<text x="${lbRX}" y="${lbRY}" font-family="JetBrains Mono" font-size="8" font-weight="700" fill="#86efac" text-anchor="middle">rod=${f(rodLen,1)}</text>`}
- // Length summary box
- const lblMidX=(Ax+hx)/2,lblMidY=(Ay+hy)/2-24;
- html+=`<rect x="${lblMidX-56}" y="${lblMidY-14}" width="112" height="28" rx="3" fill="rgba(12,18,34,.92)" stroke="#a855f7" stroke-width="1"/>`;
- html+=`<text x="${lblMidX}" y="${lblMidY-2}" text-anchor="middle" font-family="JetBrains Mono" font-size="9" font-weight="700" fill="#c084fc">L_total = ${f(totalLen,1)} px</text>`;
- html+=`<text x="${lblMidX}" y="${lblMidY+10}" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#86efac">stroke = ${f(rodLen,1)} px</text>`;
+ // Length stack labels (mm)
+ const lblMidX=(Bx_svg+Hx_svg)/2,lblMidY=(By_svg+Hy_svg)/2-26;
+ html+=`<rect x="${lblMidX-58}" y="${lblMidY-15}" width="116" height="30" rx="3" fill="rgba(12,18,34,.92)" stroke="${validCol}" stroke-width="1.2"/>`;
+ html+=`<text x="${lblMidX}" y="${lblMidY-4}" text-anchor="middle" font-family="JetBrains Mono" font-size="9" font-weight="700" fill="#c084fc">L_act = ${f(Lact_mm,1)} mm</text>`;
+ html+=`<text x="${lblMidX}" y="${lblMidY+5}" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#86efac">stroke = ${f(stroke_mm,1)} mm</text>`;
+ html+=`<text x="${lblMidX}" y="${lblMidY+13}" text-anchor="middle" font-family="JetBrains Mono" font-size="7" fill="${validCol}">${validLbl}</text>`;
  // Info annotation box
- html+=`<rect x="305" y="35" width="180" height="105" rx="6" fill="rgba(30,41,59,.92)" stroke="#7c3aed" stroke-width="1"/>`;
- html+=`<text x="315" y="52" font-family="Inter" font-size="10" font-weight="700" fill="#c084fc">ROLLERSCREW (2-force)</text>`;
- html+=`<text x="315" y="68" font-family="JetBrains Mono" font-size="9" fill="#e2e8f0">θ = ${f(travelDeg,1)}°</text>`;
- html+=`<text x="315" y="82" font-family="JetBrains Mono" font-size="9" fill="#e2e8f0">h = ${f(hp,1)} mm/rev</text>`;
- html+=`<text x="315" y="96" font-family="JetBrains Mono" font-size="9" fill="#e2e8f0">F_peak = ${f((r.Fp||0)/1e3,2)} kN</text>`;
- html+=`<text x="315" y="110" font-family="JetBrains Mono" font-size="9" fill="#e2e8f0">v = ${f(r.vL,1)} mm/s</text>`;
- html+=`<text x="315" y="124" font-family="JetBrains Mono" font-size="9" fill="#e2e8f0">i_tot = ${f(r.iT,1)}</text>`;
- html+=`<text x="315" y="138" font-family="JetBrains Mono" font-size="8" fill="#94a3b8">Force along axis only (pinned-pinned)</text>`;
+ html+=`<rect x="${VBW-180}" y="35" width="170" height="116" rx="6" fill="rgba(30,41,59,.94)" stroke="#7c3aed" stroke-width="1"/>`;
+ html+=`<text x="${VBW-172}" y="50" font-family="Inter" font-size="9.5" font-weight="700" fill="#c084fc">GEOMETRY (mm)</text>`;
+ const ix=VBW-172;let iy=63;
+ const infoLines=[
+  ['L_h (hinge)',f(Lh_mm,0)+' mm'],
+  ['Base ΔX',f(Bx_mm,0)+' mm'],
+  ['Base ΔY',f(By_mm,0)+' mm'],
+  ['L_min',f(Lmin_mm,0)+' mm'],
+  ['L_max',f(Lmax_mm,0)+' mm'],
+  ['θ range',f(elMinDeg,0)+'° → '+f(elMaxDeg,0)+'°'],
+  ['Stroke max',f(Lmax_mm-Lmin_mm,0)+' mm'],
+  ['F_peak',f((r.Fp||0)/1e3,2)+' kN']
+ ];
+ for(const [k,v] of infoLines){pdf_textRow(html,ix,iy,k,v);html+=`<text x="${ix}" y="${iy}" font-family="JetBrains Mono" font-size="8" fill="#94a3b8">${k}</text>`;html+=`<text x="${VBW-15}" y="${iy}" text-anchor="end" font-family="JetBrains Mono" font-size="8" fill="#e2e8f0">${v}</text>`;iy+=10}
+ // Sweep range arc indicator at trunnion
+ const arcR=18,a1=-elMaxDeg*Math.PI/180,a2=-elMinDeg*Math.PI/180;
+ const arcX1=Tx_svg+arcR*Math.cos(a1),arcY1=Ty_svg+arcR*Math.sin(a1);
+ const arcX2=Tx_svg+arcR*Math.cos(a2),arcY2=Ty_svg+arcR*Math.sin(a2);
+ const lg=Math.abs(elMaxDeg-elMinDeg)>180?1:0;
+ html+=`<path d="M ${arcX1} ${arcY1} A ${arcR} ${arcR} 0 ${lg} 1 ${arcX2} ${arcY2}" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="2 2"/>`;
+ html+=`<text x="${Tx_svg+arcR+4}" y="${Ty_svg-arcR}" font-family="JetBrains Mono" font-size="7" fill="#fbbf24">${f(elMinDeg,0)}°…${f(elMaxDeg,0)}°</text>`;
  svg.innerHTML=html;
- return totalLen;
+ return Lact_mm;
 }
-
 // === ACTUATOR ANIMATION ===
 const actAnim={raf:null,t0:0,lastR:null,targetId:null};
 function startActAnim(r,targetId){
@@ -895,10 +941,11 @@ function startActAnim(r,targetId){
  actAnim.t0=performance.now();
  const tick=()=>{
   const ufn=UNITS.ang==='rad'?1:U2R;
-  const trav=Math.max(6,Math.abs((AP.elevation.performance.travelAngle||25)*ufn/U2R));
+  const m=AP.elevation.mechanical;
+  const elMin=(m.elevMin!=null?m.elevMin:-10)*ufn/U2R;
+  const elMax=(m.elevMax!=null?m.elevMax:60)*ufn/U2R;
   const el=(performance.now()-actAnim.t0)*.0008;
-  const minDeg=Math.max(0,-trav*.15),maxDeg=trav;
-  const mid=(minDeg+maxDeg)/2,amp=(maxDeg-minDeg)/2;
+  const mid=(elMin+elMax)/2,amp=(elMax-elMin)/2;
   const ang=mid+amp*Math.sin(el);
   drawActuatorGeom(actAnim.lastR,actAnim.targetId,ang);
   actAnim.raf=requestAnimationFrame(tick);
@@ -1250,25 +1297,267 @@ function updScnSel(){const list=loadScnList(),sel=document.getElementById('scnLo
 function saveScn(){rd();const name=prompt('Scenario name?','Scenario '+(new Date().toISOString().slice(0,16).replace('T',' ')));if(!name)return;const list=loadScnList();list[name]={ax,AP:JSON.parse(JSON.stringify(AP)),PM:{...PM},ts:new Date().toISOString()};saveScnList(list);updScnSel();alert('Saved: '+name)}
 function loadScn(name){if(!name)return;const list=loadScnList(),s=list[name];if(!s)return;ax=s.ax;Object.assign(AP,s.AP);Object.assign(PM,s.PM);sw(ax);pop();markStale();document.getElementById('scnLoad').value=''}
 
-// === D3: PDF EXPORT ===
-function exportPDF(){
- if(!solved)solve();swView('results');
- // Visit each sub-tab in turn to render all content, then show overview before capture
- const subs=['overview','power','energy','precision','charts','visuals'];
- let idx=0;const seq=()=>{
-  if(idx<subs.length){swSub(subs[idx]);idx++;setTimeout(seq,300);return}
-  // All tabs rendered; build a composite layout
-  const src=document.getElementById('view-results');
-  // Temporarily force all subviews visible so PDF captures everything
-  const subEls=subs.map(k=>document.getElementById('sub-'+k));
-  const prevDisp=subEls.map(e=>e?.style.display);
-  subEls.forEach(e=>{if(e)e.style.display='block'});
-  const hdr=`<div style="padding:14px 18px;background:#0A1020;color:#e2e8f0;border-bottom:2px solid #3b82f6;font-family:Inter,sans-serif;margin-bottom:8px"><div style="font-size:16px;font-weight:800;letter-spacing:2px">WEAPON SYSTEM MOTOR SIZING — DETAILED REPORT</div><div style="font-size:10px;color:#94a3b8;margin-top:3px">Axis: <b>${ax.toUpperCase()}</b> · Generated: ${new Date().toLocaleString()} · v7.3</div></div>`;
-  const wrap=document.createElement('div');wrap.style.cssText='background:#060A13;color:#e2e8f0;font-family:Inter,sans-serif';
-  wrap.innerHTML=hdr;wrap.appendChild(src.cloneNode(true));
-  const opt={margin:[8,6,8,6],filename:'motor_sizing_'+ax+'_'+new Date().toISOString().slice(0,16).replace(/[:T]/g,'-')+'.pdf',image:{type:'jpeg',quality:.92},html2canvas:{scale:1.6,backgroundColor:'#060A13',useCORS:true,logging:false,windowWidth:1600},jsPDF:{unit:'mm',format:'a4',orientation:'landscape',compress:true},pagebreak:{mode:['css','legacy'],avoid:'.card'}};
-  html2pdf().set(opt).from(wrap).save().then(()=>{subEls.forEach((e,i)=>{if(e)e.style.display=prevDisp[i]||''});swSub(curSub)}).catch(err=>{console.error('PDF err:',err);alert('PDF generation failed: '+err.message);subEls.forEach((e,i)=>{if(e)e.style.display=prevDisp[i]||''})});
- };seq();
+// === D3: PDF EXPORT (custom jsPDF layout) ===
+async function exportPDF(){
+ if(!solved)solve();
+ await new Promise(rs=>setTimeout(rs,250));
+ const r=calc(AP[ax],ax);
+ const {jsPDF}=window.jspdf;
+ const pdf=new jsPDF({unit:'mm',format:'a4',orientation:'landscape',compress:true});
+ const PW=297,PH=210,M=10;
+ let pg=1;
+ // ---- helpers ----
+ const C={hdr:[10,16,32],accent:[59,130,246],muted:[100,116,139],line:[226,232,240],dark:[15,23,42],good:[34,197,94],warn:[245,158,11],bad:[239,68,68],vio:[124,58,237]};
+ function header(title){
+  pdf.setFillColor(...C.hdr);pdf.rect(0,0,PW,15,'F');
+  pdf.setFillColor(...C.accent);pdf.rect(0,15,PW,1,'F');
+  pdf.setTextColor(255);pdf.setFontSize(11);pdf.setFont('helvetica','bold');
+  pdf.text('WEAPON SYSTEM MOTOR SIZING — '+title,M,10);
+  pdf.setFontSize(7);pdf.setFont('helvetica','normal');pdf.setTextColor(180);
+  pdf.text(`Axis: ${ax.toUpperCase()}  ·  ${new Date().toLocaleString('tr-TR')}  ·  v7.5`,PW-M,10,{align:'right'});
+  pdf.setTextColor(0);
+ }
+ function footer(){
+  pdf.setDrawColor(...C.muted);pdf.setLineWidth(.2);pdf.line(M,PH-7,PW-M,PH-7);
+  pdf.setFontSize(7);pdf.setTextColor(...C.muted);
+  pdf.text(`Page ${pg}`,M,PH-3);
+  pdf.text(`Generated by sizing-gui · github.com/yagokhan/sizing-gui`,PW-M,PH-3,{align:'right'});
+  pdf.setTextColor(0);
+ }
+ function section(y,label){
+  pdf.setDrawColor(...C.accent);pdf.setLineWidth(.6);pdf.line(M,y,M+3,y);
+  pdf.setFont('helvetica','bold');pdf.setFontSize(9);pdf.setTextColor(...C.accent);
+  pdf.text(label,M+5,y+1);
+  pdf.setLineWidth(.15);pdf.setDrawColor(...C.line);pdf.line(M+5+pdf.getTextWidth(label)+3,y,PW-M,y);
+  pdf.setTextColor(0);
+ }
+ function tiles(y,arr,x,w){
+  const cols=4,rows=Math.ceil(arr.length/cols);
+  const tw=(w-(cols-1)*3)/cols,th=18;
+  for(let i=0;i<arr.length;i++){
+   const cx=x+(i%cols)*(tw+3),cy=y+Math.floor(i/cols)*(th+3);
+   const t=arr[i];
+   pdf.setDrawColor(...(t.c||C.accent));pdf.setLineWidth(.4);
+   pdf.setFillColor(248,250,252);pdf.rect(cx,cy,tw,th,'FD');
+   pdf.setFontSize(6.5);pdf.setTextColor(...C.muted);pdf.setFont('helvetica','bold');
+   pdf.text((t.l||'').toUpperCase(),cx+2,cy+4);
+   pdf.setFontSize(11);pdf.setTextColor(0);pdf.setFont('helvetica','bold');
+   pdf.text(String(t.v),cx+2,cy+11);
+   pdf.setFontSize(6.5);pdf.setFont('helvetica','normal');pdf.setTextColor(...C.muted);
+   pdf.text(String(t.u||''),cx+2,cy+15);
+   if(t.note){pdf.setFontSize(6);pdf.text(t.note,cx+tw-2,cy+15,{align:'right'})}
+  }
+  return rows*(th+3);
+ }
+ function table(y,rows,x,w,colWs){
+  const lh=4.6;pdf.setFontSize(7.5);
+  pdf.setFillColor(241,245,249);pdf.rect(x,y,w,lh+1.2,'F');
+  pdf.setFont('helvetica','bold');pdf.setTextColor(...C.dark);
+  let cx=x;rows[0].forEach((h,i)=>{pdf.text(h,cx+1.5,y+lh-.5);cx+=colWs[i]});
+  pdf.setFont('helvetica','normal');pdf.setTextColor(0);
+  let cy=y+lh+1.5;
+  for(let i=1;i<rows.length;i++){
+   if(i%2===0){pdf.setFillColor(248,250,252);pdf.rect(x,cy-3.5,w,lh+.5,'F')}
+   cx=x;rows[i].forEach((cell,j)=>{
+    if(j===rows[i].length-1&&typeof cell==='object'){
+     // status pill
+     const c=cell.s==='ok'?C.good:cell.s==='warn'?C.warn:C.bad;
+     pdf.setFillColor(...c);pdf.roundedRect(cx+1.5,cy-3.2,8,3.6,1,1,'F');
+     pdf.setFontSize(6);pdf.setTextColor(255);pdf.text(cell.t||'',cx+5.5,cy-.6,{align:'center'});
+     pdf.setTextColor(0);pdf.setFontSize(7.5);
+    } else {
+     pdf.setFont(j===0?'helvetica':'helvetica',j===0?'normal':'bold');
+     if(j===0)pdf.setTextColor(...C.muted);else pdf.setTextColor(0);
+     pdf.text(String(cell),cx+1.5,cy);
+     pdf.setFont('helvetica','normal');pdf.setTextColor(0);
+    }
+    cx+=colWs[j];
+   });cy+=lh;
+  }
+  pdf.setDrawColor(...C.line);pdf.setLineWidth(.15);pdf.rect(x,y,w,cy-y-lh+lh,'S');
+  return cy-y;
+ }
+ function status(val,gw,db){return val<=gw?{s:'ok',t:'OK'}:val<=db?{s:'warn',t:'WARN'}:{s:'bad',t:'HIGH'}}
+ function statusGE(val,gw,db){return val>=gw?{s:'ok',t:'OK'}:val>=db?{s:'warn',t:'LOW'}:{s:'bad',t:'CRIT'}}
+ async function chartImg(id,w,h){try{const url=await Plotly.toImage(id,{format:'png',width:w,height:h,scale:1.5});return url}catch(e){return null}}
+ async function svgImg(id,w,h){
+  const svg=document.getElementById(id);if(!svg)return null;
+  const xml=new XMLSerializer().serializeToString(svg);
+  const data='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(xml);
+  return new Promise(rs=>{const img=new Image();img.onload=()=>{const c=document.createElement('canvas');c.width=w*2.2;c.height=h*2.2;const ctx=c.getContext('2d');ctx.fillStyle='#060A13';ctx.fillRect(0,0,c.width,c.height);ctx.scale(2.2,2.2);ctx.drawImage(img,0,0,w,h);rs(c.toDataURL('image/png'))};img.onerror=()=>rs(null);img.src=data});
+ }
+ // ============ PAGE 1: EXECUTIVE SUMMARY ============
+ header('EXECUTIVE SUMMARY');
+ let y=22;
+ section(y,'KEY METRICS');y+=4;
+ const tlist=[
+  {l:'i_tot',v:f(r.iT,2),u:'[-]',c:C.vio},
+  {l:'ω_M',v:f(r.wM,1),u:'rad/s ('+f(r.rpm,0)+' rpm)',c:C.accent},
+  {l:'T_peak / motor',v:fA(r.Tpm),u:'Nm',c:[37,99,235],note:f(r.pU,0)+'% lim'},
+  {l:'M_rms / motor',v:fA(r.Mrm),u:'Nm',c:[14,165,233],note:f((r.Mrm/r.Tco)*100,0)+'% cont'},
+  {l:'I_peak',v:f(r.Ipm,1),u:'A',c:C.warn},
+  {l:'V_req',v:f(r.Vr,1),u:'V ('+f(r.vP,0)+'% margin)',c:r.vP<5?C.bad:r.vP<15?C.warn:C.good},
+  {l:'Inertia ratio',v:f(r.Jrat,1)+':1',u:'load / motor',c:r.Jrat<=5?C.good:r.Jrat<=10?C.warn:C.bad},
+  {l:'Peak Mech. P',v:f(r.Pmech_pk,0),u:'W',c:C.vio},
+  {l:'System η',v:f(r.etaSys*100,1),u:'%',c:C.good},
+  {l:'Energy / cycle',v:f(r.En/3600,3),u:'Wh',c:C.warn},
+  {l:'τ_m',v:f(r.tauM*1e3,2),u:'ms (mech)',c:C.muted},
+  {l:'Pointing LSB',v:f(r.lsb_mrad,4),u:'mrad',c:C.good}
+ ];
+ y+=tiles(y,tlist,M,PW-2*M);
+ y+=4;
+ section(y,'CONFIGURATION');y+=4;
+ const isL=r.isL,p=AP[ax];
+ const cfgRows=[
+  ['Parameter','Value','Unit'],
+  ['Axis',ax.toUpperCase(),''],
+  ['Motor count (parallel)',r.n,''],
+  ['Gear input mode',GM[ax]==='single'?'Single ratio (lumped)':'Step-by-step',''],
+  ['Total ratio i_tot',f(r.iT,2),'[-]'],
+  ['Total efficiency η',f(r.eT*100,2),'%'],
+  ['Effective inertia J_eff',r.Je.toExponential(3),'kg·m²'],
+  ['Bus voltage V_dc',f(r.Vb,1),'V'],
+  ['Profile mode',PM[ax]+(PM[ax]==='import'?' (CSV)':''),''],
+  ['Stab mode',SM[ax],SM[ax]==='import'?'(imported)':''],
+  ['Encoder',f(r.encCPR,0),'counts/rev']
+ ];
+ const cwCfg=[(PW-2*M)*.45,(PW-2*M)*.35,(PW-2*M)*.20];
+ table(y,cfgRows,M,PW-2*M,cwCfg);
+ footer();
+
+ // ============ PAGE 2: PERFORMANCE ============
+ pdf.addPage();pg++;header('GUN LAYING & STABILIZATION');
+ y=22;
+ section(y,'GUN LAYING');y+=4;
+ const layRows=[
+  ['Quantity','Value','Unit','Status'],
+  ['T_peak (total)',fA(r.Tp),'Nm',''],
+  ['T_peak / motor',fA(r.Tpm),'Nm',status(r.pU,70,90)],
+  ['I_peak / motor',f(r.Ipm,2),'A',''],
+  ['V_req',f(r.Vr,2),'V',statusGE(r.vP,15,5)],
+  ['M_rms (total)',fA(r.Mrm*r.n),'Nm',''],
+  ['M_rms / motor',fA(r.Mrm),'Nm',status((r.Mrm/r.Tco)*100,80,95)],
+  ['I_rms / motor',f(r.Irm,2),'A',''],
+  ['Source profile',r.prof.label,'','']
+ ];
+ const cw4=[(PW-2*M)*.42,(PW-2*M)*.30,(PW-2*M)*.18,(PW-2*M)*.10];
+ const h1=table(y,layRows,M,PW-2*M,cw4);y+=h1+5;
+ section(y,'STABILIZATION');y+=4;
+ const stabRows=[
+  ['Quantity','Value','Unit','Status'],
+  ['Peak Stab Torque (total)',fA(r.TsP),'Nm',''],
+  ['RMS Stab Torque (total)',fA(r.TsR),'Nm',''],
+  ['T_hold (unbalance)',fA(r.Th),'Nm',''],
+  ['RMS / motor',fA(r.TsRm),'Nm',''],
+  ['I_rms (stab) / motor',f(r.IsRm,2),'A',''],
+  ['V_req (stab)',f(r.Vs,2),'V',''],
+  ['Mode',r.sMode,'','']
+ ];
+ table(y,stabRows,M,PW-2*M,cw4);
+ footer();
+
+ // ============ PAGE 3: POWER & BANDWIDTH ============
+ pdf.addPage();pg++;header('POWER & BANDWIDTH');
+ y=22;
+ section(y,'POWER METRICS');y+=4;
+ const pwrTiles=[
+  {l:'Peak Mech. Power',v:f(r.Pmech_pk,0),u:'W',c:C.accent},
+  {l:'Peak Elec. Power',v:f(r.Pelec_pk,0),u:'W',c:C.warn},
+  {l:'Peak Cu Loss',v:f(r.Ploss_cu_pk,0),u:'W',c:C.bad},
+  {l:'System Eff.',v:f(r.etaSys*100,1),u:'%',c:C.good}
+ ];
+ y+=tiles(y,pwrTiles,M,PW-2*M);y+=3;
+ section(y,'DYNAMIC RESPONSE');y+=4;
+ const dynRows=[
+  ['Quantity','Value','Unit'],
+  ['Mechanical time constant τ_m',f(r.tauM*1e3,3),'ms'],
+  ['Open-loop pole ω_m',f(r.wmp,2),'rad/s'],
+  ['Open-loop pole f_m',f(r.fmp,2),'Hz'],
+  ['Max achievable BW',f(r.bwMax,2),'Hz'],
+  ['Target position BW',f(r.bwSet,2),'Hz'],
+  ['Velocity loop K_p',r.Kp_vel.toExponential(3),'Nm·s/rad'],
+  ['Velocity loop K_i',r.Ki_vel.toExponential(3),'Nm/rad'],
+  ['No-load speed ω_NL',f(r.wNL,1),'rad/s']
+ ];
+ const cw3=[(PW-2*M)*.55,(PW-2*M)*.25,(PW-2*M)*.20];
+ const h3=table(y,dynRows,M,PW-2*M,cw3);y+=h3+5;
+ // Power-Speed chart
+ const psImg=await chartImg('psC',900,400);
+ if(psImg){section(y,'POWER – SPEED CURVE');y+=4;pdf.addImage(psImg,'PNG',M,y,PW-2*M,55)}
+ footer();
+
+ // ============ PAGE 4: ENERGY & PRECISION ============
+ pdf.addPage();pg++;header('ENERGY & PRECISION');
+ y=22;
+ section(y,'ENERGY & BATTERY');y+=4;
+ const eTiles=[
+  {l:'E / cycle',v:f(r.En/3600,3),u:'Wh',c:C.warn},
+  {l:'E / mission',v:f(r.Emis/3600,2),u:'Wh',c:C.warn},
+  {l:'Battery (Ah, +30% margin)',v:f(r.Ah_rec,2),u:'Ah',c:C.vio},
+  {l:'Avg bus current',v:f(r.Iavg,2),u:'A',c:C.accent},
+  {l:'Peak bus current',v:f(r.Ipk_bus,1),u:'A',c:C.bad},
+  {l:'Continuous heat',v:f(r.Qheat,1),u:'W',c:C.bad},
+  {l:'Cycles / mission',v:f(r.nCyc,1),u:'',c:C.muted},
+  {l:'Regen recoverable',v:f(r.Ereg_mis/3600,3),u:'Wh',c:C.good}
+ ];
+ y+=tiles(y,eTiles,M,PW-2*M);y+=4;
+ section(y,'PRECISION & POINTING');y+=4;
+ const prRows=[
+  ['Quantity','Value','Unit'],
+  ['Encoder resolution',f(r.encCPR,0),'counts/rev'],
+  ['Δθ at motor',f(r.dthM*1e6,2),'μrad'],
+  ['Δθ at load (LSB)',f(r.dthL_urad,2),'μrad'],
+  ['Δθ at load',f(r.dthL_arcsec,2),'arcsec'],
+  ['Quantization (mrad)',f(r.lsb_mrad,4),'mrad'],
+  ['Resolution @ 1 km',f(r.res_1km,2),'cm'],
+  ['Resolution @ 4 km',f(r.res_4km,2),'cm'],
+  ['Max slew rate',f(r.slewMax,1),'rad/s']
+ ];
+ table(y,prRows,M,PW-2*M,cw3);
+ footer();
+
+ // ============ PAGE 5: TORQUE/SPEED + DUTY ============
+ pdf.addPage();pg++;header('TORQUE-SPEED · DUTY CYCLE');
+ y=22;
+ const tsImg=await chartImg('tsC',900,500);
+ const dcImg=await chartImg('dcC',900,500);
+ if(tsImg){section(y,'TORQUE – SPEED DIAGRAM');y+=4;pdf.addImage(tsImg,'PNG',M,y,(PW-3*M)/2,80);}
+ if(dcImg){pdf.addImage(dcImg,'PNG',M+(PW-3*M)/2+M,y,(PW-3*M)/2,80);}
+ y+=85;
+ const tbImg=await chartImg('tbC',900,500);
+ const emImg=await chartImg('emC',900,500);
+ if(tbImg){section(y,'TORQUE BUDGET');y+=4;pdf.addImage(tbImg,'PNG',M,y,(PW-3*M)/2,75);}
+ if(emImg){pdf.addImage(emImg,'PNG',M+(PW-3*M)/2+M,y,(PW-3*M)/2,75);}
+ footer();
+
+ // ============ PAGE 6: ANALYSIS CHARTS ============
+ pdf.addPage();pg++;header('ANALYSIS CHARTS');
+ y=22;
+ const ps2Img=await chartImg('ps2C',900,500);
+ const fftImg=await chartImg('fftC',900,500);
+ const ebImg=await chartImg('ebC',900,500);
+ if(ps2Img){section(y,'POWER – SPEED OVERLAY');y+=4;pdf.addImage(ps2Img,'PNG',M,y,(PW-3*M)/2,80);}
+ if(fftImg){pdf.addImage(fftImg,'PNG',M+(PW-3*M)/2+M,y,(PW-3*M)/2,80);}
+ y+=85;
+ if(ebImg){section(y,'ENERGY BREAKDOWN');y+=4;pdf.addImage(ebImg,'PNG',M+50,y,80,60);}
+ footer();
+
+ // ============ PAGE 7: VISUALS ============
+ pdf.addPage();pg++;header('SYSTEM VISUALS');
+ y=22;
+ const blockI=await svgImg('svgBlock',900,220);
+ const kinId=GM[ax]==='single'?(r.isL?'svgAct':'svgGear'):(r.isL?'svgAct':'svgGear');
+ const kinI=await svgImg(kinId,500,260);
+ const gaugeI=await svgImg('svgGauges',600,240);
+ const pointI=await svgImg('svgPoint',320,280);
+ if(blockI){section(y,'POWER FLOW BLOCK');y+=4;pdf.addImage(blockI,'PNG',M,y,PW-2*M,50);y+=55}
+ if(kinI){section(y,'KINEMATICS');y+=4;pdf.addImage(kinI,'PNG',M,y,(PW-3*M)/2,50);}
+ if(gaugeI){pdf.addImage(gaugeI,'PNG',M+(PW-3*M)/2+M,y,(PW-3*M)/2,50);}
+ y+=55;
+ if(pointI){section(y,'POINTING ERROR');y+=4;pdf.addImage(pointI,'PNG',M+50,y,60,52)}
+ footer();
+
+ pdf.save('motor_sizing_'+ax+'_'+new Date().toISOString().slice(0,16).replace(/[:T]/g,'-')+'.pdf');
 }
 
 // === D4: COMPARE A/B ===
