@@ -809,51 +809,82 @@ function drawBlockDiagram(r,targetId){
 
 function drawActuatorGeom(r,targetId,elPhysDeg){
  const svg=document.getElementById(targetId||'svgAct');if(!svg||!r.isL)return;
- // Elevation physical (degrees, up=positive). Default: use half the user's travel angle as nominal position.
  const ufn=UNITS.ang==='rad'?1:U2R;
  const travelDeg=elPhysDeg!=null?elPhysDeg:Math.max(15,(AP.elevation.performance.travelAngle||25)*ufn/U2R/2);
- const elAng=-travelDeg*Math.PI/180;   // SVG y-down → flip sign
- const h=r.vL>0?r.vL/Math.max(r.wM,.01)*1e3*r.iT:25;
+ const elAng=-travelDeg*Math.PI/180;
+ const hp=r.vL>0?r.vL/Math.max(r.wM,.01)*1e3*r.iT:25;
  let html='<rect x="0" y="0" width="500" height="260" fill="#060A13"/>';
- html+='<text x="20" y="22" font-family="Inter" font-size="11" font-weight="700" fill="#94a3b8" letter-spacing="2">ACTUATOR GEOMETRY · θ='+f(travelDeg,1)+'°</text>';
+ html+='<text x="20" y="22" font-family="Inter" font-size="11" font-weight="700" fill="#94a3b8" letter-spacing="2">ACTUATOR · TWO-FORCE MEMBER · θ='+f(travelDeg,1)+'°</text>';
  // Fixed pivots
- const Tx=120,Ty=200;     // trunnion
- const Ax=200,Ay=250;     // actuator base
- // Barrel (lever arm)
- const Lpx=180;const bx=Tx+Lpx*Math.cos(elAng),by=Ty+Lpx*Math.sin(elAng);
- html+=`<line x1="${Tx}" y1="${Ty}" x2="${bx}" y2="${by}" stroke="#3b82f6" stroke-width="10" stroke-linecap="round" opacity=".85"/>`;
- // Hinge point on barrel
- const Lh=80;const hx=Tx+Lh*Math.cos(elAng),hy=Ty+Lh*Math.sin(elAng);
- html+=`<circle cx="${hx}" cy="${hy}" r="5" fill="#f59e0b" stroke="#fbbf24" stroke-width="1"/>`;
- // Actuator length (from base to hinge)
- const actLen=Math.sqrt((hx-Ax)**2+(hy-Ay)**2);
- // Cylinder (outer tube) — fat purple line with extended/retracted ratio indicator
- html+=`<line x1="${Ax}" y1="${Ay}" x2="${hx}" y2="${hy}" stroke="#a855f7" stroke-width="10" stroke-linecap="round" opacity=".9"/>`;
- // Inner rod segments (visual stroke)
- html+=`<line x1="${Ax}" y1="${Ay}" x2="${hx}" y2="${hy}" stroke="#c084fc" stroke-width="2" stroke-dasharray="3 3" opacity=".8"/>`;
- // Trunnion pivot (on top so it overlays)
+ const Tx=120,Ty=200,Ax=220,Ay=232;
+ // Barrel (lever arm, rotates about trunnion)
+ const Lpx=185,bx=Tx+Lpx*Math.cos(elAng),by=Ty+Lpx*Math.sin(elAng);
+ html+=`<line x1="${Tx}" y1="${Ty}" x2="${bx}" y2="${by}" stroke="#3b82f6" stroke-width="11" stroke-linecap="round" opacity=".9"/>`;
+ // Barrel tip
+ const tipX=bx+12*Math.cos(elAng),tipY=by+12*Math.sin(elAng);
+ html+=`<line x1="${bx}" y1="${by}" x2="${tipX}" y2="${tipY}" stroke="#1d4ed8" stroke-width="5" stroke-linecap="round"/>`;
+ // Hinge on barrel
+ const Lh=85,hx=Tx+Lh*Math.cos(elAng),hy=Ty+Lh*Math.sin(elAng);
+ // Actuator axial geometry (two-force member)
+ const totalLen=Math.sqrt((hx-Ax)**2+(hy-Ay)**2);
+ const theta=Math.atan2(hy-Ay,hx-Ax);
+ const cylLen=Math.min(90,Math.max(40,totalLen*.55));   // fixed cylinder body length
+ const rodLen=Math.max(0,totalLen-cylLen);
+ const cylEx=Ax+cylLen*Math.cos(theta),cylEy=Ay+cylLen*Math.sin(theta);
+ // Cylinder body (outer tube — fixed length, dark purple)
+ html+=`<line x1="${Ax}" y1="${Ay}" x2="${cylEx}" y2="${cylEy}" stroke="#5b21b6" stroke-width="18" stroke-linecap="round"/>`;
+ // Cylinder inner highlight
+ html+=`<line x1="${Ax+8*Math.cos(theta)}" y1="${Ay+8*Math.sin(theta)}" x2="${cylEx-6*Math.cos(theta)}" y2="${cylEy-6*Math.sin(theta)}" stroke="#a855f7" stroke-width="11" stroke-linecap="round" opacity=".65"/>`;
+ // End cap of cylinder (where piston exits)
+ html+=`<circle cx="${cylEx}" cy="${cylEy}" r="6" fill="#1e1b4b" stroke="#a855f7" stroke-width="1.5"/>`;
+ // Piston rod (shiny metallic, variable length)
+ if(rodLen>1){
+  html+=`<line x1="${cylEx}" y1="${cylEy}" x2="${hx}" y2="${hy}" stroke="#475569" stroke-width="7" stroke-linecap="round"/>`;
+  html+=`<line x1="${cylEx}" y1="${cylEy}" x2="${hx}" y2="${hy}" stroke="#e2e8f0" stroke-width="3.5"/>`;
+  html+=`<line x1="${cylEx}" y1="${cylEy}" x2="${hx}" y2="${hy}" stroke="#f1f5f9" stroke-width="1" opacity=".9"/>`;
+ }
+ // Base pivot (two-force member pinned end)
+ html+=`<circle cx="${Ax}" cy="${Ay}" r="7" fill="#94a3b8" stroke="#e2e8f0" stroke-width="1.5"/>`;
+ html+=`<circle cx="${Ax}" cy="${Ay}" r="2.5" fill="#060A13"/>`;
+ // Hinge pivot (barrel end)
+ html+=`<circle cx="${hx}" cy="${hy}" r="6.5" fill="#f59e0b" stroke="#fbbf24" stroke-width="1.5"/>`;
+ html+=`<circle cx="${hx}" cy="${hy}" r="2" fill="#7c2d12"/>`;
+ // Trunnion (barrel pivot)
  html+=`<circle cx="${Tx}" cy="${Ty}" r="8" fill="#475569" stroke="#94a3b8" stroke-width="1.5"/>`;
- html+=`<text x="${Tx-15}" y="${Ty+22}" font-family="JetBrains Mono" font-size="9" fill="#64748b">Trunnion</text>`;
- // Actuator base
- html+=`<rect x="${Ax-25}" y="${Ay-8}" width="50" height="14" fill="#64748b" stroke="#94a3b8"/>`;
- // Motor attached to actuator base
- html+=`<circle cx="${Ax-40}" cy="${Ay+10}" r="14" fill="#1e40af" stroke="#3b82f6" stroke-width="1.5"/>`;
- html+=`<text x="${Ax-40}" y="${Ay+14}" text-anchor="middle" font-family="Inter" font-size="9" font-weight="700" fill="#fff">M</text>`;
- html+=`<text x="${Ax-65}" y="${Ay+33}" font-family="JetBrains Mono" font-size="9" fill="#60a5fa">${r.n}× motor</text>`;
- // Actuator length label on cylinder
- const midX=(Ax+hx)/2,midY=(Ay+hy)/2;
- html+=`<rect x="${midX-32}" y="${midY-26}" width="64" height="18" rx="3" fill="rgba(168,85,247,.25)" stroke="#a855f7" stroke-width="1"/>`;
- html+=`<text x="${midX}" y="${midY-13}" text-anchor="middle" font-family="JetBrains Mono" font-size="9" font-weight="700" fill="#e9d5ff">L_a=${f(actLen,1)} px</text>`;
+ html+=`<circle cx="${Tx}" cy="${Ty}" r="3" fill="#0f172a"/>`;
+ // Ground hatching under trunnion
+ html+=`<rect x="${Tx-18}" y="${Ty+10}" width="36" height="5" fill="#334155" stroke="#64748b" stroke-width=".7"/>`;
+ for(let i=0;i<5;i++){const gx=Tx-18+i*9;html+=`<line x1="${gx}" y1="${Ty+15}" x2="${gx-5}" y2="${Ty+22}" stroke="#64748b" stroke-width="1"/>`}
+ html+=`<text x="${Tx-2}" y="${Ty+34}" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#64748b">Trunnion</text>`;
+ // Ground hatching under actuator base
+ html+=`<rect x="${Ax-20}" y="${Ay+8}" width="40" height="5" fill="#334155" stroke="#64748b" stroke-width=".7"/>`;
+ for(let i=0;i<5;i++){const gx=Ax-20+i*10;html+=`<line x1="${gx}" y1="${Ay+13}" x2="${gx-5}" y2="${Ay+20}" stroke="#64748b" stroke-width="1"/>`}
+ html+=`<text x="${Ax}" y="${Ay+33}" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#64748b">Base pivot</text>`;
+ // Motor mounted on cylinder body
+ const mx=Ax-18*Math.sin(theta),my=Ay+18*Math.cos(theta);
+ html+=`<rect x="${mx-12}" y="${my-8}" width="24" height="16" rx="3" fill="#1e40af" stroke="#60a5fa" stroke-width="1"/>`;
+ html+=`<text x="${mx}" y="${my+3}" text-anchor="middle" font-family="Inter" font-size="8" font-weight="700" fill="#fff">M×${r.n}</text>`;
+ // Dimension labels — cylinder
+ const lbCX=(Ax+cylEx)/2-18*Math.sin(theta),lbCY=(Ay+cylEy)/2+18*Math.cos(theta);
+ html+=`<text x="${lbCX}" y="${lbCY}" font-family="JetBrains Mono" font-size="8" font-weight="700" fill="#c084fc" text-anchor="middle">cyl=${f(cylLen,0)}</text>`;
+ // Dimension label — rod (variable)
+ if(rodLen>5){const lbRX=(cylEx+hx)/2-18*Math.sin(theta),lbRY=(cylEy+hy)/2+18*Math.cos(theta);html+=`<text x="${lbRX}" y="${lbRY}" font-family="JetBrains Mono" font-size="8" font-weight="700" fill="#86efac" text-anchor="middle">rod=${f(rodLen,1)}</text>`}
+ // Length summary box
+ const lblMidX=(Ax+hx)/2,lblMidY=(Ay+hy)/2-24;
+ html+=`<rect x="${lblMidX-56}" y="${lblMidY-14}" width="112" height="28" rx="3" fill="rgba(12,18,34,.92)" stroke="#a855f7" stroke-width="1"/>`;
+ html+=`<text x="${lblMidX}" y="${lblMidY-2}" text-anchor="middle" font-family="JetBrains Mono" font-size="9" font-weight="700" fill="#c084fc">L_total = ${f(totalLen,1)} px</text>`;
+ html+=`<text x="${lblMidX}" y="${lblMidY+10}" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#86efac">stroke = ${f(rodLen,1)} px</text>`;
  // Info annotation box
- html+=`<rect x="295" y="60" width="190" height="96" rx="6" fill="rgba(30,41,59,.9)" stroke="#7c3aed" stroke-width="1"/>`;
- html+=`<text x="305" y="78" font-family="Inter" font-size="10" font-weight="700" fill="#c084fc">ROLLERSCREW</text>`;
- html+=`<text x="305" y="95" font-family="JetBrains Mono" font-size="10" fill="#e2e8f0">θ = ${f(travelDeg,1)}°</text>`;
- html+=`<text x="305" y="110" font-family="JetBrains Mono" font-size="10" fill="#e2e8f0">h = ${f(h,1)} mm/rev</text>`;
- html+=`<text x="305" y="125" font-family="JetBrains Mono" font-size="10" fill="#e2e8f0">F_peak = ${f((r.Fp||0)/1e3,2)} kN</text>`;
- html+=`<text x="305" y="140" font-family="JetBrains Mono" font-size="10" fill="#e2e8f0">v = ${f(r.vL,1)} mm/s</text>`;
- html+=`<text x="305" y="155" font-family="JetBrains Mono" font-size="10" fill="#e2e8f0">i_tot = ${f(r.iT,1)}</text>`;
+ html+=`<rect x="305" y="35" width="180" height="105" rx="6" fill="rgba(30,41,59,.92)" stroke="#7c3aed" stroke-width="1"/>`;
+ html+=`<text x="315" y="52" font-family="Inter" font-size="10" font-weight="700" fill="#c084fc">ROLLERSCREW (2-force)</text>`;
+ html+=`<text x="315" y="68" font-family="JetBrains Mono" font-size="9" fill="#e2e8f0">θ = ${f(travelDeg,1)}°</text>`;
+ html+=`<text x="315" y="82" font-family="JetBrains Mono" font-size="9" fill="#e2e8f0">h = ${f(hp,1)} mm/rev</text>`;
+ html+=`<text x="315" y="96" font-family="JetBrains Mono" font-size="9" fill="#e2e8f0">F_peak = ${f((r.Fp||0)/1e3,2)} kN</text>`;
+ html+=`<text x="315" y="110" font-family="JetBrains Mono" font-size="9" fill="#e2e8f0">v = ${f(r.vL,1)} mm/s</text>`;
+ html+=`<text x="315" y="124" font-family="JetBrains Mono" font-size="9" fill="#e2e8f0">i_tot = ${f(r.iT,1)}</text>`;
+ html+=`<text x="315" y="138" font-family="JetBrains Mono" font-size="8" fill="#94a3b8">Force along axis only (pinned-pinned)</text>`;
  svg.innerHTML=html;
- return actLen;
+ return totalLen;
 }
 
 // === ACTUATOR ANIMATION ===
