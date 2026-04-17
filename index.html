@@ -163,6 +163,9 @@ input[type="number"]{-moz-appearance:textfield;box-sizing:border-box}input::-web
 <div class="sl">Stabilization</div>
 <div class="pr"><span class="pl">Stab Amplitude<span class="ps">&phi;<sub>max</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="performance.stabAmplitude" step="0.1" min="0"><span class="pu">mrad</span></div></div>
 <div class="pr"><span class="pl">Stab Frequency<span class="ps">f</span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="performance.stabFrequency" step="0.5" min="0"><span class="pu">Hz</span></div></div>
+<div class="sl">Live Preview</div>
+<div style="background:rgba(8,13,26,.6);border-radius:.4rem;padding:.25rem;margin-top:.25rem"><div id="profPrev" style="width:100%;height:170px"></div></div>
+<div class="text-[9px] text-slate-600 font-mono mt-1 text-center" id="profPrevInfo">--</div>
 </div></div>
 
 <!-- MOTOR -->
@@ -847,6 +850,34 @@ function drawExtras(r){
  }catch(e){console.error('drawExtras:',e)}
 }
 
+// ============ LIVE PROFILE PREVIEW (Inputs view) ============
+function drawProfPreview(){
+ const div=document.getElementById('profPrev');if(!div)return;
+ rd(); // sync inputs to AP
+ const p=AP[ax],mode=PM[ax],n=Math.max(Math.round(p.motor.motorCount)||1,1);
+ let prof,col,fillCol,title;
+ if(mode==='sine'){prof=genSine(p,n);col='rgba(168,85,247,.85)';fillCol='rgba(168,85,247,.12)';title='Sinusoidal Torque — '+prof.label}
+ else if(mode==='import'){prof=genImport(n);col='rgba(245,158,11,.85)';fillCol='rgba(245,158,11,.12)';if(!prof){const info=document.getElementById('profPrevInfo');if(info)info.textContent='No data — upload CSV/JSON file';Plotly.react('profPrev',[],Object.assign({},pltCommon,{margin:{t:10,r:10,b:30,l:40},xaxis:{title:'',gridcolor:'rgba(30,41,59,.4)'},yaxis:{title:'',gridcolor:'rgba(30,41,59,.4)'},annotations:[{text:'No imported data',xref:'paper',yref:'paper',x:.5,y:.5,showarrow:false,font:{color:'#475569',size:11}}]}),pltCfg);return}title='Imported — '+prof.label}
+ else{
+  // Quick trap preview (needs iT, Ta, Td, Th — compute lightly)
+  const JL=p.mechanical.loadInertia||0,Jgb=p.mechanical.gearboxInertia||0,Jm=p.motor.rotorInertia||0;
+  let iT,eT,Td,Th,Tfire=0;
+  if(ax==='elevation'){const h=(p.mechanical.screwLead||25)/1e3,L=p.mechanical.leverArm||.3,ig=p.mechanical.motorScrewRatio||1,es=p.mechanical.screwEfficiency||.9,eg=p.mechanical.gearEfficiency||.95;iT=ig*2*Math.PI*L/h;eT=es*eg;const Tw=p.mechanical.windTorque||0,Tfi=p.mechanical.firingTorque||0,Tfr=p.mechanical.frictionTorque||0,Tub=p.mechanical.unbalanceTorque||0;Td=(Tw+Tfr+Tub)/(eT*iT);Tfire=Tfi/(eT*iT);Th=Tub/(eT*iT)}
+  else{const z1=p.mechanical.ringTeeth||1,z2=p.mechanical.pinionTeeth||1,igb=p.mechanical.gearboxRatio||1;eT=p.mechanical.efficiency||.85;iT=(z1/z2)*igb;const Tfr=p.mechanical.frictionTorque||0,Tub=p.mechanical.unbalanceTorque||0;Td=(Tfr+Tub)/(eT*iT);Th=Tub/(eT*iT)}
+  const aL=(p.performance.targetAccel||0)*Math.PI/180,wL=(p.performance.targetSpeed||0)*Math.PI/180,wM=wL*iT,aM=aL*iT;
+  const Je=n*Jm+Jgb+JL/(eT*iT*iT),Ta=Je*aM;
+  prof=genTrap(p,{Ta,Td,Th,Tfire,wM,n});col='rgba(59,130,246,.85)';fillCol='rgba(59,130,246,.12)';title='Trapezoidal — '+prof.label
+ }
+ const info=document.getElementById('profPrevInfo');if(info)info.textContent=title;
+ const maxT=Math.max(...prof.TArr.map(v=>Math.abs(v)));
+ const tr=[
+  {x:prof.tArr,y:prof.TArr,type:'scatter',mode:'lines',name:'T/motor',line:{color:col,width:2},fill:'tozeroy',fillcolor:fillCol,hovertemplate:'%{x:.3f}s · %{y:.2f} Nm<extra></extra>'},
+  {x:[prof.tArr[0]||0,prof.tArr[prof.tArr.length-1]||1],y:[prof.Mr/n,prof.Mr/n],type:'scatter',mode:'lines',name:'M<sub>rms</sub>',line:{color:'rgba(34,197,94,.7)',width:1.5,dash:'dash'}}
+ ];
+ const lo={...pltCommon,margin:{t:15,r:10,b:35,l:45},xaxis:{title:'',tickfont:{size:9,color:'#64748b',family:'JetBrains Mono'},gridcolor:'rgba(30,41,59,.4)'},yaxis:{title:'Nm/motor',titlefont:{size:9},tickfont:{size:9,color:'#64748b',family:'JetBrains Mono'},gridcolor:'rgba(30,41,59,.4)'},showlegend:false,annotations:[{x:1,y:prof.Mr/n,xref:'paper',yref:'y',text:'RMS='+fA(prof.Mr/n),showarrow:false,xanchor:'right',yanchor:'bottom',font:{size:8,color:'#4ade80',family:'JetBrains Mono'}},{x:prof.tArr[Math.floor(prof.tArr.length/3)]||0,y:maxT,text:'peak '+fA(prof.Tp/n),showarrow:false,font:{size:8,color:col,family:'JetBrains Mono'},yanchor:'bottom'}]};
+ Plotly.react('profPrev',tr,lo,pltCfg);
+}
+
 // === FILE IMPORT ===
 function handleImport(e){
  const file=e.target.files[0];if(!file)return;
@@ -860,7 +891,7 @@ function handleImport(e){
   }catch(ex){data=[];alert('Parse error: '+ex.message)}
   IM[ax]=data.length?data:null;
   sT('importInfo',data.length?'Loaded: '+data.length+' points, '+f(data[data.length-1].t-data[0].t,2)+'s duration':'Parse failed');
-  rc();
+  drawProfPreview();markStale();
  };reader.readAsText(file);e.target.value=''}
 
 function dlTemplate(){
@@ -870,7 +901,7 @@ function dlTemplate(){
 function updateImportInfo(){const d=IM[ax];sT('importInfo',d?'Loaded: '+d.length+' pts, '+f(d[d.length-1].t-d[0].t,2)+'s':'No file loaded')}
 
 // === PROFILE MODE ===
-function onProf(){const sel=document.getElementById('profSel');PM[ax]=sel.value;updProfVis();markStale()}
+function onProf(){const sel=document.getElementById('profSel');PM[ax]=sel.value;updProfVis();markStale();drawProfPreview()}
 function updProfVis(){const m=PM[ax];
  document.getElementById('pf-trap').style.display=m==='trap'?'block':'none';
  document.getElementById('pf-sine').style.display=m==='sine'?'block':'none';
@@ -885,7 +916,7 @@ function rc(){rd();const r=calc(AP[ax],ax);uR(r);uC(r);uB(r.Jrat)}
 
 // === VIEW SWITCHING & SOLVE ===
 let solved=false;let currentView='inputs';let curSub='overview';
-function markStale(){solved=false;const p=document.getElementById('statusPill');if(p){p.className='pill-status pill-ready ml-2';p.textContent='NOT SOLVED'}}
+function markStale(){solved=false;const p=document.getElementById('statusPill');if(p){p.className='pill-status pill-ready ml-2';p.textContent='NOT SOLVED'}drawProfPreview()}
 function swView(v){currentView=v;
  document.getElementById('view-inputs').style.display=v==='inputs'?'block':'none';
  document.getElementById('view-results').style.display=v==='results'?'block':'none';
@@ -942,8 +973,8 @@ function uV(a){const isE=a==='elevation';
  document.querySelectorAll('.elev-only-inline').forEach(e=>e.style.display=isE?'inline':'none');
  document.querySelectorAll('.trav-only-inline').forEach(e=>e.style.display=isE?'none':'inline');
  const mn=document.getElementById('mn');if(mn)mn.textContent=isE?'Linear actuator: rollerscrew + gear + lever':'Ring gear + gearbox drive system'}
-function sw(a){rd();ax=a;document.querySelectorAll('.axis-tab').forEach(b=>{b.classList.remove('tab-active');b.classList.add('tab-inactive')});document.getElementById('tab-'+a).classList.remove('tab-inactive');document.getElementById('tab-'+a).classList.add('tab-active');uV(a);pop();markStale();swView('inputs')}
-document.addEventListener('DOMContentLoaded',()=>{uV(ax);pop();updScnSel();document.querySelectorAll('input.inp').forEach(e=>e.addEventListener('input',markStale))});
+function sw(a){rd();ax=a;document.querySelectorAll('.axis-tab').forEach(b=>{b.classList.remove('tab-active');b.classList.add('tab-inactive')});document.getElementById('tab-'+a).classList.remove('tab-inactive');document.getElementById('tab-'+a).classList.add('tab-active');uV(a);pop();markStale();swView('inputs');drawProfPreview()}
+document.addEventListener('DOMContentLoaded',()=>{uV(ax);pop();updScnSel();document.querySelectorAll('input.inp').forEach(e=>e.addEventListener('input',markStale));setTimeout(drawProfPreview,100)});
 document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();solve()}});
 window.addEventListener('resize',()=>setTimeout(resizeAll,100));
 </script>
