@@ -29,6 +29,10 @@ input[type="number"]{-moz-appearance:textfield;box-sizing:border-box}input::-web
 .icon-ok{background:rgba(34,197,94,.15);color:#4ade80}.icon-warn{background:rgba(245,158,11,.15);color:#fbbf24}.icon-danger{background:rgba(239,68,68,.15);color:#f87171}
 @keyframes pd{0%,100%{opacity:1}50%{opacity:.6}}.animate-pulse-danger{animation:pd 2s ease-in-out infinite}
 .tab-active{background:#2563eb;color:white;box-shadow:0 4px 12px rgba(37,99,235,.25)}.tab-inactive{color:#94a3b8}.tab-inactive:hover{color:#e2e8f0;background:rgba(55,65,81,.4)}
+.vtab{padding:.45rem 1.1rem;border-radius:.4rem;font-size:.7rem;font-weight:700;letter-spacing:.12em;transition:all .18s}.vtab-active{background:linear-gradient(135deg,#1e40af,#2563eb);color:#fff;box-shadow:0 2px 8px rgba(37,99,235,.35)}.vtab-inactive{background:rgba(30,41,59,.4);color:#64748b;border:1px solid rgba(51,65,85,.4)}.vtab-inactive:hover{background:rgba(51,65,85,.5);color:#cbd5e1}
+.btn-solve{padding:.55rem 1.4rem;background:linear-gradient(135deg,#059669,#10b981);color:#fff;border-radius:.45rem;font-size:.78rem;font-weight:800;letter-spacing:.15em;box-shadow:0 4px 16px rgba(16,185,129,.3),0 0 0 1px rgba(52,211,153,.2);transition:all .2s;display:inline-flex;align-items:center;gap:.5rem}.btn-solve:hover{background:linear-gradient(135deg,#047857,#059669);box-shadow:0 6px 20px rgba(16,185,129,.45);transform:translateY(-1px)}.btn-solve:active{transform:translateY(0)}
+.btn-back{padding:.4rem 1rem;background:rgba(30,41,59,.6);color:#94a3b8;border-radius:.4rem;font-size:.7rem;font-weight:600;letter-spacing:.1em;border:1px solid rgba(51,65,85,.5);transition:all .15s;display:inline-flex;align-items:center;gap:.4rem}.btn-back:hover{background:rgba(51,65,85,.8);color:#e2e8f0}
+.pill-status{padding:.25rem .7rem;border-radius:9999px;font-size:.6rem;font-weight:700;letter-spacing:.1em;font-family:'JetBrains Mono',monospace}.pill-ready{background:rgba(245,158,11,.15);color:#fbbf24;border:1px solid rgba(245,158,11,.3)}.pill-solved{background:rgba(34,197,94,.15);color:#4ade80;border:1px solid rgba(34,197,94,.3)}
 .sl{font-size:.48rem;color:#536175;text-transform:uppercase;letter-spacing:.1em;font-weight:700;padding:.3rem 0 .1rem;border-top:1px solid rgba(30,41,59,.25);margin-top:.15rem}
 .btn-sm{padding:.3rem .6rem;border-radius:.3rem;font-size:.65rem;font-weight:600;transition:all .15s}
 .js-plotly-plot .plotly .modebar{top:2px!important;right:2px!important}.js-plotly-plot .plotly .modebar-btn{color:#475569!important}
@@ -54,12 +58,27 @@ input[type="number"]{-moz-appearance:textfield;box-sizing:border-box}input::-web
 </div></div></header>
 <input type="file" id="csvFile" accept=".csv,.json,.txt" style="display:none" onchange="handleImport(event)">
 
-<main class="max-w-[1750px] mx-auto p-4">
-<!-- BADGES -->
-<div class="grid grid-cols-3 gap-3 mb-4">
-<div class="card badge-ok px-3 py-2" id="bdg-inertia"><div class="flex items-center justify-between mb-1"><span class="text-[9px] font-bold tracking-widest uppercase text-slate-500">Inertia Ratio</span><span class="w-4 h-4 rounded-full icon-ok flex items-center justify-center text-[8px] font-bold" id="bdg-inertia-ic">OK</span></div><div class="text-lg font-bold font-mono" id="bdg-inertia-val">--</div><div class="text-[9px] text-slate-500" id="bdg-inertia-sub">--</div></div>
-<div class="card badge-ok px-3 py-2" id="bdg-voltage"><div class="flex items-center justify-between mb-1"><span class="text-[9px] font-bold tracking-widest uppercase text-slate-500">Voltage Margin</span><span class="w-4 h-4 rounded-full icon-ok flex items-center justify-center text-[8px] font-bold" id="bdg-voltage-ic">OK</span></div><div class="text-lg font-bold font-mono" id="bdg-voltage-val">--</div><div class="text-[9px] text-slate-500" id="bdg-voltage-sub">--</div></div>
-<div class="card badge-ok px-3 py-2" id="bdg-peak"><div class="flex items-center justify-between mb-1"><span class="text-[9px] font-bold tracking-widest uppercase text-slate-500">Peak Torque / Motor</span><span class="w-4 h-4 rounded-full icon-ok flex items-center justify-center text-[8px] font-bold" id="bdg-peak-ic">OK</span></div><div class="text-lg font-bold font-mono" id="bdg-peak-val">--</div><div class="text-[9px] text-slate-500" id="bdg-peak-sub">--</div></div>
+<!-- VIEW NAV -->
+<div class="max-w-[1750px] mx-auto px-4 pt-3 pb-1 flex items-center justify-between gap-3">
+ <div class="flex items-center gap-2">
+  <button id="vtab-inputs" onclick="swView('inputs')" class="vtab vtab-active"><span class="inline-flex items-center gap-1.5"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 6h16M4 12h10M4 18h16"/></svg>INPUTS</span></button>
+  <button id="vtab-results" onclick="swView('results')" class="vtab vtab-inactive"><span class="inline-flex items-center gap-1.5"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 3v18h18M7 14l3-3 4 4 5-5"/></svg>RESULTS</span></button>
+  <span id="statusPill" class="pill-status pill-ready ml-2">NOT SOLVED</span>
+ </div>
+ <button id="solveBtn" onclick="solve()" class="btn-solve"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>SOLVE</button>
+</div>
+
+<main class="max-w-[1750px] mx-auto p-4 pt-2">
+
+<!-- ============== INPUTS VIEW ============== -->
+<section id="view-inputs">
+<div class="card mb-4" style="background:linear-gradient(135deg,rgba(30,41,59,.4),rgba(15,23,42,.4));border:1px solid rgba(51,65,85,.5)">
+ <div class="px-4 py-2 flex items-center justify-between">
+  <div class="flex items-center gap-2">
+   <div class="w-6 h-6 rounded-md bg-blue-500/20 flex items-center justify-center"><svg class="w-3.5 h-3.5 text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg></div>
+   <div><div class="text-[10px] font-bold tracking-widest uppercase text-slate-300">Parameter Entry</div><div class="text-[9px] text-slate-500">Enter values manually or import torque profile as CSV/JSON. Press SOLVE to compute.</div></div>
+  </div>
+ </div>
 </div>
 
 <!-- PARAMS -->
@@ -148,7 +167,31 @@ input[type="number"]{-moz-appearance:textfield;box-sizing:border-box}input::-web
 </div></div>
 </div>
 
-<!-- RESULTS -->
+<!-- SOLVE ACTION BAR -->
+<div class="card mt-3 mb-4" style="background:linear-gradient(90deg,rgba(5,150,105,.08),rgba(16,185,129,.04));border:1px solid rgba(16,185,129,.25)">
+ <div class="px-4 py-3 flex items-center justify-between">
+  <div class="flex items-center gap-3"><svg class="w-5 h-5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg><div><div class="text-[10px] font-bold tracking-widest uppercase text-emerald-300">Ready to compute</div><div class="text-[9px] text-slate-500">All input parameters set. Click SOLVE to run sizing analysis and view results.</div></div></div>
+  <button onclick="solve()" class="btn-solve"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>SOLVE &amp; VIEW RESULTS</button>
+ </div>
+</div>
+</section>
+
+<!-- ============== RESULTS VIEW ============== -->
+<section id="view-results" style="display:none">
+<!-- BACK BAR -->
+<div class="flex items-center justify-between mb-3">
+ <button onclick="swView('inputs')" class="btn-back"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>EDIT INPUTS</button>
+ <div class="text-[10px] text-slate-500 font-mono tracking-wider" id="solveStamp">--</div>
+</div>
+
+<!-- BADGES -->
+<div class="grid grid-cols-3 gap-3 mb-4">
+<div class="card badge-ok px-3 py-2" id="bdg-inertia"><div class="flex items-center justify-between mb-1"><span class="text-[9px] font-bold tracking-widest uppercase text-slate-500">Inertia Ratio</span><span class="w-4 h-4 rounded-full icon-ok flex items-center justify-center text-[8px] font-bold" id="bdg-inertia-ic">OK</span></div><div class="text-lg font-bold font-mono" id="bdg-inertia-val">--</div><div class="text-[9px] text-slate-500" id="bdg-inertia-sub">--</div></div>
+<div class="card badge-ok px-3 py-2" id="bdg-voltage"><div class="flex items-center justify-between mb-1"><span class="text-[9px] font-bold tracking-widest uppercase text-slate-500">Voltage Margin</span><span class="w-4 h-4 rounded-full icon-ok flex items-center justify-center text-[8px] font-bold" id="bdg-voltage-ic">OK</span></div><div class="text-lg font-bold font-mono" id="bdg-voltage-val">--</div><div class="text-[9px] text-slate-500" id="bdg-voltage-sub">--</div></div>
+<div class="card badge-ok px-3 py-2" id="bdg-peak"><div class="flex items-center justify-between mb-1"><span class="text-[9px] font-bold tracking-widest uppercase text-slate-500">Peak Torque / Motor</span><span class="w-4 h-4 rounded-full icon-ok flex items-center justify-center text-[8px] font-bold" id="bdg-peak-ic">OK</span></div><div class="text-lg font-bold font-mono" id="bdg-peak-val">--</div><div class="text-[9px] text-slate-500" id="bdg-peak-sub">--</div></div>
+</div>
+
+<!-- RESULTS GRID -->
 <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
 <div class="card border-l-2 border-l-blue-500"><div class="ch flex items-center gap-2 bg-blue-500/5"><div class="w-2 h-2 rounded-full bg-blue-500"></div><div><h3 class="text-[10px] font-bold tracking-widest uppercase text-blue-400">Gun Laying</h3><p class="cn" id="layNote">Trapezoidal profile</p></div></div>
 <div class="px-3 py-1">
@@ -188,6 +231,7 @@ input[type="number"]{-moz-appearance:textfield;box-sizing:border-box}input::-web
 <div class="p-2"><div id="dcC" style="width:100%;height:340px"></div></div>
 </div>
 </div>
+</section>
 </main>
 <footer class="border-t border-slate-800/50 mt-3 py-2 text-center text-[8px] text-slate-600 tracking-wider">WEAPON SYSTEM MOTOR SIZING v5.0</footer>
 
@@ -354,7 +398,7 @@ function dlTemplate(){
 function updateImportInfo(){const d=IM[ax];sT('importInfo',d?'Loaded: '+d.length+' pts, '+f(d[d.length-1].t-d[0].t,2)+'s':'No file loaded')}
 
 // === PROFILE MODE ===
-function onProf(){const sel=document.getElementById('profSel');PM[ax]=sel.value;updProfVis();rc()}
+function onProf(){const sel=document.getElementById('profSel');PM[ax]=sel.value;updProfVis();markStale()}
 function updProfVis(){const m=PM[ax];
  document.getElementById('pf-trap').style.display=m==='trap'?'block':'none';
  document.getElementById('pf-sine').style.display=m==='sine'?'block':'none';
@@ -366,13 +410,31 @@ function pop(){const p=AP[ax];document.querySelectorAll('input.inp').forEach(e=>
  document.getElementById('profSel').value=PM[ax];updProfVis()}
 function rd(){const p=AP[ax];document.querySelectorAll('input.inp').forEach(e=>{if(e.offsetParent===null)return;const[c,k]=e.dataset.key.split('.');if(!p[c]||!p[c].hasOwnProperty(k))return;const v=parseFloat(e.value);if(!isNaN(v))p[c][k]=v})}
 function rc(){rd();const r=calc(AP[ax],ax);uR(r);uC(r);uB(r.Jrat)}
+
+// === VIEW SWITCHING & SOLVE ===
+let solved=false;let currentView='inputs';
+function markStale(){solved=false;const p=document.getElementById('statusPill');if(p){p.className='pill-status pill-ready ml-2';p.textContent='NOT SOLVED'}}
+function swView(v){currentView=v;
+ document.getElementById('view-inputs').style.display=v==='inputs'?'block':'none';
+ document.getElementById('view-results').style.display=v==='results'?'block':'none';
+ document.getElementById('vtab-inputs').className='vtab '+(v==='inputs'?'vtab-active':'vtab-inactive');
+ document.getElementById('vtab-results').className='vtab '+(v==='results'?'vtab-active':'vtab-inactive');
+ if(v==='results'&&solved){setTimeout(()=>{try{Plotly.Plots.resize('tsC');Plotly.Plots.resize('dcC')}catch(e){}},50)}
+ if(v==='results'&&!solved)solve()}
+function solve(){rc();solved=true;
+ const now=new Date();const stamp=now.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+ const ss=document.getElementById('solveStamp');if(ss)ss.textContent='AXIS: '+ax.toUpperCase()+' · SOLVED @ '+stamp;
+ const p=document.getElementById('statusPill');if(p){p.className='pill-status pill-solved ml-2';p.textContent='SOLVED'}
+ swView('results');setTimeout(()=>{try{Plotly.Plots.resize('tsC');Plotly.Plots.resize('dcC')}catch(e){}},60)}
+
 function uV(a){const isE=a==='elevation';
  document.querySelectorAll('.elev-only').forEach(e=>e.style.display=isE?'flex':'none');
  document.querySelectorAll('.trav-only').forEach(e=>e.style.display=isE?'none':'flex');
  document.querySelectorAll('.elev-only-inline').forEach(e=>e.style.display=isE?'inline':'none');
  document.querySelectorAll('.trav-only-inline').forEach(e=>e.style.display=isE?'none':'inline');
  const mn=document.getElementById('mn');if(mn)mn.textContent=isE?'Linear actuator: rollerscrew + gear + lever':'Ring gear + gearbox drive system'}
-function sw(a){rd();ax=a;document.querySelectorAll('.axis-tab').forEach(b=>{b.classList.remove('tab-active');b.classList.add('tab-inactive')});document.getElementById('tab-'+a).classList.remove('tab-inactive');document.getElementById('tab-'+a).classList.add('tab-active');uV(a);pop();rc()}
-document.addEventListener('DOMContentLoaded',()=>{uV(ax);pop();rc();document.querySelectorAll('input.inp').forEach(e=>e.addEventListener('input',rc))});
+function sw(a){rd();ax=a;document.querySelectorAll('.axis-tab').forEach(b=>{b.classList.remove('tab-active');b.classList.add('tab-inactive')});document.getElementById('tab-'+a).classList.remove('tab-inactive');document.getElementById('tab-'+a).classList.add('tab-active');uV(a);pop();markStale();swView('inputs')}
+document.addEventListener('DOMContentLoaded',()=>{uV(ax);pop();document.querySelectorAll('input.inp').forEach(e=>e.addEventListener('input',markStale))});
+document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();solve()}});
 </script>
 </body></html>
