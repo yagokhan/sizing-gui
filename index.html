@@ -5,7 +5,7 @@
 <title>Weapon System Motor Sizing Tool</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','sans-serif'],mono:['JetBrains Mono','monospace']}}}}</script>
 <style>
@@ -70,6 +70,17 @@ input[type="number"]{-moz-appearance:textfield;box-sizing:border-box}input::-web
 </div></div></header>
 <input type="file" id="csvFile" accept=".csv,.json,.txt" style="display:none" onchange="handleImport(event)">
 
+<!-- ENLARGE MODAL for kinematic visual -->
+<div id="visModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:99998;align-items:center;justify-content:center;padding:24px" onclick="if(event.target.id==='visModal')closeVisModal()">
+ <div style="position:relative;background:#060A13;border:1.5px solid #3b82f6;border-radius:10px;padding:14px;width:min(95vw,1200px);height:min(90vh,750px);box-shadow:0 20px 60px rgba(0,0,0,.7)">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+   <div style="color:#93c5fd;font-size:11px;font-weight:700;letter-spacing:2px">SYSTEM KINEMATICS — ENLARGED VIEW</div>
+   <button onclick="closeVisModal()" style="background:rgba(239,68,68,.25);color:#fca5a5;border:1px solid rgba(239,68,68,.5);padding:6px 14px;border-radius:5px;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:1px">✕ CLOSE</button>
+  </div>
+  <svg id="svgKinModal" viewBox="0 0 500 260" preserveAspectRatio="xMidYMid meet" style="width:100%;height:calc(100% - 36px);background:#060A13;border-radius:6px"></svg>
+ </div>
+</div>
+
 <!-- VIEW NAV -->
 <div class="max-w-[1750px] mx-auto px-4 pt-3 pb-1 flex items-center justify-between gap-3 no-print">
  <div class="flex items-center gap-2">
@@ -112,7 +123,7 @@ input[type="number"]{-moz-appearance:textfield;box-sizing:border-box}input::-web
  </div>
  <div class="card">
   <div class="ch flex items-center justify-between"><div class="flex items-center gap-2"><div class="w-1 h-3.5 rounded-full bg-violet-500"></div><h3 class="text-[9px] font-bold tracking-widest uppercase text-slate-400" id="kinTitle">Kinematics — Live</h3></div><span class="text-[8px] text-slate-600 font-mono" id="kinHint">—</span></div>
-  <div class="p-2"><svg id="svgKinIn" viewBox="0 0 500 260" style="width:100%;height:200px"></svg></div>
+  <div class="p-2"><svg id="svgKinIn" viewBox="0 0 500 260" onclick="openVisModal()" style="width:100%;height:200px;cursor:zoom-in" data-tip="Click to enlarge in full-screen view"></svg></div>
  </div>
 </div>
 
@@ -932,8 +943,30 @@ function drawActuatorGeom(r,targetId,elPhysDeg){
  svg.innerHTML=html;
  return Lact_mm;
 }
+// === ENLARGE MODAL FOR KINEMATICS VISUAL ===
+let visModalActive=false;
+function openVisModal(){
+ const m=document.getElementById('visModal');if(!m)return;
+ m.style.display='flex';visModalActive=true;
+ // If actuator anim is running, also drive modal SVG
+ if(actAnim.raf&&actAnim.lastR&&actAnim.lastR.isL&&GM[ax]!=='single'){actAnim.targetIdAlt='svgKinModal'}
+ else {
+  // Static: render once into modal SVG
+  try{const r=actAnim.lastR||calc(AP[ax],ax);
+   if(GM[ax]==='single')drawSingleBlock(r,'svgKinModal');
+   else if(r.isL)drawActuatorGeom(r,'svgKinModal');
+   else drawGearDiagram(r,'svgKinModal');
+  }catch(e){console.error('modal render:',e)}
+ }
+}
+function closeVisModal(){
+ const m=document.getElementById('visModal');if(m)m.style.display='none';
+ visModalActive=false;actAnim.targetIdAlt=null;
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&visModalActive)closeVisModal()});
+
 // === ACTUATOR ANIMATION ===
-const actAnim={raf:null,t0:0,lastR:null,targetId:null};
+const actAnim={raf:null,t0:0,lastR:null,targetId:null,targetIdAlt:null};
 function startActAnim(r,targetId){
  actAnim.lastR=r;actAnim.targetId=targetId;
  if(actAnim.raf){cancelAnimationFrame(actAnim.raf);actAnim.raf=null}
@@ -948,6 +981,7 @@ function startActAnim(r,targetId){
    const mid=(elMin+elMax)/2,amp=(elMax-elMin)/2;
    const ang=mid+amp*Math.sin(el);
    drawActuatorGeom(actAnim.lastR,actAnim.targetId,ang);
+   if(actAnim.targetIdAlt)drawActuatorGeom(actAnim.lastR,actAnim.targetIdAlt,ang);
   }catch(e){console.error('actAnim tick:',e)}
   actAnim.raf=requestAnimationFrame(tick);
  };
