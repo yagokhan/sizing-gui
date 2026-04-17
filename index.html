@@ -9,14 +9,14 @@
 <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','sans-serif'],mono:['JetBrains Mono','monospace']}}}}</script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{overflow-x:hidden;-webkit-text-size-adjust:100%;scroll-behavior:smooth}
-body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#060A13;margin:0;padding:0;min-width:320px;overflow-x:hidden;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;color:#e2e8f0;line-height:1.5}
-img,svg{display:block;max-width:100%}
-button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
+html{overflow-x:hidden;-webkit-text-size-adjust:100%}
+body{font-family:'Inter',-apple-system,sans-serif;background:#060A13;margin:0;padding:0;min-width:320px;overflow-x:hidden;-webkit-font-smoothing:antialiased;color:#e2e8f0;line-height:1.5}
+img,svg{display:block;max-width:100%}button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
 input[type="number"]{-moz-appearance:textfield;box-sizing:border-box}input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none}
 ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:#0a0f1a}::-webkit-scrollbar-thumb{background:#2d3748;border-radius:3px}
-.inp{width:5.2rem;padding:.25rem .4rem;background:rgba(15,23,42,.9);border:1px solid rgba(55,65,81,.5);border-radius:.35rem;text-align:right;font-size:.78rem;font-family:'JetBrains Mono',monospace;color:#e2e8f0;outline:none;transition:border-color .15s}
-.inp:focus{border-color:#3b82f6;box-shadow:0 0 0 2px rgba(59,130,246,.15)}
+.inp{width:5.2rem;padding:.25rem .4rem;background:rgba(15,23,42,.9);border:1px solid rgba(55,65,81,.5);border-radius:.35rem;text-align:right;font-size:.78rem;font-family:'JetBrains Mono',monospace;color:#e2e8f0;outline:none;transition:border-color .15s}.inp:focus{border-color:#3b82f6;box-shadow:0 0 0 2px rgba(59,130,246,.15)}
+.sel{-webkit-appearance:none;appearance:none;background:rgba(15,23,42,.9) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' fill='%2364748b'%3E%3Cpath d='M5 8L0 3h10z'/%3E%3C/svg%3E") no-repeat right .4rem center;border:1px solid rgba(55,65,81,.5);border-radius:.35rem;padding:.25rem 1.4rem .25rem .4rem;font-size:.72rem;font-family:'JetBrains Mono',monospace;color:#e2e8f0;outline:none}
+.sel:focus{border-color:#3b82f6}.sel option{background:#0f172a;color:#e2e8f0}
 .card{background:#0C1222;border:1px solid rgba(30,41,59,.7);border-radius:.7rem;overflow:hidden}
 .ch{padding:.45rem .8rem;border-bottom:1px solid rgba(30,41,59,.5);background:rgba(15,23,42,.5)}
 .cn{font-size:.5rem;color:#475569;margin-top:.1rem;letter-spacing:.03em}
@@ -30,36 +30,29 @@ input[type="number"]{-moz-appearance:textfield;box-sizing:border-box}input::-web
 @keyframes pd{0%,100%{opacity:1}50%{opacity:.6}}.animate-pulse-danger{animation:pd 2s ease-in-out infinite}
 .tab-active{background:#2563eb;color:white;box-shadow:0 4px 12px rgba(37,99,235,.25)}.tab-inactive{color:#94a3b8}.tab-inactive:hover{color:#e2e8f0;background:rgba(55,65,81,.4)}
 .sl{font-size:.48rem;color:#536175;text-transform:uppercase;letter-spacing:.1em;font-weight:700;padding:.3rem 0 .1rem;border-top:1px solid rgba(30,41,59,.25);margin-top:.15rem}
+.btn-sm{padding:.3rem .6rem;border-radius:.3rem;font-size:.65rem;font-weight:600;transition:all .15s}
 .js-plotly-plot .plotly .modebar{top:2px!important;right:2px!important}.js-plotly-plot .plotly .modebar-btn{color:#475569!important}
-/* Tailwind fallbacks — layout survives if CDN is slow */
-.grid{display:grid}.flex{display:flex}.hidden{display:none}
-.items-center{align-items:center}.justify-between{justify-content:space-between}
-.sticky{position:sticky}.top-0{top:0}.z-50{z-index:50}
-.min-h-screen{min-height:100vh}.overflow-hidden{overflow:hidden}
-.text-center{text-align:center}.font-bold{font-weight:700}.font-mono{font-family:'JetBrains Mono',Consolas,monospace}
+.grid{display:grid}.flex{display:flex}.hidden{display:none}.items-center{align-items:center}.justify-between{justify-content:space-between}
+.sticky{position:sticky}.top-0{top:0}.z-50{z-index:50}.min-h-screen{min-height:100vh}
 .gap-1{gap:.25rem}.gap-2{gap:.5rem}.gap-3{gap:.75rem}
-.p-2{padding:.5rem}.p-3{padding:.75rem}.p-4{padding:1rem}
-.px-3{padding-left:.75rem;padding-right:.75rem}.px-4{padding-left:1rem;padding-right:1rem}
+.p-2{padding:.5rem}.p-3{padding:.75rem}.p-4{padding:1rem}.px-3{padding-left:.75rem;padding-right:.75rem}.px-4{padding-left:1rem;padding-right:1rem}
 .py-1{padding-top:.25rem;padding-bottom:.25rem}.py-2{padding-top:.5rem;padding-bottom:.5rem}
-.mb-1{margin-bottom:.25rem}.mb-4{margin-bottom:1rem}.mt-3{margin-top:.75rem}
-.rounded-full{border-radius:9999px}.rounded-lg{border-radius:.5rem}.rounded-md{border-radius:.375rem}
-.border-b{border-bottom-width:1px;border-bottom-style:solid}.border-t{border-top-width:1px;border-top-style:solid}
-.border-l-2{border-left-width:2px;border-left-style:solid}
-.w-full{width:100%}.h-full{height:100%}
-.text-xs{font-size:.75rem}.text-sm{font-size:.875rem}.text-lg{font-size:1.125rem}
-@media(min-width:768px){.md\:grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}.md\:grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}}
-@media(min-width:1024px){.lg\:grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}.lg\:grid-cols-5{grid-template-columns:repeat(5,minmax(0,1fr))}.lg\:col-span-2{grid-column:span 2}.lg\:col-span-3{grid-column:span 3}.lg\:block{display:block}}
+.mb-1{margin-bottom:.25rem}.mb-4{margin-bottom:1rem}.rounded-full{border-radius:9999px}.rounded-lg{border-radius:.5rem}.rounded-md{border-radius:.375rem}
+.border-b{border-bottom-width:1px;border-bottom-style:solid}.border-l-2{border-left-width:2px;border-left-style:solid}
+.w-full{width:100%}.text-xs{font-size:.75rem}.text-sm{font-size:.875rem}.text-lg{font-size:1.125rem}.font-bold{font-weight:700}.font-mono{font-family:'JetBrains Mono',monospace}
+@media(min-width:768px){.md\:grid-cols-2{grid-template-columns:repeat(2,1fr)}.md\:grid-cols-3{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:1024px){.lg\:grid-cols-5{grid-template-columns:repeat(5,1fr)}.lg\:col-span-2{grid-column:span 2}.lg\:col-span-3{grid-column:span 3}.lg\:block{display:block}}
 </style>
 </head>
 <body class="text-gray-100 min-h-screen">
-
 <header class="bg-[#0A1020] border-b border-slate-800/80 sticky top-0 z-50">
 <div class="max-w-[1750px] mx-auto px-4 py-2 flex items-center justify-between">
-<div class="flex items-center gap-3"><div class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center shadow-lg shadow-blue-600/20"><svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="1.5"/><path d="M12 2v5M12 17v5M2 12h5M17 12h5"/></svg></div><div><h1 class="text-xs font-bold tracking-wider">WEAPON SYSTEM MOTOR SIZING</h1><p class="text-[9px] text-slate-500 tracking-widest uppercase">v4.0 — Dual-Axis Servo Analysis</p></div></div>
+<div class="flex items-center gap-3"><div class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center shadow-lg shadow-blue-600/20"><svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="1.5"/><path d="M12 2v5M12 17v5M2 12h5M17 12h5"/></svg></div><div><h1 class="text-xs font-bold tracking-wider">WEAPON SYSTEM MOTOR SIZING</h1><p class="text-[9px] text-slate-500 tracking-widest uppercase">v5.0 — Profile Import &amp; Waveform Analysis</p></div></div>
 <div class="flex bg-slate-800/40 rounded-lg p-0.5 border border-slate-700/40">
 <button id="tab-elevation" onclick="sw('elevation')" class="axis-tab tab-active px-3 py-1 rounded-md text-[10px] font-bold tracking-wider flex items-center gap-1"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 19V5M5 12l7-7 7 7"/></svg>ELEVATION</button>
 <button id="tab-traverse" onclick="sw('traverse')" class="axis-tab tab-inactive px-3 py-1 rounded-md text-[10px] font-bold tracking-wider flex items-center gap-1"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg>TRAVERSE</button>
 </div></div></header>
+<input type="file" id="csvFile" accept=".csv,.json,.txt" style="display:none" onchange="handleImport(event)">
 
 <main class="max-w-[1750px] mx-auto p-4">
 <!-- BADGES -->
@@ -71,25 +64,22 @@ input[type="number"]{-moz-appearance:textfield;box-sizing:border-box}input::-web
 
 <!-- PARAMS -->
 <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-<!-- MECHANICAL -->
+<!-- MECHANICAL (unchanged structure) -->
 <div class="card"><div class="ch flex items-center gap-2"><div class="w-1 h-3.5 rounded-full bg-blue-500"></div><div><h2 class="text-[9px] font-bold tracking-widest uppercase text-slate-400">Mechanical &amp; Load</h2><p class="cn" id="mn">Linear actuator drive</p></div></div>
 <div class="px-3 py-1">
-<!-- ELEV -->
-<div class="sl elev-only" style="border-top:none;margin-top:0">Transmission (Rollerscrew)</div>
+<div class="sl elev-only" style="border-top:none;margin-top:0">Transmission</div>
 <div class="pr elev-only"><span class="pl">Screw Lead<span class="ps">h</span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.screwLead" step="1" min="0.1"><span class="pu">mm/rev</span></div></div>
 <div class="pr elev-only"><span class="pl">Lever Arm<span class="ps">L</span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.leverArm" step="0.01" min="0.001"><span class="pu">m</span></div></div>
 <div class="pr elev-only"><span class="pl">Motor-Screw Ratio<span class="ps">i<sub>gk</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.motorScrewRatio" step="0.1" min="1"><span class="pu">[-]</span></div></div>
 <div class="pr elev-only"><span class="pl">Screw Eff.<span class="ps">&eta;<sub>s</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.screwEfficiency" step="0.01" min="0.01" max="1"><span class="pu">[-]</span></div></div>
 <div class="pr elev-only"><span class="pl">Gear Eff.<span class="ps">&eta;<sub>gk</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.gearEfficiency" step="0.01" min="0.01" max="1"><span class="pu">[-]</span></div></div>
 <div class="pr elev-only"><span class="pl">Gearbox Inertia<span class="ps">J<sub>gb</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.gearboxInertia" step="0.0001" min="0"><span class="pu">kg&middot;m&sup2;</span></div></div>
-<!-- TRAV -->
 <div class="sl trav-only" style="border-top:none;margin-top:0">Ring Gear &amp; Gearbox</div>
-<div class="pr trav-only"><span class="pl">Ring Gear Teeth<span class="ps">z<sub>1</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.ringTeeth" step="1" min="1"><span class="pu">[-]</span></div></div>
+<div class="pr trav-only"><span class="pl">Ring Teeth<span class="ps">z<sub>1</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.ringTeeth" step="1" min="1"><span class="pu">[-]</span></div></div>
 <div class="pr trav-only"><span class="pl">Pinion Teeth<span class="ps">z<sub>2</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.pinionTeeth" step="1" min="1"><span class="pu">[-]</span></div></div>
 <div class="pr trav-only"><span class="pl">Gearbox Ratio<span class="ps">i<sub>gb</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.gearboxRatio" step="1" min="1"><span class="pu">[-]</span></div></div>
-<div class="pr trav-only"><span class="pl">Total Efficiency<span class="ps">&eta;<sub>tot</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.efficiency" step="0.01" min="0.01" max="1"><span class="pu">[-]</span></div></div>
+<div class="pr trav-only"><span class="pl">Total Eff.<span class="ps">&eta;<sub>tot</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.efficiency" step="0.01" min="0.01" max="1"><span class="pu">[-]</span></div></div>
 <div class="pr trav-only"><span class="pl">Gearbox Inertia<span class="ps">J<sub>gb</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.gearboxInertia" step="0.001" min="0"><span class="pu">kg&middot;m&sup2;</span></div></div>
-<!-- COMMON: Load -->
 <div class="sl">Load &amp; Disturbances</div>
 <div class="pr"><span class="pl">Load Inertia<span class="ps">J<sub>L</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.loadInertia" step="10" min="0"><span class="pu">kg&middot;m&sup2;</span></div></div>
 <div class="pr"><span class="pl">Unbalance<span class="ps">T<sub>ub</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.unbalanceTorque" step="10" min="0"><span class="pu">Nm</span></div></div>
@@ -97,41 +87,74 @@ input[type="number"]{-moz-appearance:textfield;box-sizing:border-box}input::-web
 <div class="pr elev-only"><span class="pl">Wind<span class="ps">T<sub>w</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.windTorque" step="5" min="0"><span class="pu">Nm</span></div></div>
 <div class="pr elev-only"><span class="pl">Firing<span class="ps">T<sub>fire</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.firingTorque" step="10" min="0"><span class="pu">Nm</span></div></div>
 </div></div>
-<!-- PERFORMANCE -->
-<div class="card"><div class="ch flex items-center gap-2"><div class="w-1 h-3.5 rounded-full bg-amber-500"></div><div><h2 class="text-[9px] font-bold tracking-widest uppercase text-slate-400">Performance &amp; Duty Cycle</h2><p class="cn">Slewing profile and stabilization specs</p></div></div>
+
+<!-- PERFORMANCE + PROFILE -->
+<div class="card"><div class="ch flex items-center gap-2"><div class="w-1 h-3.5 rounded-full bg-amber-500"></div><div><h2 class="text-[9px] font-bold tracking-widest uppercase text-slate-400">Performance &amp; Profile</h2><p class="cn">Laying waveform, stabilization, CSV import</p></div></div>
 <div class="px-3 py-1">
-<div class="sl" style="border-top:none;margin-top:0">Gun Laying Profile</div>
+<!-- PROFILE MODE SELECTOR -->
+<div class="pr" style="background:rgba(245,158,11,.06);border-radius:.3rem;padding:.35rem .3rem;margin-bottom:.2rem">
+<span class="pl font-bold text-amber-300">Profile Mode</span>
+<select id="profSel" onchange="onProf()" class="sel" style="width:8rem">
+<option value="trap">Trapezoidal</option>
+<option value="sine">Sinusoidal</option>
+<option value="import">Import CSV/JSON</option>
+</select></div>
+
+<!-- TRAPEZOIDAL FIELDS -->
+<div id="pf-trap">
+<div class="sl" style="border-top:none;margin-top:0">Gun Laying (Trapezoidal)</div>
 <div class="pr"><span class="pl">Target Speed</span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="performance.targetSpeed" step="1" min="0"><span class="pu">deg/s</span></div></div>
 <div class="pr"><span class="pl">Target Accel</span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="performance.targetAccel" step="1" min="0"><span class="pu">deg/s&sup2;</span></div></div>
 <div class="pr"><span class="pl">Travel Angle</span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="performance.travelAngle" step="1" min="0"><span class="pu">deg</span></div></div>
 <div class="pr"><span class="pl">Dwell Time</span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="performance.dwellTime" step="0.5" min="0"><span class="pu">s</span></div></div>
+</div>
+
+<!-- SINE FIELDS -->
+<div id="pf-sine" style="display:none">
+<div class="sl" style="border-top:none;margin-top:0">Gun Laying (Sinusoidal)</div>
+<div class="pr"><span class="pl">Torque Amplitude</span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="performance.sineAmp" step="1" min="0"><span class="pu">Nm (motor)</span></div></div>
+<div class="pr"><span class="pl">Frequency</span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="performance.sineFreq" step="0.1" min="0.01"><span class="pu">Hz</span></div></div>
+<div class="pr"><span class="pl">Duration</span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="performance.sineDur" step="0.5" min="0.1"><span class="pu">s</span></div></div>
+</div>
+
+<!-- IMPORT FIELDS -->
+<div id="pf-import" style="display:none">
+<div class="sl" style="border-top:none;margin-top:0">Import External Profile</div>
+<div class="flex items-center gap-2 py-2">
+<button onclick="document.getElementById('csvFile').click()" class="btn-sm bg-blue-600 hover:bg-blue-500 text-white">Upload CSV / JSON</button>
+<button onclick="dlTemplate()" class="btn-sm bg-slate-700 hover:bg-slate-600 text-slate-300">Download Template</button>
+</div>
+<div id="importInfo" class="text-[10px] font-mono text-slate-500 py-1">No file loaded</div>
+<div class="text-[9px] text-slate-600 mt-1 leading-relaxed">CSV format: <code class="text-slate-400">time,torque</code> or <code class="text-slate-400">time,torque,speed</code><br>JSON: <code class="text-slate-400">[{"t":0,"T":5.2}, ...]</code></div>
+</div>
+
+<!-- STABILIZATION (always visible) -->
 <div class="sl">Stabilization</div>
 <div class="pr"><span class="pl">Stab Amplitude<span class="ps">&phi;<sub>max</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="performance.stabAmplitude" step="0.1" min="0"><span class="pu">mrad</span></div></div>
 <div class="pr"><span class="pl">Stab Frequency<span class="ps">f</span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="performance.stabFrequency" step="0.5" min="0"><span class="pu">Hz</span></div></div>
 </div></div>
+
 <!-- MOTOR -->
-<div class="card"><div class="ch flex items-center gap-2"><div class="w-1 h-3.5 rounded-full bg-emerald-500"></div><div><h2 class="text-[9px] font-bold tracking-widest uppercase text-slate-400">Motor Parameters</h2><p class="cn">Per-motor values; parallel operation supported</p></div></div>
+<div class="card"><div class="ch flex items-center gap-2"><div class="w-1 h-3.5 rounded-full bg-emerald-500"></div><div><h2 class="text-[9px] font-bold tracking-widest uppercase text-slate-400">Motor Parameters</h2><p class="cn">Per-motor values; parallel operation</p></div></div>
 <div class="px-3 py-1">
 <div class="pr" style="background:rgba(59,130,246,.04);border-radius:.3rem;padding:.3rem;margin-bottom:.15rem"><span class="pl font-bold text-blue-300">Motor Count<span class="ps">n</span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="motor.motorCount" step="1" min="1" max="8" style="width:3.5rem;font-weight:700;color:#93c5fd"><span class="pu">parallel</span></div></div>
-<div class="pr"><span class="pl">Torque Const.<span class="ps">K<sub>t</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="motor.kt" step="0.001" min="0.001"><span class="pu">Nm/A</span></div></div>
-<div class="pr"><span class="pl">Back-EMF Const.<span class="ps">K<sub>e</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="motor.ke" step="0.001" min="0.001"><span class="pu">V/(rad/s)</span></div></div>
-<div class="pr"><span class="pl">Resistance<span class="ps">R<sub>mt</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="motor.resistance" step="0.001" min="0.001"><span class="pu">&Omega;/motor</span></div></div>
-<div class="pr"><span class="pl">Rotor Inertia<span class="ps">J<sub>m</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="motor.rotorInertia" step="0.0001" min="0"><span class="pu">kg&middot;m&sup2;</span></div></div>
-<div class="pr"><span class="pl">Peak Torque Limit</span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="motor.peakTorque" step="1" min="0"><span class="pu">Nm/motor</span></div></div>
-<div class="pr"><span class="pl">Cont. Torque Limit</span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="motor.contTorque" step="1" min="0"><span class="pu">Nm/motor</span></div></div>
-<div class="pr"><span class="pl">Bus Voltage<span class="ps">V<sub>dc</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="motor.busVoltage" step="1" min="1"><span class="pu">V DC</span></div></div>
+<div class="pr"><span class="pl">K<sub>t</sub></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="motor.kt" step="0.001" min="0.001"><span class="pu">Nm/A</span></div></div>
+<div class="pr"><span class="pl">K<sub>e</sub></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="motor.ke" step="0.001" min="0.001"><span class="pu">V/(rad/s)</span></div></div>
+<div class="pr"><span class="pl">R<sub>mt</sub></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="motor.resistance" step="0.001" min="0.001"><span class="pu">&Omega;/motor</span></div></div>
+<div class="pr"><span class="pl">J<sub>m</sub></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="motor.rotorInertia" step="0.0001" min="0"><span class="pu">kg&middot;m&sup2;</span></div></div>
+<div class="pr"><span class="pl">Peak Torque Limit</span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="motor.peakTorque" step="1" min="0"><span class="pu">Nm/mot</span></div></div>
+<div class="pr"><span class="pl">Cont. Torque Limit</span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="motor.contTorque" step="1" min="0"><span class="pu">Nm/mot</span></div></div>
+<div class="pr"><span class="pl">V<sub>dc</sub></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="motor.busVoltage" step="1" min="1"><span class="pu">V DC</span></div></div>
 </div></div>
 </div>
 
 <!-- RESULTS -->
 <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
-<div class="card border-l-2 border-l-blue-500"><div class="ch flex items-center gap-2 bg-blue-500/5"><div class="w-2 h-2 rounded-full bg-blue-500"></div><div><h3 class="text-[10px] font-bold tracking-widest uppercase text-blue-400">Gun Laying (Slew)</h3><p class="cn">Trapezoidal profile &mdash; peak &amp; RMS</p></div></div>
+<div class="card border-l-2 border-l-blue-500"><div class="ch flex items-center gap-2 bg-blue-500/5"><div class="w-2 h-2 rounded-full bg-blue-500"></div><div><h3 class="text-[10px] font-bold tracking-widest uppercase text-blue-400">Gun Laying</h3><p class="cn" id="layNote">Trapezoidal profile</p></div></div>
 <div class="px-3 py-1">
-<div class="rr"><span class="rl">i<sub>tot</sub> (total ratio)</span><span><span class="rv text-violet-300" id="r-itot">--</span></span></div>
+<div class="rr"><span class="rl">i<sub>tot</sub></span><span><span class="rv text-violet-300" id="r-itot">--</span></span></div>
 <div class="rr"><span class="rl">Motor Speed</span><span><span class="rv" id="r-wm">--</span><span class="ru">rad/s</span><span class="rv text-xs opacity-40 ml-2" id="r-rpm">--</span><span class="ru">RPM</span></span></div>
 <div class="rr elev-only"><span class="rl">Linear Speed</span><span><span class="rv text-violet-300" id="r-vl">--</span><span class="ru">mm/s</span></span></div>
-<div class="rr"><span class="rl">T<sub>acc</sub></span><span><span class="rv text-sky-300" id="r-ta">--</span><span class="ru">Nm</span></span></div>
-<div class="rr"><span class="rl">T<sub>dist</sub></span><span><span class="rv text-amber-300" id="r-td">--</span><span class="ru">Nm</span></span></div>
 <div class="rr"><span class="rl">T<sub>peak</sub> (total)</span><span><span class="rv text-blue-400" id="r-tp">--</span><span class="ru">Nm</span></span></div>
 <div class="rr"><span class="rl">T<sub>peak</sub> /motor</span><span><span class="rv" id="r-tpm">--</span><span class="ru">Nm</span></span></div>
 <div class="rr"><span class="rl">I<sub>peak</sub> /motor</span><span><span class="rv" id="r-ip">--</span><span class="ru">A</span></span></div>
@@ -139,19 +162,17 @@ input[type="number"]{-moz-appearance:textfield;box-sizing:border-box}input::-web
 <div class="rr" style="border-top:1px solid rgba(59,130,246,.15);margin-top:.15rem;padding-top:.4rem"><span class="rl font-semibold">M<sub>rms</sub> (total)</span><span><span class="rv text-blue-300" id="r-mr">--</span><span class="ru">Nm</span></span></div>
 <div class="rr"><span class="rl">M<sub>rms</sub> /motor</span><span><span class="rv" id="r-mrm">--</span><span class="ru">Nm</span></span></div>
 <div class="rr"><span class="rl">I<sub>rms</sub> /motor</span><span><span class="rv" id="r-ir">--</span><span class="ru">A</span></span></div>
-<div class="rr elev-only"><span class="rl">Peak Force</span><span><span class="rv text-violet-300" id="r-fp">--</span><span class="ru">N</span></span></div>
-<div class="rr"><span class="rl text-[9px] text-slate-600">Profile</span><span class="text-[8px] font-mono text-slate-600" id="r-pf">--</span></div>
+<div class="rr"><span class="rl text-[9px] text-slate-600">Source</span><span class="text-[8px] font-mono text-slate-600" id="r-pf">--</span></div>
 </div></div>
 <div class="card border-l-2 border-l-red-500"><div class="ch flex items-center gap-2 bg-red-500/5"><div class="w-2 h-2 rounded-full bg-red-500"></div><div><h3 class="text-[10px] font-bold tracking-widest uppercase text-red-400">Stabilization</h3><p class="cn">&phi;(t) = &phi;<sub>max</sub>&middot;sin(2&pi;ft)</p></div></div>
 <div class="px-3 py-1">
-<div class="rr"><span class="rl">Peak Motor Speed</span><span><span class="rv" id="r-ss">--</span><span class="ru">rad/s</span></span></div>
 <div class="rr"><span class="rl">Peak Stab Torque (total)</span><span><span class="rv text-red-400" id="r-sp">--</span><span class="ru">Nm</span></span></div>
 <div class="rr"><span class="rl">RMS Stab Torque (total)</span><span><span class="rv text-red-300" id="r-sr">--</span><span class="ru">Nm</span></span></div>
-<div class="rr"><span class="rl">T<sub>hold</sub> (unbalance)</span><span><span class="rv text-amber-300" id="r-th">--</span><span class="ru">Nm</span></span></div>
+<div class="rr"><span class="rl">T<sub>hold</sub></span><span><span class="rv text-amber-300" id="r-th">--</span><span class="ru">Nm</span></span></div>
 <div class="rr"><span class="rl">RMS /motor</span><span><span class="rv" id="r-srm">--</span><span class="ru">Nm</span></span></div>
 <div class="rr"><span class="rl">I<sub>rms</sub> /motor</span><span><span class="rv" id="r-si">--</span><span class="ru">A</span></span></div>
 <div class="rr"><span class="rl">V<sub>req</sub> (stab)</span><span><span class="rv" id="r-sv">--</span><span class="ru">V</span></span></div>
-<div class="rr" style="border-top:1px solid rgba(239,68,68,.12);margin-top:.15rem;padding-top:.4rem"><span class="rl">E<sub>cycle</sub> (energy)</span><span><span class="rv text-amber-200" id="r-en">--</span><span class="ru">Ws</span></span></div>
+<div class="rr" style="border-top:1px solid rgba(239,68,68,.12);margin-top:.15rem;padding-top:.4rem"><span class="rl">E<sub>cycle</sub></span><span><span class="rv text-amber-200" id="r-en">--</span><span class="ru">Ws</span></span></div>
 </div></div>
 </div>
 
@@ -163,120 +184,127 @@ input[type="number"]{-moz-appearance:textfield;box-sizing:border-box}input::-web
 <div class="px-4 pb-3"><div class="flex items-center justify-between mb-1"><span class="text-[9px] font-bold tracking-widest uppercase text-slate-500">Inertia Match</span><span class="text-xs font-mono font-bold" id="ibv" style="color:#22c55e">--</span></div><div class="relative w-full h-3 bg-slate-800/80 rounded-full overflow-hidden border border-slate-700/30"><div class="absolute top-0 h-full w-px bg-slate-500/40 z-10" style="left:33.33%"></div><div class="absolute top-0 h-full w-px bg-red-500/30 z-10" style="left:66.66%"></div><div id="ibf" class="h-full rounded-full transition-all duration-500" style="width:0%;background:#22c55e"></div></div><div class="flex justify-between mt-0.5 text-[8px] font-mono"><span class="text-slate-600">0:1</span><span class="text-green-600/70">5:1</span><span class="text-red-600/70">10:1</span><span class="text-slate-600">15+</span></div></div>
 </div>
 <div class="card lg:col-span-2">
-<div class="ch flex items-center gap-2"><div class="w-1 h-3.5 rounded-full bg-cyan-500"></div><h3 class="text-[9px] font-bold tracking-widest uppercase text-slate-400">Duty Cycle Profile</h3></div>
+<div class="ch flex items-center justify-between"><div class="flex items-center gap-2"><div class="w-1 h-3.5 rounded-full bg-cyan-500"></div><h3 class="text-[9px] font-bold tracking-widest uppercase text-slate-400">Duty Cycle Profile</h3></div><span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400" id="profBadge">TRAP</span></div>
 <div class="p-2"><div id="dcC" style="width:100%;height:340px"></div></div>
-<div class="px-3 pb-2 text-[10px] font-mono text-slate-500 space-y-1">
-<div>i<sub>tot</sub> = <span class="trav-only-inline">z<sub>1</sub>/z<sub>2</sub> &middot; i<sub>gb</sub></span><span class="elev-only-inline">i<sub>gk</sub>&middot;2&pi;L/h</span></div>
-<div>J<sub>eff</sub> = n&middot;J<sub>m</sub> + J<sub>gb</sub> + J<sub>L</sub>/(&eta;&middot;i&sup2;)</div>
-<div>T<sub>acc</sub> = J<sub>eff</sub>&middot;&alpha;<sub>load</sub>&middot;i<sub>tot</sub></div>
-<div>M<sub>rms</sub> = &radic;(&Sigma;T<sub>i</sub>&sup2;t<sub>i</sub> / &Sigma;t<sub>i</sub>)</div>
-</div></div>
+</div>
 </div>
 </main>
-<footer class="border-t border-slate-800/50 mt-3 py-2 text-center text-[8px] text-slate-600 tracking-wider">WEAPON SYSTEM MOTOR SIZING v4.0</footer>
+<footer class="border-t border-slate-800/50 mt-3 py-2 text-center text-[8px] text-slate-600 tracking-wider">WEAPON SYSTEM MOTOR SIZING v5.0</footer>
 
 <script>
-const D={
-elevation:{
- mechanical:{screwLead:25,leverArm:0.30,motorScrewRatio:3,screwEfficiency:0.90,gearEfficiency:0.95,gearboxInertia:0.0005,loadInertia:3500,unbalanceTorque:1500,frictionTorque:400,windTorque:80,firingTorque:400},
- performance:{targetSpeed:40,targetAccel:80,travelAngle:25,dwellTime:1.5,stabAmplitude:2,stabFrequency:3},
- motor:{motorCount:1,kt:0.126,ke:0.126,resistance:0.012,rotorInertia:0.005,peakTorque:80,contTorque:50,busVoltage:24}
-},
-traverse:{
- mechanical:{ringTeeth:294,pinionTeeth:25,gearboxRatio:33,efficiency:0.855,gearboxInertia:0.01,loadInertia:35000,unbalanceTorque:0,frictionTorque:1200},
- performance:{targetSpeed:20,targetAccel:20,travelAngle:30,dwellTime:2,stabAmplitude:2,stabFrequency:1},
- motor:{motorCount:2,kt:0.062,ke:0.062,resistance:0.004,rotorInertia:0.001,peakTorque:25,contTorque:12,busVoltage:24}
+const D={elevation:{
+ mechanical:{screwLead:25,leverArm:.3,motorScrewRatio:3,screwEfficiency:.9,gearEfficiency:.95,gearboxInertia:5e-4,loadInertia:3500,unbalanceTorque:1500,frictionTorque:400,windTorque:80,firingTorque:400},
+ performance:{targetSpeed:40,targetAccel:80,travelAngle:25,dwellTime:1.5,stabAmplitude:2,stabFrequency:3,sineAmp:30,sineFreq:2,sineDur:4},
+ motor:{motorCount:1,kt:.126,ke:.126,resistance:.012,rotorInertia:.005,peakTorque:80,contTorque:50,busVoltage:24}
+},traverse:{
+ mechanical:{ringTeeth:294,pinionTeeth:25,gearboxRatio:33,efficiency:.855,gearboxInertia:.01,loadInertia:35e3,unbalanceTorque:0,frictionTorque:1200},
+ performance:{targetSpeed:20,targetAccel:20,travelAngle:30,dwellTime:2,stabAmplitude:2,stabFrequency:1,sineAmp:15,sineFreq:1,sineDur:5},
+ motor:{motorCount:2,kt:.062,ke:.062,resistance:.004,rotorInertia:.001,peakTorque:25,contTorque:12,busVoltage:24}
 }};
-let ax='elevation';const AP={elevation:JSON.parse(JSON.stringify(D.elevation)),traverse:JSON.parse(JSON.stringify(D.traverse))};let pi=false;
+let ax='elevation';
+const AP={elevation:JSON.parse(JSON.stringify(D.elevation)),traverse:JSON.parse(JSON.stringify(D.traverse))};
+const PM={elevation:'trap',traverse:'trap'};
+const IM={elevation:null,traverse:null};
+let pi=false;
 
+// === PROFILE HELPERS ===
+function genTrap(p,r){
+ const ws=p.performance.targetSpeed,as_=p.performance.targetAccel,thT=p.performance.travelAngle,tDw=p.performance.dwellTime;
+ const tA=as_>0?ws/as_:0,thA=.5*as_*tA*tA;let t1,t2,t3;
+ if(2*thA<=thT){t1=tA;t3=tA;t2=ws>0?(thT-2*thA)/ws:0}else{t1=as_>0?Math.sqrt(thT/as_):0;t3=t1;t2=0}
+ const t4=tDw,tC=t1+t2+t3+t4;
+ const T1=r.Ta+r.Td,T2=r.Td,T3=Math.abs(r.Ta-r.Td),T4=r.Th;
+ // Build arrays
+ const tA_=[],TA_=[],wA_=[];const dt=.02;let tc=0;
+ for(let t=0;t<t1;t+=dt){tA_.push(tc+t);TA_.push(T1/r.n);wA_.push(r.wM*(t/Math.max(t1,.001)))}tc+=t1;
+ for(let t=0;t<t2;t+=dt){tA_.push(tc+t);TA_.push(T2/r.n);wA_.push(r.wM)}tc+=t2;
+ for(let t=0;t<t3;t+=dt){tA_.push(tc+t);TA_.push(T3/r.n);wA_.push(r.wM*(1-t/Math.max(t3,.001)))}tc+=t3;
+ for(let t=0;t<t4;t+=dt){tA_.push(tc+t);TA_.push(T4/r.n);wA_.push(0)}
+ const Mr=tC>0?Math.sqrt((T1*T1*t1+T2*T2*t2+T3*T3*t3+T4*T4*t4)/tC):0;
+ return{tArr:tA_,TArr:TA_,wArr:wA_,Mr,Tp:T1,tC,label:'TRAP t1='+t1.toFixed(2)+'s t2='+t2.toFixed(2)+'s t3='+t3.toFixed(2)+'s t4='+t4.toFixed(1)+'s'};}
+
+function genSine(p,n){
+ const amp=Math.max(p.performance.sineAmp||10,0),freq=Math.max(p.performance.sineFreq||1,.01),dur=Math.max(p.performance.sineDur||3,.1);
+ const tA=[],TA=[],wA=[];const dt=.005;
+ for(let t=0;t<=dur;t+=dt){tA.push(t);TA.push(amp/n*Math.sin(2*Math.PI*freq*t));wA.push(0)}
+ const N=TA.length,Mr_m=Math.sqrt(TA.reduce((s,v)=>s+v*v,0)/N),Tp_m=Math.max(...TA.map(Math.abs));
+ return{tArr:tA,TArr:TA,wArr:wA,Mr:Mr_m*n,Tp:Tp_m*n,tC:dur,label:'SINE A='+amp+'Nm f='+freq+'Hz'};}
+
+function genImport(n){
+ const d=IM[ax];if(!d||!d.length)return null;
+ const tA=d.map(v=>v.t),TA=d.map(v=>v.T/n),wA=d.map(v=>v.w||0);
+ const N=TA.length,Mr_m=Math.sqrt(TA.reduce((s,v)=>s+v*v,0)/N),Tp_m=Math.max(...TA.map(Math.abs));
+ return{tArr:tA,TArr:TA,wArr:wA,Mr:Mr_m*n,Tp:Tp_m*n,tC:tA[tA.length-1]-tA[0],label:'IMPORT N='+N+' pts'};}
+
+// === MAIN CALC ===
 function calc(p,at){
-const isL=at==='elevation';
+const isL=at==='elevation',mode=PM[at];
 const n=Math.max(Math.round(p.motor.motorCount),1);
 const Kt=Math.max(p.motor.kt,.001),Ke=Math.max(p.motor.ke,.001),R=Math.max(p.motor.resistance,.001);
 const Jm=Math.max(p.motor.rotorInertia,0),Tpk=Math.max(p.motor.peakTorque,.001),Tco=Math.max(p.motor.contTorque,.001),Vb=Math.max(p.motor.busVoltage,1);
-const ws_=Math.max(p.performance.targetSpeed,0),as_=Math.max(p.performance.targetAccel,0);
-const thT=Math.max(p.performance.travelAngle,0),tDw=Math.max(p.performance.dwellTime,0);
 const As=Math.max(p.performance.stabAmplitude,0),fs=Math.max(p.performance.stabFrequency,0);
 const JL=Math.max(p.mechanical.loadInertia,0),Tub=Math.max(p.mechanical.unbalanceTorque,0),Tfr=Math.max(p.mechanical.frictionTorque,0);
 const Jgb=Math.max(p.mechanical.gearboxInertia||0,0);
-let iT,eT,Td,Th,vL=0,Fp=0;
-if(isL){
- const h=Math.max(p.mechanical.screwLead,.1)/1000,L=Math.max(p.mechanical.leverArm,.001);
- const ig=Math.max(p.mechanical.motorScrewRatio,1),es=Math.max(p.mechanical.screwEfficiency,.01),eg=Math.max(p.mechanical.gearEfficiency,.01);
+let iT,eT,Td,Th,vL=0;
+if(isL){const h=Math.max(p.mechanical.screwLead,.1)/1e3,L=Math.max(p.mechanical.leverArm,.001),ig=Math.max(p.mechanical.motorScrewRatio,1),es=Math.max(p.mechanical.screwEfficiency,.01),eg=Math.max(p.mechanical.gearEfficiency,.01);
  const Tw=Math.max(p.mechanical.windTorque||0,0),Tfi=Math.max(p.mechanical.firingTorque||0,0);
- iT=ig*2*Math.PI*L/h;eT=es*eg;
- Td=(Tw+Tfi+Tfr+Tub)/(eT*iT);Th=Tub/(eT*iT);
- vL=(ws_*Math.PI/180)*L*1000;
-}else{
- const z1=Math.max(p.mechanical.ringTeeth||1,1),z2=Math.max(p.mechanical.pinionTeeth||1,1),igb=Math.max(p.mechanical.gearboxRatio||1,1);
- eT=Math.max(p.mechanical.efficiency||.8,.01);
- iT=(z1/z2)*igb;
- Td=(Tfr+Tub)/(eT*iT);Th=(Tub||0)/(eT*iT)+Tfr/(eT*iT)*.1;
-}
-const Je=n*Jm+Jgb+JL/(eT*iT*iT);
-const Jr=JL/(eT*iT*iT),Jrat=(n*Jm)>0?Jr/(n*Jm):Infinity;
-const wL=ws_*Math.PI/180,aL=as_*Math.PI/180;
-const wM=wL*iT,aM=aL*iT,rpm=wM*60/(2*Math.PI);
-const Ta=Je*aM,Tp=Ta+Td;
-const Tpm=Tp/n,Ipm=Tpm/Kt;
-const Vr=Ipm*R+Ke*wM;
-if(isL){const h=Math.max(p.mechanical.screwLead,.1)/1000;Fp=Tp*2*Math.PI*eT/h;}
-// RMS
-const tA=as_>0?ws_/as_:0,thA=.5*as_*tA*tA;
-let t1,t2,t3;
-if(2*thA<=thT){t1=tA;t3=tA;t2=ws_>0?(thT-2*thA)/ws_:0}else{t1=as_>0?Math.sqrt(thT/as_):0;t3=t1;t2=0}
-const t4=tDw,tC=t1+t2+t3+t4;
-const T1=Ta+Td,T2=Td,T3=Math.abs(Ta-Td),T4=Th;
-const Mr=tC>0?Math.sqrt((T1*T1*t1+T2*T2*t2+T3*T3*t3+T4*T4*t4)/tC):0;
+ iT=ig*2*Math.PI*L/h;eT=es*eg;Td=(Tw+Tfi+Tfr+Tub)/(eT*iT);Th=Tub/(eT*iT);vL=(Math.max(p.performance.targetSpeed,0)*Math.PI/180)*L*1e3;
+}else{const z1=Math.max(p.mechanical.ringTeeth||1,1),z2=Math.max(p.mechanical.pinionTeeth||1,1),igb=Math.max(p.mechanical.gearboxRatio||1,1);
+ eT=Math.max(p.mechanical.efficiency||.8,.01);iT=(z1/z2)*igb;Td=(Tfr+Tub)/(eT*iT);Th=Tub/(eT*iT)+Tfr/(eT*iT)*.1;}
+const Je=n*Jm+Jgb+JL/(eT*iT*iT),Jr=JL/(eT*iT*iT),Jrat=(n*Jm)>0?Jr/(n*Jm):Infinity;
+const ws_=Math.max(p.performance.targetSpeed,0),as_=Math.max(p.performance.targetAccel,0);
+const wL=ws_*Math.PI/180,aL=as_*Math.PI/180,wM=wL*iT,aM=aL*iT,rpm=wM*60/(2*Math.PI);
+const Ta=Je*aM; // acceleration torque (math mode)
+
+// Profile-dependent results
+let prof,Mr,Tp,Fp=0;
+if(mode==='sine'){prof=genSine(p,n);Mr=prof.Mr;Tp=prof.Tp;}
+else if(mode==='import'){prof=genImport(n);if(!prof){prof=genTrap(p,{Ta,Td,Th,wM,n});Mr=prof.Mr;Tp=prof.Tp;}else{Mr=prof.Mr;Tp=prof.Tp;}}
+else{prof=genTrap(p,{Ta,Td,Th,wM,n});Mr=prof.Mr;Tp=prof.Tp;}
+const Tpm=Tp/n,Ipm=Tpm/Kt,Vr=Ipm*R+Ke*wM;
+if(isL){Fp=Tp*2*Math.PI*eT/(Math.max(p.mechanical.screwLead,.1)/1e3);}
 const Mrm=Mr/n,Irm=Mrm/Kt;
 // Energy
-let En=0;
-{const w1=wM,I1=T1/(n*Kt),I2=T2/(n*Kt),I3=T3/(n*Kt),I4=T4/(n*Kt);
-const P1=n*(T1/n*w1*.5+I1*I1*R),P2=n*(T2/n*w1+I2*I2*R),P3=n*(T3/n*w1*.5+I3*I3*R),P4=n*I4*I4*R;
-En=P1*t1+P2*t2+P3*t3+P4*t4;}
+let En=0;if(prof.tArr.length>1){const dt2=prof.tArr[1]-prof.tArr[0];for(let i=0;i<prof.TArr.length;i++){const T=prof.TArr[i]*n,w=prof.wArr[i]||0,I=Math.abs(T)/(n*Kt);En+=(Math.abs(T*w)+n*I*I*R)*dt2;}}
 // Stab
-const Am=(As/1000)*iT,wsf=2*Math.PI*fs;
-const wSp=Am*wsf,aSp=Am*wsf*wsf;
+const Am=(As/1e3)*iT,wsf=2*Math.PI*fs,wSp=Am*wsf,aSp=Am*wsf*wsf;
 const TsD=Je*aSp,TsP=TsD+Math.abs(Th),TsR=Math.sqrt((TsD/Math.sqrt(2))**2+Th*Th);
-const TsRm=TsR/n,IsRm=TsRm/Kt;
-const Vs=(TsP/(n*Kt))*R+Ke*wSp;
-const vM=Vb-Vr,vP=(vM/Vb)*100,pU=(Tpm/Tpk)*100;
-const wNL=Vb/Ke;
-return{isL,n,iT,eT,Je,Jgb,Jr,Jrat,wM,aM,rpm,vL,Ta,Td,Th,Tp,Tpm,Ipm,Vr,Fp,
-Mr,Mrm,Irm,t1,t2,t3,t4,tC,T1,T2,T3,T4,En,
-wSp,aSp,TsP,TsR,TsRm,IsRm,Vs,
-vM,vP,pU,wNL,Tpk,Tco,Kt,Ke,R,Vb};}
+const TsRm=TsR/n,IsRm=TsRm/Kt,Vs=(TsP/(n*Kt))*R+Ke*wSp;
+const vM=Vb-Vr,vP=(vM/Vb)*100,pU=(Tpm/Tpk)*100,wNL=Vb/Ke;
+return{isL,n,mode,iT,eT,Je,Jgb,Jr,Jrat,wM,aM,rpm,vL,Ta,Td,Th,Tp,Tpm,Ipm,Vr,Fp,
+Mr,Mrm,Irm,En,prof,wSp,TsP,TsR,TsRm,IsRm,Vs,vM,vP,pU,wNL,Tpk,Tco,Kt,Ke,R,Vb};}
 
-function f(v,d){return v.toFixed(d??2)}function fA(v){if(!isFinite(v))return'--';if(Math.abs(v)<.01&&v!==0)return v.toExponential(3);if(Math.abs(v)>=1e4)return v.toFixed(0);if(Math.abs(v)>=100)return v.toFixed(1);if(Math.abs(v)>=1)return v.toFixed(3);return v.toFixed(4)}
+// === HELPERS ===
+function f(v,d){return v.toFixed(d??2)}
+function fA(v){if(!isFinite(v))return'--';if(Math.abs(v)<.01&&v!==0)return v.toExponential(3);if(Math.abs(v)>=1e4)return v.toFixed(0);if(Math.abs(v)>=100)return v.toFixed(1);if(Math.abs(v)>=1)return v.toFixed(3);return v.toFixed(4)}
 function lC(a,b,t){const ah=parseInt(a.replace('#',''),16),bh=parseInt(b.replace('#',''),16);const ar=(ah>>16)&0xff,ag=(ah>>8)&0xff,ab=ah&0xff,br=(bh>>16)&0xff,bg=(bh>>8)&0xff,bb=bh&0xff;return'#'+((1<<24)+(Math.round(ar+(br-ar)*t)<<16)+(Math.round(ag+(bg-ag)*t)<<8)+Math.round(ab+(bb-ab)*t)).toString(16).slice(1)}
-function sT(i,t){const e=document.getElementById(i);if(e)e.textContent=t}function sH(i,h){const e=document.getElementById(i);if(e)e.innerHTML=h}
-function gS(v,g,w){return v<=g?'ok':v<=w?'warn':'danger'}function gSH(v,g,w){return v>=g?'ok':v>=w?'warn':'danger'}
+function sT(i,t){const e=document.getElementById(i);if(e)e.textContent=t}
+function sH(i,h){const e=document.getElementById(i);if(e)e.innerHTML=h}
+function gS(v,g,w){return v<=g?'ok':v<=w?'warn':'danger'}
+function gSH(v,g,w){return v>=g?'ok':v>=w?'warn':'danger'}
 function aB(i,s,v,u){const c=document.getElementById(i),ic=document.getElementById(i+'-ic');c.className=c.className.replace(/badge-\w+/g,'');c.classList.add('badge-'+s);ic.className=ic.className.replace(/icon-\w+/g,'');ic.classList.add('icon-'+s);c.classList.remove('animate-pulse-danger');ic.textContent={ok:'OK',warn:'!!',danger:'XX'}[s];if(s==='danger')c.classList.add('animate-pulse-danger');sT(i+'-val',v);sH(i+'-sub',u)}
 
 function uR(r){
 sT('r-itot',f(r.iT,1));sT('r-wm',f(r.wM,1));sT('r-rpm',f(r.rpm,0));sT('r-vl',f(r.vL,1));
-sT('r-ta',fA(r.Ta));sT('r-td',fA(r.Td));sT('r-tp',fA(r.Tp));sT('r-tpm',fA(r.Tpm));
-sT('r-ip',f(r.Ipm,1));sT('r-vr',f(r.Vr,1));sT('r-fp',f(r.Fp,0));
-sT('r-mr',fA(r.Mr));sT('r-mrm',fA(r.Mrm));sT('r-ir',f(r.Irm,1));
-sT('r-pf','t1='+f(r.t1,2)+'s t2='+f(r.t2,2)+'s t3='+f(r.t3,2)+'s t4='+f(r.t4,1)+'s T='+f(r.tC,2)+'s');
-sT('r-ss',f(r.wSp,2));sT('r-sp',fA(r.TsP));sT('r-sr',fA(r.TsR));sT('r-th',fA(r.Th));
-sT('r-srm',fA(r.TsRm));sT('r-si',f(r.IsRm,2));sT('r-sv',f(r.Vs,1));sT('r-en',f(r.En,1));
-aB('bdg-inertia',gS(r.Jrat,5,10),f(r.Jrat,1)+':1','J<sub>eff</sub>='+r.Je.toExponential(3)+' &mdash; i<sub>tot</sub>='+f(r.iT,1)+' &mdash; n='+r.n);
-aB('bdg-voltage',gSH(r.vP,15,5),(r.vM>=0?'+':'')+f(r.vM,1)+'V',f(r.vP,1)+'% &mdash; '+f(r.Vr,1)+'V/'+f(r.Vb,0)+'V');
-aB('bdg-peak',gS(r.pU,70,90),f(r.pU,1)+'%',fA(r.Tpm)+'/'+f(r.Tpk,1)+' Nm per motor');}
+sT('r-tp',fA(r.Tp));sT('r-tpm',fA(r.Tpm));sT('r-ip',f(r.Ipm,1));sT('r-vr',f(r.Vr,1));
+sT('r-mr',fA(r.Mr));sT('r-mrm',fA(r.Mrm));sT('r-ir',f(r.Irm,1));sT('r-pf',r.prof.label);
+sT('r-sp',fA(r.TsP));sT('r-sr',fA(r.TsR));sT('r-th',fA(r.Th));sT('r-srm',fA(r.TsRm));sT('r-si',f(r.IsRm,2));sT('r-sv',f(r.Vs,1));sT('r-en',f(r.En,1));
+const ln=document.getElementById('layNote');if(ln)ln.textContent={trap:'Trapezoidal profile',sine:'Sinusoidal profile',import:'Imported data profile'}[r.mode];
+aB('bdg-inertia',gS(r.Jrat,5,10),f(r.Jrat,1)+':1','J<sub>eff</sub>='+r.Je.toExponential(3)+' i<sub>tot</sub>='+f(r.iT,1)+' n='+r.n);
+aB('bdg-voltage',gSH(r.vP,15,5),(r.vM>=0?'+':'')+f(r.vM,1)+'V',f(r.vP,1)+'% '+f(r.Vr,1)+'V/'+f(r.Vb,0)+'V');
+aB('bdg-peak',gS(r.pU,70,90),f(r.pU,1)+'%',fA(r.Tpm)+'/'+f(r.Tpk,1)+' Nm/motor');}
 
 function uB(r){const b=document.getElementById('ibf'),l=document.getElementById('ibv');if(!b)return;b.style.width=Math.min(r,15)/15*100+'%';let c=r<=5?'#22c55e':r<=10?lC('#22c55e','#f59e0b',(r-5)/5):lC('#f59e0b','#ef4444',Math.min((r-10)/5,1));b.style.background='linear-gradient(90deg,#22c55e,'+c+')';l.textContent=(isFinite(r)?f(r,1):'---')+':1';l.style.color=c}
 
 function uC(r){
+// Torque-Speed chart
 const wX=Math.max(r.wNL,r.wM)*1.25,N=100;const wP=[],tP=[],wC=[],tC=[];
 for(let j=0;j<=N;j++){const w=(j/N)*wX,Tv=r.Kt*Math.max(0,(r.Vb-r.Ke*w))/r.R;wP.push(w);tP.push(Math.max(0,Math.min(r.Tpk,Tv)));wC.push(w);tC.push(Math.max(0,Math.min(r.Tco,Tv)))}
-const dl=r.isL?'Linear':'Ring Gear';
 const tr=[
-{x:wP,y:tP,type:'scatter',mode:'lines',name:'Peak Env.',fill:'tozeroy',line:{color:'rgba(239,68,68,.65)',width:2},fillcolor:'rgba(239,68,68,.05)',hovertemplate:'%{x:.1f} rad/s, %{y:.2f} Nm<extra>Peak</extra>'},
-{x:wC,y:tC,type:'scatter',mode:'lines',name:'Cont. Env.',fill:'tozeroy',line:{color:'rgba(96,165,250,.55)',width:1.5,dash:'dash'},fillcolor:'rgba(59,130,246,.03)',hovertemplate:'%{x:.1f} rad/s, %{y:.2f} Nm<extra>Cont</extra>'},
-{x:[r.wM],y:[r.Tpm],type:'scatter',mode:'markers+text',name:'Laying/motor',text:['LAYING'],textposition:'top center',textfont:{size:9,color:'#93c5fd'},marker:{color:'#3b82f6',size:14,line:{color:'#93c5fd',width:2}},hovertemplate:'Laying: %{x:.1f} rad/s, %{y:.3f} Nm<extra></extra>'},
-{x:[r.wSp],y:[r.TsRm],type:'scatter',mode:'markers+text',name:'Stab RMS/motor',text:['STAB'],textposition:'top center',textfont:{size:9,color:'#fca5a5'},marker:{color:'#ef4444',size:14,symbol:'diamond',line:{color:'#fca5a5',width:2}},hovertemplate:'Stab: %{x:.2f} rad/s, %{y:.4f} Nm<extra></extra>'}
-];
+{x:wP,y:tP,type:'scatter',mode:'lines',name:'Peak Env.',fill:'tozeroy',line:{color:'rgba(239,68,68,.65)',width:2},fillcolor:'rgba(239,68,68,.05)'},
+{x:wC,y:tC,type:'scatter',mode:'lines',name:'Cont. Env.',fill:'tozeroy',line:{color:'rgba(96,165,250,.55)',width:1.5,dash:'dash'},fillcolor:'rgba(59,130,246,.03)'},
+{x:[r.wM],y:[r.Tpm],type:'scatter',mode:'markers+text',name:'Laying/mot',text:['LAYING'],textposition:'top center',textfont:{size:9,color:'#93c5fd'},marker:{color:'#3b82f6',size:14,line:{color:'#93c5fd',width:2}}},
+{x:[r.wSp],y:[r.TsRm],type:'scatter',mode:'markers+text',name:'Stab/mot',text:['STAB'],textposition:'top center',textfont:{size:9,color:'#fca5a5'},marker:{color:'#ef4444',size:14,symbol:'diamond',line:{color:'#fca5a5',width:2}}}];
 const yX=Math.max(r.Tpk,r.Tpm,r.TsRm)*1.4;
 const lo={paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'#080d1a',font:{family:'Inter',color:'#94a3b8',size:10},margin:{t:25,r:15,b:45,l:55},
 xaxis:{title:'Motor Speed (rad/s)',tickfont:{family:'JetBrains Mono',size:9,color:'#64748b'},gridcolor:'rgba(30,41,59,.4)',range:[0,wX]},
@@ -285,35 +313,65 @@ legend:{x:.01,y:.99,bgcolor:'rgba(12,18,34,.85)',bordercolor:'#1e293b',font:{siz
 shapes:[{type:'line',x0:0,x1:wX,y0:r.Tpk,y1:r.Tpk,line:{color:'rgba(239,68,68,.2)',width:1,dash:'dot'}},{type:'line',x0:0,x1:wX,y0:r.Tco,y1:r.Tco,line:{color:'rgba(96,165,250,.2)',width:1,dash:'dot'}}]};
 const cf={responsive:true,displaylogo:false,modeBarButtonsToRemove:['lasso2d','select2d','autoScale2d']};
 if(!pi){Plotly.newPlot('tsC',tr,lo,cf);pi=true}else Plotly.react('tsC',tr,lo,cf);
-sT('cl',ax.toUpperCase()+' ('+dl+', n='+r.n+')');
+sT('cl',ax.toUpperCase()+' (n='+r.n+')');
 // Duty cycle chart
-const tArr=[],TArr=[],wArr=[];let tc=0;const dt=0.02;
-for(let tt=0;tt<r.t1;tt+=dt){tArr.push(tc+tt);TArr.push(r.T1/r.n);wArr.push(r.wM*(tt/Math.max(r.t1,.001)))}tc+=r.t1;
-for(let tt=0;tt<r.t2;tt+=dt){tArr.push(tc+tt);TArr.push(r.T2/r.n);wArr.push(r.wM)}tc+=r.t2;
-for(let tt=0;tt<r.t3;tt+=dt){tArr.push(tc+tt);TArr.push(r.T3/r.n);wArr.push(r.wM*(1-tt/Math.max(r.t3,.001)))}tc+=r.t3;
-for(let tt=0;tt<r.t4;tt+=dt){tArr.push(tc+tt);TArr.push(r.T4/r.n);wArr.push(0)}
+const pr=r.prof;
+const modeColors={trap:'rgba(59,130,246,.7)',sine:'rgba(168,85,247,.7)',import:'rgba(245,158,11,.7)'};
+const fillColors={trap:'rgba(59,130,246,.08)',sine:'rgba(168,85,247,.08)',import:'rgba(245,158,11,.08)'};
 const dcTr=[
-{x:tArr,y:TArr,type:'scatter',mode:'lines',name:'Torque/motor',fill:'tozeroy',line:{color:'rgba(59,130,246,.7)',width:2},fillcolor:'rgba(59,130,246,.08)'},
-{x:tArr,y:wArr,type:'scatter',mode:'lines',name:'Speed (rad/s)',yaxis:'y2',line:{color:'rgba(245,158,11,.5)',width:1.5,dash:'dot'}}
-];
+{x:pr.tArr,y:pr.TArr,type:'scatter',mode:'lines',name:'T/motor (Nm)',fill:'tozeroy',line:{color:modeColors[r.mode],width:2},fillcolor:fillColors[r.mode]},
+{x:pr.tArr,y:pr.wArr,type:'scatter',mode:'lines',name:'Speed',yaxis:'y2',line:{color:'rgba(245,158,11,.4)',width:1.5,dash:'dot'}}];
 const dcLo={paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'#080d1a',font:{family:'Inter',color:'#94a3b8',size:10},margin:{t:25,r:50,b:45,l:55},
 xaxis:{title:'Time (s)',tickfont:{family:'JetBrains Mono',size:9,color:'#64748b'},gridcolor:'rgba(30,41,59,.4)'},
 yaxis:{title:'Torque/Motor (Nm)',tickfont:{family:'JetBrains Mono',size:9,color:'#64748b'},gridcolor:'rgba(30,41,59,.4)',rangemode:'tozero'},
 yaxis2:{title:'Speed (rad/s)',overlaying:'y',side:'right',tickfont:{family:'JetBrains Mono',size:9,color:'#f59e0b40'},showgrid:false,rangemode:'tozero'},
 legend:{x:.01,y:.99,bgcolor:'rgba(12,18,34,.85)',bordercolor:'#1e293b',font:{size:8}},hovermode:'x unified',
-shapes:[{type:'line',x0:0,x1:r.tC,y0:r.Mrm,y1:r.Mrm,line:{color:'rgba(34,197,94,.5)',width:2,dash:'dash'}}],
-annotations:[{x:r.tC*.95,y:r.Mrm,text:'M<sub>rms</sub>/motor='+fA(r.Mrm),showarrow:false,yanchor:'bottom',font:{size:8,color:'#4ade80',family:'JetBrains Mono'}}]};
-Plotly.react('dcC',dcTr,dcLo,cf);}
+shapes:[{type:'line',x0:pr.tArr[0]||0,x1:pr.tArr[pr.tArr.length-1]||1,y0:r.Mrm,y1:r.Mrm,line:{color:'rgba(34,197,94,.5)',width:2,dash:'dash'}}],
+annotations:[{x:(pr.tArr[pr.tArr.length-1]||1)*.9,y:r.Mrm,text:'M<sub>rms</sub>='+fA(r.Mrm),showarrow:false,yanchor:'bottom',font:{size:8,color:'#4ade80',family:'JetBrains Mono'}}]};
+Plotly.react('dcC',dcTr,dcLo,cf);
+const pb=document.getElementById('profBadge');if(pb){pb.textContent={trap:'TRAP',sine:'SINE',import:'CSV'}[r.mode];pb.style.background=r.mode==='import'?'rgba(245,158,11,.15)':r.mode==='sine'?'rgba(168,85,247,.15)':'rgba(30,41,59,.8)';pb.style.color=r.mode==='import'?'#f59e0b':r.mode==='sine'?'#a78bfa':'#94a3b8'}}
 
-function pop(){const p=AP[ax];document.querySelectorAll('input.inp').forEach(e=>{const[c,k]=e.dataset.key.split('.');if(p[c]&&p[c].hasOwnProperty(k))e.value=p[c][k]})}
+// === FILE IMPORT ===
+function handleImport(e){
+ const file=e.target.files[0];if(!file)return;
+ const reader=new FileReader();
+ reader.onload=function(ev){
+  const txt=ev.target.result;let data;
+  try{
+   if(file.name.endsWith('.json')){const j=JSON.parse(txt);data=Array.isArray(j)?j:(j.data||[]);data=data.map(d=>({t:d.t??d.time??0,T:d.T??d.torque??0,w:d.w??d.speed??0}))}
+   else{const lines=txt.trim().split('\n');const hdr=lines[0].toLowerCase();const hasW=hdr.includes('speed')||hdr.includes('omega');
+    data=lines.slice(1).map(l=>{const p=l.split(/[,;\t]/).map(Number);return{t:p[0],T:p[1],w:hasW&&p[2]!==undefined?p[2]:0}}).filter(d=>!isNaN(d.t)&&!isNaN(d.T))}
+  }catch(ex){data=[];alert('Parse error: '+ex.message)}
+  IM[ax]=data.length?data:null;
+  sT('importInfo',data.length?'Loaded: '+data.length+' points, '+f(data[data.length-1].t-data[0].t,2)+'s duration':'Parse failed');
+  rc();
+ };reader.readAsText(file);e.target.value=''}
+
+function dlTemplate(){
+ const csv='time,torque,speed\n0,0,0\n0.1,5.0,10\n0.2,15.0,50\n0.3,30.0,100\n0.5,25.0,120\n0.7,10.0,80\n1.0,5.0,30\n1.5,2.0,0\n2.0,0,0\n';
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='torque_profile_template.csv';a.click()}
+
+function updateImportInfo(){const d=IM[ax];sT('importInfo',d?'Loaded: '+d.length+' pts, '+f(d[d.length-1].t-d[0].t,2)+'s':'No file loaded')}
+
+// === PROFILE MODE ===
+function onProf(){const sel=document.getElementById('profSel');PM[ax]=sel.value;updProfVis();rc()}
+function updProfVis(){const m=PM[ax];
+ document.getElementById('pf-trap').style.display=m==='trap'?'block':'none';
+ document.getElementById('pf-sine').style.display=m==='sine'?'block':'none';
+ document.getElementById('pf-import').style.display=m==='import'?'block':'none';
+ updateImportInfo()}
+
+// === FORM SYNC ===
+function pop(){const p=AP[ax];document.querySelectorAll('input.inp').forEach(e=>{const[c,k]=e.dataset.key.split('.');if(p[c]&&p[c].hasOwnProperty(k))e.value=p[c][k]});
+ document.getElementById('profSel').value=PM[ax];updProfVis()}
 function rd(){const p=AP[ax];document.querySelectorAll('input.inp').forEach(e=>{if(e.offsetParent===null)return;const[c,k]=e.dataset.key.split('.');if(!p[c]||!p[c].hasOwnProperty(k))return;const v=parseFloat(e.value);if(!isNaN(v))p[c][k]=v})}
 function rc(){rd();const r=calc(AP[ax],ax);uR(r);uC(r);uB(r.Jrat)}
 function uV(a){const isE=a==='elevation';
-document.querySelectorAll('.elev-only').forEach(e=>e.style.display=isE?'flex':'none');
-document.querySelectorAll('.trav-only').forEach(e=>e.style.display=isE?'none':'flex');
-document.querySelectorAll('.elev-only-inline').forEach(e=>e.style.display=isE?'inline':'none');
-document.querySelectorAll('.trav-only-inline').forEach(e=>e.style.display=isE?'none':'inline');
-const mn=document.getElementById('mn');if(mn)mn.textContent=isE?'Linear actuator: rollerscrew + gear + lever':'Ring gear + gearbox drive system'}
+ document.querySelectorAll('.elev-only').forEach(e=>e.style.display=isE?'flex':'none');
+ document.querySelectorAll('.trav-only').forEach(e=>e.style.display=isE?'none':'flex');
+ document.querySelectorAll('.elev-only-inline').forEach(e=>e.style.display=isE?'inline':'none');
+ document.querySelectorAll('.trav-only-inline').forEach(e=>e.style.display=isE?'none':'inline');
+ const mn=document.getElementById('mn');if(mn)mn.textContent=isE?'Linear actuator: rollerscrew + gear + lever':'Ring gear + gearbox drive system'}
 function sw(a){rd();ax=a;document.querySelectorAll('.axis-tab').forEach(b=>{b.classList.remove('tab-active');b.classList.add('tab-inactive')});document.getElementById('tab-'+a).classList.remove('tab-inactive');document.getElementById('tab-'+a).classList.add('tab-active');uV(a);pop();rc()}
 document.addEventListener('DOMContentLoaded',()=>{uV(ax);pop();rc();document.querySelectorAll('input.inp').forEach(e=>e.addEventListener('input',rc))});
 </script>
