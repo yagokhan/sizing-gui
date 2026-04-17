@@ -42,10 +42,9 @@ input[type="number"]{-moz-appearance:textfield;box-sizing:border-box}input::-web
 /* Clickable per-input unit labels */
 .pu.u-click{cursor:pointer;background:rgba(30,41,59,.6);border:1px solid rgba(71,85,105,.5);border-radius:.25rem;padding:1px 4px;transition:all .1s;font-weight:600}
 .pu.u-click:hover{background:rgba(37,99,235,.3);border-color:#3b82f6;color:#93c5fd}
-/* Tooltips — shared for inputs and results */
-[data-tip]{cursor:help;border-bottom:1px dotted rgba(100,116,139,.5);position:relative}
-[data-tip]:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:0;background:#0b1220;color:#e2e8f0;padding:.5rem .7rem;border-radius:.4rem;font-size:.68rem;line-height:1.45;font-weight:400;font-family:Inter,sans-serif;min-width:160px;max-width:320px;white-space:normal;border:1px solid #3b82f6;box-shadow:0 6px 18px rgba(0,0,0,.7);pointer-events:none;z-index:9999}
-[data-tip]:hover::before{content:'';position:absolute;bottom:100%;left:12px;border:5px solid transparent;border-top-color:#3b82f6;z-index:9999;pointer-events:none}
+/* Tooltips — JS-managed portal style (avoids card overflow clipping) */
+[data-tip]{cursor:help;border-bottom:1px dotted rgba(100,116,139,.5)}
+#globalTip{position:fixed;display:none;background:#0b1220;color:#e2e8f0;padding:.55rem .75rem;border-radius:.4rem;font-size:.7rem;line-height:1.45;font-weight:400;font-family:Inter,sans-serif;max-width:340px;border:1px solid #3b82f6;box-shadow:0 8px 24px rgba(0,0,0,.85);pointer-events:none;z-index:99999;letter-spacing:.01em}
 .sl{font-size:.48rem;color:#536175;text-transform:uppercase;letter-spacing:.1em;font-weight:700;padding:.3rem 0 .1rem;border-top:1px solid rgba(30,41,59,.25);margin-top:.15rem}
 .btn-sm{padding:.3rem .6rem;border-radius:.3rem;font-size:.65rem;font-weight:600;transition:all .15s}
 .js-plotly-plot .plotly .modebar{top:2px!important;right:2px!important}.js-plotly-plot .plotly .modebar-btn{color:#475569!important}
@@ -1299,8 +1298,16 @@ function loadScn(name){if(!name)return;const list=loadScnList(),s=list[name];if(
 
 // === D3: PDF EXPORT (custom jsPDF layout) ===
 async function exportPDF(){
+ if(!window.jspdf||!window.jspdf.jsPDF){alert('PDF library not loaded.\nCheck your internet connection (CDN: html2pdf.bundle.min.js).');return}
+ if(!window.Plotly){alert('Plotly library not loaded.');return}
+ const btn=document.querySelector('button[onclick="exportPDF()"]');const origTxt=btn?btn.innerHTML:'';if(btn){btn.disabled=true;btn.innerHTML='⏳ Building PDF…'}
+ try{
  if(!solved)solve();
- await new Promise(rs=>setTimeout(rs,250));
+ // Render every sub-tab once so all Plotly charts get drawn
+ const subs=['overview','power','energy','precision','charts','visuals'];
+ const prevSub=curSub;
+ for(const s of subs){swSub(s);await new Promise(rs=>setTimeout(rs,250))}
+ swSub(prevSub);await new Promise(rs=>setTimeout(rs,150));
  const r=calc(AP[ax],ax);
  const {jsPDF}=window.jspdf;
  const pdf=new jsPDF({unit:'mm',format:'a4',orientation:'landscape',compress:true});
@@ -1379,7 +1386,7 @@ async function exportPDF(){
  }
  function status(val,gw,db){return val<=gw?{s:'ok',t:'OK'}:val<=db?{s:'warn',t:'WARN'}:{s:'bad',t:'HIGH'}}
  function statusGE(val,gw,db){return val>=gw?{s:'ok',t:'OK'}:val>=db?{s:'warn',t:'LOW'}:{s:'bad',t:'CRIT'}}
- async function chartImg(id,w,h){try{const url=await Plotly.toImage(id,{format:'png',width:w,height:h,scale:1.5});return url}catch(e){return null}}
+ async function chartImg(id,w,h){try{const el=document.getElementById(id);if(!el||!el.data){console.warn('chartImg: '+id+' not initialized');return null}const url=await Plotly.toImage(id,{format:'png',width:w,height:h,scale:1.5});return url}catch(e){console.warn('chartImg('+id+') failed:',e.message);return null}}
  async function svgImg(id,w,h){
   const svg=document.getElementById(id);if(!svg)return null;
   const xml=new XMLSerializer().serializeToString(svg);
@@ -1558,6 +1565,8 @@ async function exportPDF(){
  footer();
 
  pdf.save('motor_sizing_'+ax+'_'+new Date().toISOString().slice(0,16).replace(/[:T]/g,'-')+'.pdf');
+ }catch(err){console.error('PDF export failed:',err);alert('PDF generation error: '+err.message+'\nSee console for details.')}
+ finally{if(btn){btn.disabled=false;btn.innerHTML=origTxt}}
 }
 
 // === D4: COMPARE A/B ===
@@ -1587,7 +1596,19 @@ function uV(a){const isE=a==='elevation';
  document.querySelectorAll('.trav-only-inline').forEach(e=>e.style.display=isE?'none':'inline');
  const mn=document.getElementById('mn');if(mn)mn.textContent=isE?'Linear actuator: rollerscrew + gear + lever':'Ring gear + gearbox drive system'}
 function sw(a){rd();ax=a;document.querySelectorAll('.axis-tab').forEach(b=>{b.classList.remove('tab-active');b.classList.add('tab-inactive')});document.getElementById('tab-'+a).classList.remove('tab-inactive');document.getElementById('tab-'+a).classList.add('tab-active');uV(a);pop();markStale();swView('inputs');drawProfPreview()}
-document.addEventListener('DOMContentLoaded',()=>{uV(ax);pop();updScnSel();updUnitLabels();document.querySelectorAll('input.inp').forEach(e=>e.addEventListener('input',markStale));setTimeout(()=>{drawProfPreview();drawInputsVisuals()},100)});
+document.addEventListener('DOMContentLoaded',()=>{uV(ax);pop();updScnSel();updUnitLabels();document.querySelectorAll('input.inp').forEach(e=>e.addEventListener('input',markStale));setTimeout(()=>{drawProfPreview();drawInputsVisuals()},100);
+ // Tooltip portal
+ const tip=document.createElement('div');tip.id='globalTip';document.body.appendChild(tip);
+ const showTip=el=>{const t=el.getAttribute('data-tip');if(!t)return;tip.textContent=t;tip.style.display='block';
+  const r=el.getBoundingClientRect();let x=r.left,y=r.top-tip.offsetHeight-8;
+  if(y<6){y=r.bottom+8}if(x<6){x=6}if(x+tip.offsetWidth>window.innerWidth-6){x=window.innerWidth-tip.offsetWidth-6}
+  tip.style.left=x+'px';tip.style.top=y+'px'};
+ const hideTip=()=>{tip.style.display='none'};
+ document.addEventListener('mouseover',e=>{const el=e.target.closest('[data-tip]');if(el)showTip(el)});
+ document.addEventListener('mouseout',e=>{const el=e.target.closest('[data-tip]');if(el)hideTip()});
+ document.addEventListener('click',e=>{const el=e.target.closest('[data-tip]');if(el){e.stopPropagation();showTip(el);clearTimeout(window._tipT);window._tipT=setTimeout(hideTip,3500)}});
+ document.addEventListener('scroll',hideTip,true);
+});
 document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();solve()}});
 window.addEventListener('resize',()=>setTimeout(resizeAll,100));
 </script>
