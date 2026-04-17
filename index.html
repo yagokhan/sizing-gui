@@ -85,11 +85,42 @@ input[type="number"]{-moz-appearance:textfield;box-sizing:border-box}input::-web
 <!-- ============== INPUTS VIEW ============== -->
 <section id="view-inputs">
 <div class="card mb-4" style="background:linear-gradient(135deg,rgba(30,41,59,.4),rgba(15,23,42,.4));border:1px solid rgba(51,65,85,.5)">
- <div class="px-4 py-2 flex items-center justify-between">
+ <div class="px-4 py-2 flex items-center justify-between flex-wrap gap-2">
   <div class="flex items-center gap-2">
    <div class="w-6 h-6 rounded-md bg-blue-500/20 flex items-center justify-center"><svg class="w-3.5 h-3.5 text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg></div>
-   <div><div class="text-[10px] font-bold tracking-widest uppercase text-slate-300">Parameter Entry</div><div class="text-[9px] text-slate-500">Enter values manually or import torque profile as CSV/JSON. Press SOLVE to compute.</div></div>
+   <div><div class="text-[10px] font-bold tracking-widest uppercase text-slate-300">Parameter Entry</div><div class="text-[9px] text-slate-500">Enter values manually or import profile. Press SOLVE to compute.</div></div>
   </div>
+  <div class="flex items-center gap-2">
+   <span class="text-[9px] font-bold tracking-widest uppercase text-slate-500">Angle Units</span>
+   <div class="flex bg-slate-800/70 rounded-md p-0.5 border border-slate-700/40">
+    <button id="u-deg" onclick="setUnits('deg')" class="px-2.5 py-1 text-[9px] font-bold rounded tracking-wider" style="background:#2563eb;color:#fff">DEG</button>
+    <button id="u-rad" onclick="setUnits('rad')" class="px-2.5 py-1 text-[9px] font-bold rounded tracking-wider text-slate-400">RAD</button>
+   </div>
+  </div>
+ </div>
+</div>
+
+<!-- LIVE SYSTEM OVERVIEW -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+ <div class="card">
+  <div class="ch flex items-center justify-between"><div class="flex items-center gap-2"><div class="w-1 h-3.5 rounded-full bg-blue-500"></div><h3 class="text-[9px] font-bold tracking-widest uppercase text-slate-400">Power Flow — Live</h3></div><span class="text-[8px] text-slate-600 font-mono">UPDATES AS YOU TYPE</span></div>
+  <div class="p-2"><svg id="svgBlockIn" viewBox="0 0 900 200" style="width:100%;height:160px"></svg></div>
+ </div>
+ <div class="card">
+  <div class="ch flex items-center justify-between"><div class="flex items-center gap-2"><div class="w-1 h-3.5 rounded-full bg-violet-500"></div><h3 class="text-[9px] font-bold tracking-widest uppercase text-slate-400" id="kinTitle">Kinematics — Live</h3></div><span class="text-[8px] text-slate-600 font-mono" id="kinHint">—</span></div>
+  <div class="p-2"><svg id="svgKinIn" viewBox="0 0 500 260" style="width:100%;height:200px"></svg></div>
+ </div>
+</div>
+
+<!-- LIVE METRICS STRIP (quick snapshot, updates as you type) -->
+<div class="card mb-4" style="background:rgba(12,18,34,.6);border:1px solid rgba(51,65,85,.4)">
+ <div class="flex items-center divide-x divide-slate-700/40" id="liveStrip">
+  <div class="flex-1 px-3 py-2"><div class="text-[8px] font-bold tracking-widest uppercase text-slate-500">i_tot</div><div class="text-sm font-mono font-bold text-violet-300" id="ls-itot">--</div></div>
+  <div class="flex-1 px-3 py-2"><div class="text-[8px] font-bold tracking-widest uppercase text-slate-500">J_eff</div><div class="text-sm font-mono font-bold text-blue-300" id="ls-je">--</div></div>
+  <div class="flex-1 px-3 py-2"><div class="text-[8px] font-bold tracking-widest uppercase text-slate-500">ω_motor</div><div class="text-sm font-mono font-bold text-blue-300" id="ls-wm">--</div></div>
+  <div class="flex-1 px-3 py-2"><div class="text-[8px] font-bold tracking-widest uppercase text-slate-500">T_peak est.</div><div class="text-sm font-mono font-bold text-amber-300" id="ls-tp">--</div></div>
+  <div class="flex-1 px-3 py-2"><div class="text-[8px] font-bold tracking-widest uppercase text-slate-500">Inertia Ratio</div><div class="text-sm font-mono font-bold text-emerald-300" id="ls-jrat">--</div></div>
+  <div class="flex-1 px-3 py-2"><div class="text-[8px] font-bold tracking-widest uppercase text-slate-500">V_req est.</div><div class="text-sm font-mono font-bold text-red-300" id="ls-vr">--</div></div>
  </div>
 </div>
 
@@ -98,6 +129,19 @@ input[type="number"]{-moz-appearance:textfield;box-sizing:border-box}input::-web
 <!-- MECHANICAL (unchanged structure) -->
 <div class="card"><div class="ch flex items-center gap-2"><div class="w-1 h-3.5 rounded-full bg-blue-500"></div><div><h2 class="text-[9px] font-bold tracking-widest uppercase text-slate-400">Mechanical &amp; Load</h2><p class="cn" id="mn">Linear actuator drive</p></div></div>
 <div class="px-3 py-1">
+<div class="pr" style="background:rgba(59,130,246,.06);border-radius:.3rem;padding:.35rem .3rem;margin-bottom:.2rem">
+<span class="pl font-bold text-blue-300">Gear Input Mode</span>
+<select id="gearSel" onchange="onGearMode()" class="sel" style="width:8.5rem">
+<option value="step">Step-by-step</option>
+<option value="single">Single ratio</option>
+</select></div>
+<div id="gm-single" style="display:none">
+<div class="pr"><span class="pl">Total Ratio<span class="ps">i<sub>tot</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.iTotSingle" step="0.1" min="0.1"><span class="pu">[-]</span></div></div>
+<div class="pr"><span class="pl">Total Efficiency<span class="ps">&eta;<sub>tot</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.etaTotSingle" step="0.01" min="0.01" max="1"><span class="pu">[-]</span></div></div>
+<div class="pr"><span class="pl">Drive Inertia<span class="ps">J<sub>gb</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.gearboxInertia" step="0.0001" min="0"><span class="pu">kg&middot;m&sup2;</span></div></div>
+<div class="pr elev-only"><span class="pl">Lever Arm<span class="ps">L</span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.leverArm" step="0.01" min="0.001"><span class="pu">m</span></div></div>
+</div>
+<div id="gm-step">
 <div class="sl elev-only" style="border-top:none;margin-top:0">Transmission</div>
 <div class="pr elev-only"><span class="pl">Screw Lead<span class="ps">h</span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.screwLead" step="1" min="0.1"><span class="pu">mm/rev</span></div></div>
 <div class="pr elev-only"><span class="pl">Lever Arm<span class="ps">L</span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.leverArm" step="0.01" min="0.001"><span class="pu">m</span></div></div>
@@ -111,6 +155,7 @@ input[type="number"]{-moz-appearance:textfield;box-sizing:border-box}input::-web
 <div class="pr trav-only"><span class="pl">Gearbox Ratio<span class="ps">i<sub>gb</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.gearboxRatio" step="1" min="1"><span class="pu">[-]</span></div></div>
 <div class="pr trav-only"><span class="pl">Total Eff.<span class="ps">&eta;<sub>tot</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.efficiency" step="0.01" min="0.01" max="1"><span class="pu">[-]</span></div></div>
 <div class="pr trav-only"><span class="pl">Gearbox Inertia<span class="ps">J<sub>gb</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.gearboxInertia" step="0.001" min="0"><span class="pu">kg&middot;m&sup2;</span></div></div>
+</div><!-- /gm-step -->
 <div class="sl">Load &amp; Disturbances</div>
 <div class="pr"><span class="pl">Load Inertia<span class="ps">J<sub>L</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.loadInertia" step="10" min="0"><span class="pu">kg&middot;m&sup2;</span></div></div>
 <div class="pr"><span class="pl">Unbalance<span class="ps">T<sub>ub</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.unbalanceTorque" step="10" min="0"><span class="pu">Nm</span></div></div>
@@ -134,9 +179,9 @@ input[type="number"]{-moz-appearance:textfield;box-sizing:border-box}input::-web
 <!-- TRAPEZOIDAL FIELDS -->
 <div id="pf-trap">
 <div class="sl" style="border-top:none;margin-top:0">Gun Laying (Trapezoidal)</div>
-<div class="pr"><span class="pl">Target Speed</span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="performance.targetSpeed" step="1" min="0"><span class="pu">deg/s</span></div></div>
-<div class="pr"><span class="pl">Target Accel</span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="performance.targetAccel" step="1" min="0"><span class="pu">deg/s&sup2;</span></div></div>
-<div class="pr"><span class="pl">Travel Angle</span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="performance.travelAngle" step="1" min="0"><span class="pu">deg</span></div></div>
+<div class="pr"><span class="pl">Target Speed</span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="performance.targetSpeed" step="1" min="0"><span class="pu u-spd">deg/s</span></div></div>
+<div class="pr"><span class="pl">Target Accel</span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="performance.targetAccel" step="1" min="0"><span class="pu u-acc">deg/s&sup2;</span></div></div>
+<div class="pr"><span class="pl">Travel Angle</span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="performance.travelAngle" step="1" min="0"><span class="pu u-ang">deg</span></div></div>
 <div class="pr"><span class="pl">Dwell Time</span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="performance.dwellTime" step="0.5" min="0"><span class="pu">s</span></div></div>
 </div>
 
@@ -161,11 +206,30 @@ input[type="number"]{-moz-appearance:textfield;box-sizing:border-box}input::-web
 
 <!-- STABILIZATION (always visible) -->
 <div class="sl">Stabilization</div>
+<div class="pr" style="background:rgba(239,68,68,.06);border-radius:.3rem;padding:.35rem .3rem;margin-bottom:.2rem">
+<span class="pl font-bold text-red-300">Stab Mode</span>
+<select id="stabSel" onchange="onStab()" class="sel" style="width:8rem">
+<option value="sine">Sinusoidal</option>
+<option value="import">Import Disturbance</option>
+</select></div>
+<div id="sb-sine">
 <div class="pr"><span class="pl">Stab Amplitude<span class="ps">&phi;<sub>max</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="performance.stabAmplitude" step="0.1" min="0"><span class="pu">mrad</span></div></div>
 <div class="pr"><span class="pl">Stab Frequency<span class="ps">f</span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="performance.stabFrequency" step="0.5" min="0"><span class="pu">Hz</span></div></div>
+</div>
+<div id="sb-import" style="display:none">
+<input type="file" id="stabFile" accept=".csv,.json,.txt" style="display:none" onchange="handleStabImport(event)">
+<div class="flex items-center gap-2 py-2">
+<button onclick="document.getElementById('stabFile').click()" class="btn-sm bg-red-600 hover:bg-red-500 text-white">Upload Disturbance</button>
+<button onclick="dlStabTemplate()" class="btn-sm bg-slate-700 hover:bg-slate-600 text-slate-300">Template</button>
+</div>
+<div id="stabImportInfo" class="text-[10px] font-mono text-slate-500 py-1">No data loaded</div>
+<div class="text-[9px] text-slate-600 leading-relaxed">CSV: <code class="text-slate-400">time,phi</code> (mrad) or <code class="text-slate-400">time,phi,omega,alpha</code><br>JSON: <code class="text-slate-400">[{"t":0,"phi":0.5}, …]</code></div>
+</div>
 <div class="sl">Live Preview</div>
-<div style="background:rgba(8,13,26,.6);border-radius:.4rem;padding:.25rem;margin-top:.25rem"><div id="profPrev" style="width:100%;height:170px"></div></div>
+<div style="background:rgba(8,13,26,.6);border-radius:.4rem;padding:.25rem;margin-top:.25rem"><div id="profPrev" style="width:100%;height:150px"></div></div>
 <div class="text-[9px] text-slate-600 font-mono mt-1 text-center" id="profPrevInfo">--</div>
+<div style="background:rgba(8,13,26,.6);border-radius:.4rem;padding:.25rem;margin-top:.3rem;border:1px solid rgba(239,68,68,.15)"><div class="text-[9px] font-bold text-red-300 tracking-wider px-1 pt-1">STAB DISTURBANCE</div><div id="stabPrev" style="width:100%;height:135px"></div></div>
+<div class="text-[9px] text-slate-600 font-mono mt-1 text-center" id="stabPrevInfo">--</div>
 </div></div>
 
 <!-- MOTOR -->
@@ -239,7 +303,7 @@ input[type="number"]{-moz-appearance:textfield;box-sizing:border-box}input::-web
 <div class="rr"><span class="rl">I<sub>rms</sub> /motor</span><span><span class="rv" id="r-ir">--</span><span class="ru">A</span></span></div>
 <div class="rr"><span class="rl text-[9px] text-slate-600">Source</span><span class="text-[8px] font-mono text-slate-600" id="r-pf">--</span></div>
 </div></div>
-<div class="card border-l-2 border-l-red-500"><div class="ch flex items-center gap-2 bg-red-500/5"><div class="w-2 h-2 rounded-full bg-red-500"></div><div><h3 class="text-[10px] font-bold tracking-widest uppercase text-red-400">Stabilization</h3><p class="cn">&phi;(t) = &phi;<sub>max</sub>&middot;sin(2&pi;ft)</p></div></div>
+<div class="card border-l-2 border-l-red-500"><div class="ch flex items-center gap-2 bg-red-500/5"><div class="w-2 h-2 rounded-full bg-red-500"></div><div><h3 class="text-[10px] font-bold tracking-widest uppercase text-red-400">Stabilization</h3><p class="cn" id="stabNote">&phi;(t) = &phi;<sub>max</sub>&middot;sin(2&pi;ft)</p></div></div>
 <div class="px-3 py-1">
 <div class="rr"><span class="rl">Peak Stab Torque (total)</span><span><span class="rv text-red-400" id="r-sp">--</span><span class="ru">Nm</span></span></div>
 <div class="rr"><span class="rl">RMS Stab Torque (total)</span><span><span class="rv text-red-300" id="r-sr">--</span><span class="ru">Nm</span></span></div>
@@ -396,11 +460,11 @@ input[type="number"]{-moz-appearance:textfield;box-sizing:border-box}input::-web
 
 <script>
 const D={elevation:{
- mechanical:{screwLead:25,leverArm:.3,motorScrewRatio:3,screwEfficiency:.9,gearEfficiency:.95,gearboxInertia:5e-4,loadInertia:3500,unbalanceTorque:1500,frictionTorque:400,windTorque:80,firingTorque:400},
+ mechanical:{screwLead:25,leverArm:.3,motorScrewRatio:3,screwEfficiency:.9,gearEfficiency:.95,gearboxInertia:5e-4,loadInertia:3500,unbalanceTorque:1500,frictionTorque:400,windTorque:80,firingTorque:400,iTotSingle:226.2,etaTotSingle:.855},
  performance:{targetSpeed:40,targetAccel:80,travelAngle:25,dwellTime:1.5,stabAmplitude:2,stabFrequency:3,sineAmp:30,sineFreq:2,sineDur:4},
  motor:{motorCount:1,kt:.126,ke:.126,resistance:.012,rotorInertia:.005,peakTorque:80,contTorque:50,busVoltage:24,encoderBits:20,missionTime:600,targetBW:10}
 },traverse:{
- mechanical:{ringTeeth:294,pinionTeeth:25,gearboxRatio:33,efficiency:.855,gearboxInertia:.01,loadInertia:35e3,unbalanceTorque:0,frictionTorque:1200},
+ mechanical:{ringTeeth:294,pinionTeeth:25,gearboxRatio:33,efficiency:.855,gearboxInertia:.01,loadInertia:35e3,unbalanceTorque:0,frictionTorque:1200,iTotSingle:388.1,etaTotSingle:.855},
  performance:{targetSpeed:20,targetAccel:20,travelAngle:30,dwellTime:2,stabAmplitude:2,stabFrequency:1,sineAmp:15,sineFreq:1,sineDur:5},
  motor:{motorCount:2,kt:.062,ke:.062,resistance:.004,rotorInertia:.001,peakTorque:25,contTorque:12,busVoltage:24,encoderBits:18,missionTime:1200,targetBW:5}
 }};
@@ -408,6 +472,11 @@ let ax='elevation';
 const AP={elevation:JSON.parse(JSON.stringify(D.elevation)),traverse:JSON.parse(JSON.stringify(D.traverse))};
 const PM={elevation:'trap',traverse:'trap'};
 const IM={elevation:null,traverse:null};
+const SM={elevation:'sine',traverse:'sine'};   // Stab mode
+const ISM={elevation:null,traverse:null};      // Imported stab disturbance data
+const GM={elevation:'step',traverse:'step'};   // Gear input mode
+let UNITS='deg';                                // 'deg' or 'rad'
+const U2R=Math.PI/180;                           // conversion factor
 let pi=false;
 
 // === PROFILE HELPERS ===
@@ -453,18 +522,26 @@ const As=Math.max(p.performance.stabAmplitude,0),fs=Math.max(p.performance.stabF
 const JL=Math.max(p.mechanical.loadInertia,0),Tub=Math.max(p.mechanical.unbalanceTorque,0),Tfr=Math.max(p.mechanical.frictionTorque,0);
 const Jgb=Math.max(p.mechanical.gearboxInertia||0,0);
 let iT,eT,Td,Th,Tfire=0,vL=0,igP=1,hP=1;
-if(isL){const h=Math.max(p.mechanical.screwLead,.1)/1e3,L=Math.max(p.mechanical.leverArm,.001),ig=Math.max(p.mechanical.motorScrewRatio,1),es=Math.max(p.mechanical.screwEfficiency,.01),eg=Math.max(p.mechanical.gearEfficiency,.01);
- const Tw=Math.max(p.mechanical.windTorque||0,0),Tfi=Math.max(p.mechanical.firingTorque||0,0);
+const gmMode=GM[at];
+const Tw=isL?Math.max(p.mechanical.windTorque||0,0):0,Tfi=isL?Math.max(p.mechanical.firingTorque||0,0):0;
+if(gmMode==='single'){
+ iT=Math.max(p.mechanical.iTotSingle||1,.1);
+ eT=Math.max(p.mechanical.etaTotSingle||.85,.01);
+ if(isL){const L=Math.max(p.mechanical.leverArm||.3,.001);const spdSI=Math.max(p.performance.targetSpeed,0)*(UNITS==='rad'?1:U2R);vL=spdSI*L*1e3;hP=.025;igP=1}
+ Td=(Tw+Tfi+Tfr+Tub)/(eT*iT);Tfire=Tfi/(eT*iT);Th=Tub/(eT*iT);
+ // In single mode Tfire is absorbed into Td for simplicity
+ if(isL){Td=(Tw+Tfr+Tub)/(eT*iT)}
+}else if(isL){const h=Math.max(p.mechanical.screwLead,.1)/1e3,L=Math.max(p.mechanical.leverArm,.001),ig=Math.max(p.mechanical.motorScrewRatio,1),es=Math.max(p.mechanical.screwEfficiency,.01),eg=Math.max(p.mechanical.gearEfficiency,.01);
  iT=ig*2*Math.PI*L/h;eT=es*eg;
- // Continuous disturbance (steady-state) excludes firing; fire is impulsive transient
  Td=(Tw+Tfr+Tub)/(eT*iT);Tfire=Tfi/(eT*iT);Th=Tub/(eT*iT);
- vL=(Math.max(p.performance.targetSpeed,0)*Math.PI/180)*L*1e3;igP=ig;hP=h;
+ const spdSI=Math.max(p.performance.targetSpeed,0)*(UNITS==='rad'?1:U2R);vL=spdSI*L*1e3;igP=ig;hP=h;
 }else{const z1=Math.max(p.mechanical.ringTeeth||1,1),z2=Math.max(p.mechanical.pinionTeeth||1,1),igb=Math.max(p.mechanical.gearboxRatio||1,1);
  eT=Math.max(p.mechanical.efficiency||.8,.01);iT=(z1/z2)*igb;
  Td=(Tfr+Tub)/(eT*iT);Th=Tub/(eT*iT);}
 const Je=n*Jm+Jgb+JL/(eT*iT*iT),Jr=JL/(eT*iT*iT),Jrat=(n*Jm)>0?Jr/(n*Jm):Infinity;
 const ws_=Math.max(p.performance.targetSpeed,0),as_=Math.max(p.performance.targetAccel,0);
-const wL=ws_*Math.PI/180,aL=as_*Math.PI/180,wM=wL*iT,aM=aL*iT,rpm=wM*60/(2*Math.PI);
+const uf=UNITS==='rad'?1:U2R;
+const wL=ws_*uf,aL=as_*uf,wM=wL*iT,aM=aL*iT,rpm=wM*60/(2*Math.PI);
 const Ta=Je*aM; // acceleration torque (math mode)
 
 // Profile-dependent results
@@ -479,9 +556,32 @@ const Mrm=Mr/n,Irm=Mrm/Kt;
 // Energy: separate motoring (positive mech power + copper loss) from regen (negative mech power)
 let Emot=0,Ereg=0,Ecu=0;if(prof.tArr.length>1){for(let i=0;i<prof.TArr.length-1;i++){const dt2=prof.tArr[i+1]-prof.tArr[i];if(dt2<=0)continue;const T=prof.TArr[i]*n,w=prof.wArr[i]||0,I=Math.abs(T)/(n*Kt);const Pm=T*w;if(Pm>=0)Emot+=Pm*dt2;else Ereg+=Math.abs(Pm)*dt2;Ecu+=n*I*I*R*dt2;}}
 const En=Emot+Ecu; // total consumption (regen tracked separately)
-// Stab
-const Am=(As/1e3)*iT,wsf=2*Math.PI*fs,wSp=Am*wsf,aSp=Am*wsf*wsf;
-const TsD=Je*aSp,TsP=TsD+Math.abs(Th),TsR=Math.sqrt((TsD/Math.sqrt(2))**2+Th*Th);
+// Stab: sine or imported disturbance
+const sMode=SM[at];let TsD,TsP,TsR,wSp,stabProf=null;
+if(sMode==='import'&&ISM[at]&&ISM[at].length>2){
+ // Imported φ(t) at load side. Convert to torque via α·Je·iT (motor-side T)
+ const d=ISM[at];let alpha=[],wAry=[],tAry=[];
+ // Build α(t): use provided alpha if present, else 2nd-derivative of phi
+ const hasA=d[0].alpha!==undefined&&d[0].alpha!==null;
+ const hasW=d[0].omega!==undefined&&d[0].omega!==null;
+ if(hasA){for(let i=0;i<d.length;i++){alpha.push(d[i].alpha/1e3);wAry.push((d[i].omega||0)/1e3);tAry.push(d[i].t)}}
+ else{
+  for(let i=1;i<d.length-1;i++){const dt=(d[i+1].t-d[i-1].t)||.01;const a=((d[i+1].phi-2*d[i].phi+d[i-1].phi)/1e3)/((dt/2)*(dt/2));alpha.push(a);tAry.push(d[i].t);
+   if(hasW){wAry.push((d[i].omega||0)/1e3)}else{wAry.push(((d[i+1].phi-d[i-1].phi)/1e3)/dt)}}
+ }
+ // Motor-side torque for each sample
+ const Tser=alpha.map(a=>Je*a*iT);
+ const N=Tser.length;
+ TsD=Math.max(...Tser.map(Math.abs));
+ TsP=TsD+Math.abs(Th);
+ TsR=Math.sqrt(Tser.reduce((s,v)=>s+v*v,0)/N+Th*Th);
+ wSp=Math.max(...wAry.map(v=>Math.abs(v)))*iT;
+ stabProf={t:tAry,T:Tser.map(v=>v/n),w:wAry.map(v=>v*iT),phi:d.map(p=>p.phi),label:'IMPORT '+N+' pts, peak α='+f(Math.max(...alpha.map(Math.abs)),2)+' rad/s²'};
+}else{
+ const Am=(As/1e3)*iT,wsf=2*Math.PI*fs;wSp=Am*wsf;const aSp=Am*wsf*wsf;
+ TsD=Je*aSp;TsP=TsD+Math.abs(Th);TsR=Math.sqrt((TsD/Math.sqrt(2))**2+Th*Th);
+ stabProf={mode:'sine',Am,wsf,label:'SINE A='+f(As,2)+'mrad f='+f(fs,2)+'Hz'};
+}
 const TsRm=TsR/n,IsRm=TsRm/Kt,Vs=(TsP/(n*Kt))*R+Ke*wSp;
 const vM=Vb-Vr,vP=(vM/Vb)*100,pU=(Tpm/Tpk)*100,wNL=Vb/Ke;
 
@@ -533,7 +633,8 @@ tauM,wmp,fmp,bwMax,bwSet,Kp_vel,Ki_vel,
 tMis,nCyc,Emis,Ereg_mis,EnetMis,Iavg,Ipk_bus,Ah_raw,Ah_rec,Qheat,
 encCPR,dthM,dthL,dthL_urad,dthL_arcsec,lsb_mrad,res_1km,res_4km,slewMax,Tfr,Tub,
 Tub_in:p.mechanical.unbalanceTorque||0,Tfr_in:p.mechanical.frictionTorque||0,
-Tw_in:p.mechanical.windTorque||0,Tfi_in:p.mechanical.firingTorque||0};}
+Tw_in:p.mechanical.windTorque||0,Tfi_in:p.mechanical.firingTorque||0,
+sMode,stabProf};}
 
 // === HELPERS ===
 function f(v,d){return v.toFixed(d??2)}
@@ -551,6 +652,7 @@ sT('r-fp',r.Fp>0?f(r.Fp/1e3,2):'--');
 sT('r-tp',fA(r.Tp));sT('r-tpm',fA(r.Tpm));sT('r-ip',f(r.Ipm,1));sT('r-vr',f(r.Vr,1));
 sT('r-mr',fA(r.Mr));sT('r-mrm',fA(r.Mrm));sT('r-ir',f(r.Irm,1));sT('r-pf',r.prof.label);
 sT('r-sp',fA(r.TsP));sT('r-sr',fA(r.TsR));sT('r-th',fA(r.Th));sT('r-srm',fA(r.TsRm));sT('r-si',f(r.IsRm,2));sT('r-sv',f(r.Vs,1));sT('r-en',f(r.En,1));
+const sn=document.getElementById('stabNote');if(sn)sn.innerHTML=r.sMode==='import'?'φ(t) imported — '+(r.stabProf?.label||''):'φ(t) = φ<sub>max</sub>·sin(2πft)';
 sT('r-emot',f(r.Emot||0,1));sT('r-ecu',f(r.Ecu||0,1));sT('r-ereg',f(r.Ereg||0,1));
 // A2 Power
 sT('p-pmech',f(r.Pmech_pk,0));sT('p-pelec',f(r.Pelec_pk,0));sT('p-eta',f(r.etaSys*100,1));
@@ -667,8 +769,8 @@ function drawEnergyBreakdown(r){
 }
 
 // ============ SVG VISUALS ============
-function drawBlockDiagram(r){
- const svg=document.getElementById('svgBlock');if(!svg)return;
+function drawBlockDiagram(r,targetId){
+ const svg=document.getElementById(targetId||'svgBlock');if(!svg)return;
  const isL=r.isL;
  const boxes=isL?[
   {x:30,y:80,w:100,h:60,fill:'#1e40af',txt:'MOTOR',sub:'n='+r.n},
@@ -698,8 +800,8 @@ function drawBlockDiagram(r){
  svg.innerHTML=html;
 }
 
-function drawActuatorGeom(r){
- const svg=document.getElementById('svgAct');if(!svg||!r.isL)return;
+function drawActuatorGeom(r,targetId){
+ const svg=document.getElementById(targetId||'svgAct');if(!svg||!r.isL)return;
  const h=r.vL>0?r.vL/Math.max(r.wM,.01)*1e3:25;
  let html='<rect x="0" y="0" width="500" height="260" fill="#060A13"/>';
  html+='<text x="20" y="25" font-family="Inter" font-size="11" font-weight="700" fill="#94a3b8" letter-spacing="2">ACTUATOR GEOMETRY</text>';
@@ -734,30 +836,55 @@ function drawActuatorGeom(r){
  svg.innerHTML=html;
 }
 
-function drawGearDiagram(r){
- const svg=document.getElementById('svgGear');if(!svg||r.isL)return;
+function drawGearDiagram(r,targetId){
+ const svg=document.getElementById(targetId||'svgGear');if(!svg||r.isL)return;
  let html='<rect x="0" y="0" width="500" height="260" fill="#060A13"/>';
- html+='<text x="20" y="25" font-family="Inter" font-size="11" font-weight="700" fill="#94a3b8" letter-spacing="2">GEAR TRAIN</text>';
- // Ring gear
- const cx=300,cy=140,R1=95,R2=25;
- html+=`<circle cx="${cx}" cy="${cy}" r="${R1+8}" fill="none" stroke="#64748b" stroke-width="1" stroke-dasharray="2 3"/>`;
- html+=`<g class="anim-spin" style="transform-origin:${cx}px ${cy}px;animation-duration:${8/Math.max(r.wM/r.iT,.1)}s"><circle cx="${cx}" cy="${cy}" r="${R1}" fill="rgba(59,130,246,.15)" stroke="#3b82f6" stroke-width="2"/>`;
- for(let i=0;i<24;i++){const a=i*Math.PI/12;const tx=cx+R1*Math.cos(a),ty=cy+R1*Math.sin(a);html+=`<line x1="${cx+(R1-6)*Math.cos(a)}" y1="${cy+(R1-6)*Math.sin(a)}" x2="${tx}" y2="${ty}" stroke="#60a5fa" stroke-width="1.5"/>`}
- html+=`<text x="${cx}" y="${cy+5}" text-anchor="middle" font-family="JetBrains Mono" font-size="11" font-weight="700" fill="#93c5fd">z₁</text></g>`;
- // Pinion
- const px=cx-R1-R2-2,py=cy;
- html+=`<g class="anim-spin" style="transform-origin:${px}px ${py}px;animation-duration:${2/Math.max(r.wM,.1)}s;animation-direction:reverse"><circle cx="${px}" cy="${py}" r="${R2}" fill="rgba(245,158,11,.2)" stroke="#f59e0b" stroke-width="1.5"/>`;
- for(let i=0;i<10;i++){const a=i*Math.PI/5;const tx=px+R2*Math.cos(a),ty=py+R2*Math.sin(a);html+=`<line x1="${px+(R2-4)*Math.cos(a)}" y1="${py+(R2-4)*Math.sin(a)}" x2="${tx}" y2="${ty}" stroke="#fbbf24" stroke-width="1"/>`}
- html+=`<text x="${px}" y="${py+4}" text-anchor="middle" font-family="JetBrains Mono" font-size="10" font-weight="700" fill="#fbbf24">z₂</text></g>`;
- // Motor+gearbox to pinion
- html+=`<rect x="${px-100}" y="${py-25}" width="55" height="50" rx="6" fill="rgba(30,64,175,.4)" stroke="#3b82f6" stroke-width="1.5"/>`;
- html+=`<text x="${px-72}" y="${py-5}" text-anchor="middle" font-family="Inter" font-size="10" font-weight="700" fill="#fff">M ×${r.n}</text>`;
- html+=`<text x="${px-72}" y="${py+10}" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#93c5fd">GEARBOX</text>`;
- html+=`<line x1="${px-45}" y1="${py}" x2="${px-R2}" y2="${py}" stroke="#a855f7" stroke-width="3"/>`;
- // Info
- html+=`<rect x="20" y="200" width="460" height="50" rx="6" fill="rgba(30,41,59,.7)" stroke="#475569"/>`;
- html+=`<text x="30" y="220" font-family="JetBrains Mono" font-size="10" fill="#cbd5e1">i_tot = (z₁/z₂) · i_gb = ${f(r.iT,2)} · η=${f(r.eT*100,1)}%</text>`;
- html+=`<text x="30" y="238" font-family="JetBrains Mono" font-size="10" fill="#cbd5e1">ω_load=${f(r.wM/r.iT,3)} rad/s · ω_motor=${f(r.wM,1)} rad/s · T_load=${fA(r.Tp*r.iT*r.eT)} Nm</text>`;
+ html+='<text x="20" y="22" font-family="Inter" font-size="11" font-weight="700" fill="#94a3b8" letter-spacing="2">INTERNAL RING GEAR · PINION DRIVE</text>';
+ // Geometry for internal mesh
+ const cx=310,cy=130;
+ const R_outer=112,R_root_ring=92,R_tip_ring=80;       // ring annulus + internal tooth radii
+ const r_root_pin=18,r_tip_pin=26;                      // pinion radii
+ const pin_cx=cx-(R_tip_ring-r_tip_pin),pin_cy=cy;      // mesh tangent on left
+ // Outer body (annulus using two circles)
+ html+=`<circle cx="${cx}" cy="${cy}" r="${R_outer}" fill="rgba(59,130,246,.14)" stroke="#3b82f6" stroke-width="2"/>`;
+ html+=`<circle cx="${cx}" cy="${cy}" r="${R_root_ring}" fill="#060A13" stroke="rgba(96,165,250,.55)" stroke-width="1"/>`;
+ // Ring body tag
+ html+=`<text x="${cx+R_outer+4}" y="${cy-R_outer+8}" font-family="JetBrains Mono" font-size="9" fill="#60a5fa">RING z₁</text>`;
+ // Internal teeth rotating with ring (slow)
+ const nTr=28;const dur_ring=Math.max(6/Math.max(r.wM/r.iT,.05),2);
+ html+=`<g style="transform-origin:${cx}px ${cy}px;animation:spin-slow ${dur_ring}s linear infinite">`;
+ for(let i=0;i<nTr;i++){const a=i*2*Math.PI/nTr;const x1=cx+R_root_ring*Math.cos(a),y1=cy+R_root_ring*Math.sin(a);const x2=cx+R_tip_ring*Math.cos(a),y2=cy+R_tip_ring*Math.sin(a);html+=`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#93c5fd" stroke-width="2" stroke-linecap="round"/>`}
+ // Reference mark on ring
+ html+=`<circle cx="${cx+R_root_ring-4}" cy="${cy}" r="2.5" fill="#fff"/>`;
+ html+='</g>';
+ // Pinion (spins faster, SAME direction as ring for internal mesh)
+ const dur_pin=Math.max(1.5/Math.max(r.wM,.05),.4);
+ html+=`<g style="transform-origin:${pin_cx}px ${pin_cy}px;animation:spin-slow ${dur_pin}s linear infinite">`;
+ html+=`<circle cx="${pin_cx}" cy="${pin_cy}" r="${r_root_pin}" fill="rgba(245,158,11,.25)" stroke="#f59e0b" stroke-width="1.5"/>`;
+ const nTp=10;
+ for(let i=0;i<nTp;i++){const a=i*2*Math.PI/nTp;const x1=pin_cx+r_root_pin*Math.cos(a),y1=pin_cy+r_root_pin*Math.sin(a);const x2=pin_cx+r_tip_pin*Math.cos(a),y2=pin_cy+r_tip_pin*Math.sin(a);html+=`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#fbbf24" stroke-width="2" stroke-linecap="round"/>`}
+ // Reference mark on pinion
+ html+=`<circle cx="${pin_cx+r_root_pin-3}" cy="${pin_cy}" r="2" fill="#fff"/>`;
+ html+=`<text x="${pin_cx}" y="${pin_cy+4}" text-anchor="middle" font-family="JetBrains Mono" font-size="9" font-weight="700" fill="#fbbf24">z₂</text>`;
+ html+='</g>';
+ // Mesh point indicator
+ html+=`<circle cx="${cx-R_tip_ring}" cy="${cy}" r="4" fill="none" stroke="#22c55e" stroke-width="1.5" stroke-dasharray="2 1"/>`;
+ html+=`<text x="${cx-R_tip_ring-4}" y="${cy-8}" text-anchor="end" font-family="JetBrains Mono" font-size="8" fill="#4ade80">mesh</text>`;
+ // Center-line dashed
+ html+=`<line x1="${pin_cx}" y1="${pin_cy}" x2="${cx}" y2="${cy}" stroke="rgba(71,85,105,.6)" stroke-width="1" stroke-dasharray="2 3"/>`;
+ // Motor + gearbox to pinion (external to ring)
+ const mot_x=pin_cx-r_tip_pin-70,mot_y=pin_cy-25;
+ html+=`<line x1="${mot_x+55}" y1="${pin_cy}" x2="${pin_cx-r_tip_pin}" y2="${pin_cy}" stroke="#a855f7" stroke-width="3"/>`;
+ html+=`<rect x="${mot_x}" y="${mot_y}" width="55" height="50" rx="6" fill="rgba(30,64,175,.55)" stroke="#3b82f6" stroke-width="1.5"/>`;
+ html+=`<text x="${mot_x+27}" y="${pin_cy-3}" text-anchor="middle" font-family="Inter" font-size="10" font-weight="700" fill="#fff">M ×${r.n}</text>`;
+ html+=`<text x="${mot_x+27}" y="${pin_cy+10}" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#93c5fd">GEARBOX</text>`;
+ // Turret center indicator
+ html+=`<circle cx="${cx}" cy="${cy}" r="6" fill="#475569" stroke="#94a3b8" stroke-width="1"/>`;
+ html+=`<text x="${cx}" y="${cy+22}" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#64748b">turret axis</text>`;
+ // Info strip
+ html+=`<rect x="20" y="198" width="460" height="52" rx="6" fill="rgba(30,41,59,.7)" stroke="#475569"/>`;
+ html+=`<text x="30" y="216" font-family="JetBrains Mono" font-size="10" fill="#cbd5e1">i_tot = (z₁/z₂) · i_gb = ${f(r.iT,2)} · η = ${f(r.eT*100,1)}%</text>`;
+ html+=`<text x="30" y="234" font-family="JetBrains Mono" font-size="10" fill="#cbd5e1">ω_load=${f(r.wM/r.iT,3)} rad/s · ω_motor=${f(r.wM,1)} rad/s · T_load=${fA(r.Tp*r.iT*r.eT)} Nm</text>`;
  svg.innerHTML=html;
 }
 
@@ -845,9 +972,67 @@ function drawExtras(r){
  try{
   drawPowerSpeed(r,'psC');drawPowerSpeed(r,'ps2C');
   drawTorqueBudget(r);drawEffMap(r);drawFFT(r);drawEnergyBreakdown(r);
-  drawBlockDiagram(r);drawGauges(r);drawPointCircle(r);
-  if(r.isL)drawActuatorGeom(r);else drawGearDiagram(r);
+  drawBlockDiagram(r,'svgBlock');drawGauges(r);drawPointCircle(r);
+  if(GM[ax]==='single'){drawSingleBlock(r,r.isL?'svgAct':'svgGear')}
+  else if(r.isL){drawActuatorGeom(r,'svgAct')}
+  else{drawGearDiagram(r,'svgGear')}
  }catch(e){console.error('drawExtras:',e)}
+}
+
+// Live inputs-side visuals (updates as user types)
+function drawInputsVisuals(){
+ try{
+  rd();const r=calc(AP[ax],ax);
+  drawBlockDiagram(r,'svgBlockIn');
+  const kt=document.getElementById('kinTitle'),kh=document.getElementById('kinHint');
+  if(GM[ax]==='single'){drawSingleBlock(r,'svgKinIn');if(kt)kt.textContent='Lumped Drive Block — Live';if(kh)kh.textContent='SINGLE RATIO i_tot';}
+  else if(r.isL){drawActuatorGeom(r,'svgKinIn');if(kt)kt.textContent='Actuator Geometry — Live';if(kh)kh.textContent='LEVER + SCREW'}
+  else{drawGearDiagram(r,'svgKinIn');if(kt)kt.textContent='Internal Ring Gear — Live';if(kh)kh.textContent='z₁ internal · z₂ pinion'}
+  // Live metrics strip
+  sT('ls-itot',f(r.iT,2));sT('ls-je',r.Je.toExponential(2));sT('ls-wm',f(r.wM,1)+' rad/s');
+  sT('ls-tp',fA(r.Tp/r.n)+' Nm/mot');sT('ls-jrat',f(r.Jrat,1)+':1');sT('ls-vr',f(r.Vr,1)+' V');
+ }catch(e){console.error('drawInputsVisuals:',e)}
+}
+
+// Single-ratio lumped drive block visualization
+function drawSingleBlock(r,targetId){
+ const svg=document.getElementById(targetId||'svgKinIn');if(!svg)return;
+ const vbw=500,vbh=260;
+ let html=`<rect x="0" y="0" width="${vbw}" height="${vbh}" fill="#060A13"/>`;
+ html+='<text x="20" y="22" font-family="Inter" font-size="11" font-weight="700" fill="#94a3b8" letter-spacing="2">LUMPED DRIVE BLOCK · i_tot</text>';
+ // Motor (left)
+ const my=110,mh=60;
+ html+=`<rect x="20" y="${my}" width="75" height="${mh}" rx="8" fill="rgba(30,64,175,.55)" stroke="#3b82f6" stroke-width="2"/>`;
+ html+=`<text x="57" y="${my+25}" text-anchor="middle" font-family="Inter" font-size="12" font-weight="700" fill="#fff">MOTOR</text>`;
+ html+=`<text x="57" y="${my+45}" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#93c5fd">×${r.n}</text>`;
+ // Big encapsulating block (dashed outer frame showing it contains everything)
+ const bx=135,by=70,bw=225,bh=140;
+ html+=`<rect x="${bx}" y="${by}" width="${bw}" height="${bh}" rx="10" fill="rgba(124,58,237,.1)" stroke="#a855f7" stroke-width="2.5" stroke-dasharray="6 4"/>`;
+ html+=`<text x="${bx+bw/2}" y="${by-8}" text-anchor="middle" font-family="Inter" font-size="9" font-weight="700" fill="#c084fc" letter-spacing="2">LUMPED TRANSMISSION</text>`;
+ // Symbolic gear icon inside big block
+ const gcx=bx+55,gcy=by+bh/2,gr=32;
+ html+=`<g class="anim-spin" style="transform-origin:${gcx}px ${gcy}px;animation-duration:2s"><circle cx="${gcx}" cy="${gcy}" r="${gr}" fill="rgba(245,158,11,.2)" stroke="#f59e0b" stroke-width="1.5"/>`;
+ for(let i=0;i<12;i++){const a=i*Math.PI/6;const x1=gcx+gr*Math.cos(a),y1=gcy+gr*Math.sin(a);const x2=gcx+(gr+7)*Math.cos(a),y2=gcy+(gr+7)*Math.sin(a);html+=`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#fbbf24" stroke-width="2" stroke-linecap="round"/>`}
+ html+='</g>';
+ html+=`<text x="${gcx}" y="${gcy+5}" text-anchor="middle" font-family="JetBrains Mono" font-size="10" font-weight="700" fill="#fbbf24">i</text>`;
+ // Ratio badge (large, central)
+ const vx=bx+130,vy=by+bh/2;
+ html+=`<rect x="${vx-45}" y="${vy-32}" width="90" height="64" rx="8" fill="rgba(12,18,34,.9)" stroke="#a855f7" stroke-width="1.5"/>`;
+ html+=`<text x="${vx}" y="${vy-10}" text-anchor="middle" font-family="Inter" font-size="8" font-weight="700" fill="#c084fc" letter-spacing="1">RATIO</text>`;
+ html+=`<text x="${vx}" y="${vy+12}" text-anchor="middle" font-family="JetBrains Mono" font-size="16" font-weight="700" fill="#e2e8f0">${f(r.iT,1)}</text>`;
+ html+=`<text x="${vx}" y="${vy+26}" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#94a3b8">η=${f(r.eT*100,1)}%</text>`;
+ // Shaft in and out of block
+ html+=`<line x1="95" y1="${my+mh/2}" x2="${bx}" y2="${my+mh/2}" stroke="#a855f7" stroke-width="3"/>`;
+ html+=`<line x1="${bx+bw}" y1="${my+mh/2}" x2="${bx+bw+60}" y2="${my+mh/2}" stroke="#a855f7" stroke-width="3"/>`;
+ // Load block (right)
+ html+=`<rect x="${bx+bw+60}" y="${my}" width="80" height="${mh}" rx="8" fill="rgba(21,128,61,.5)" stroke="#22c55e" stroke-width="2"/>`;
+ html+=`<text x="${bx+bw+100}" y="${my+25}" text-anchor="middle" font-family="Inter" font-size="12" font-weight="700" fill="#fff">${r.isL?'BARREL':'TURRET'}</text>`;
+ html+=`<text x="${bx+bw+100}" y="${my+45}" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#86efac">J=${fA(r.Je)}</text>`;
+ // Info strip
+ html+=`<rect x="20" y="210" width="460" height="40" rx="6" fill="rgba(30,41,59,.7)" stroke="#475569"/>`;
+ html+=`<text x="30" y="225" font-family="JetBrains Mono" font-size="10" fill="#cbd5e1">i_tot = ${f(r.iT,2)} · η = ${f(r.eT*100,1)}% · ω_motor = ${f(r.wM,1)} rad/s · ω_load = ${f(r.wM/r.iT,3)} rad/s</text>`;
+ html+=`<text x="30" y="242" font-family="JetBrains Mono" font-size="9" fill="#64748b">Lumped transmission — individual components hidden (step-by-step view available in Gear Input Mode)</text>`;
+ svg.innerHTML=html;
 }
 
 // ============ LIVE PROFILE PREVIEW (Inputs view) ============
@@ -876,6 +1061,34 @@ function drawProfPreview(){
  ];
  const lo={...pltCommon,margin:{t:15,r:10,b:35,l:45},xaxis:{title:'',tickfont:{size:9,color:'#64748b',family:'JetBrains Mono'},gridcolor:'rgba(30,41,59,.4)'},yaxis:{title:'Nm/motor',titlefont:{size:9},tickfont:{size:9,color:'#64748b',family:'JetBrains Mono'},gridcolor:'rgba(30,41,59,.4)'},showlegend:false,annotations:[{x:1,y:prof.Mr/n,xref:'paper',yref:'y',text:'RMS='+fA(prof.Mr/n),showarrow:false,xanchor:'right',yanchor:'bottom',font:{size:8,color:'#4ade80',family:'JetBrains Mono'}},{x:prof.tArr[Math.floor(prof.tArr.length/3)]||0,y:maxT,text:'peak '+fA(prof.Tp/n),showarrow:false,font:{size:8,color:col,family:'JetBrains Mono'},yanchor:'bottom'}]};
  Plotly.react('profPrev',tr,lo,pltCfg);
+ drawStabPreview();
+}
+
+function drawStabPreview(){
+ const div=document.getElementById('stabPrev');if(!div)return;
+ const p=AP[ax],mode=SM[ax],info=document.getElementById('stabPrevInfo');
+ let tAry=[],phiAry=[],aAry=[],label;
+ if(mode==='import'){
+  const d=ISM[ax];if(!d||d.length<3){if(info)info.textContent='No disturbance data — upload CSV/JSON';Plotly.react('stabPrev',[],Object.assign({},pltCommon,{margin:{t:10,r:10,b:25,l:40},xaxis:{gridcolor:'rgba(30,41,59,.4)'},yaxis:{gridcolor:'rgba(30,41,59,.4)'},annotations:[{text:'No imported disturbance',xref:'paper',yref:'paper',x:.5,y:.5,showarrow:false,font:{color:'#475569',size:10}}]}),pltCfg);return}
+  tAry=d.map(v=>v.t);phiAry=d.map(v=>v.phi);
+  // alpha (rad/s²) for second axis
+  if(d[0].alpha!=null){aAry=d.map(v=>v.alpha/1e3)}
+  else{for(let i=0;i<d.length;i++){if(i===0||i===d.length-1){aAry.push(0)}else{const dt=(d[i+1].t-d[i-1].t)||.01;const a=((d[i+1].phi-2*d[i].phi+d[i-1].phi)/1e3)/((dt/2)*(dt/2));aAry.push(a)}}}
+  label='IMPORT '+d.length+' pts, φ_pk='+f(Math.max(...phiAry.map(Math.abs)),2)+' mrad, α_pk='+f(Math.max(...aAry.map(Math.abs)),2)+' rad/s²';
+ }else{
+  // Sinusoidal preview
+  const A=p.performance.stabAmplitude||0,f_=p.performance.stabFrequency||0;
+  const T=f_>0?2/f_:1;const dt=T/120;
+  for(let t=0;t<=T;t+=dt){tAry.push(t);const w=2*Math.PI*f_;phiAry.push(A*Math.sin(w*t));aAry.push(-A*w*w*Math.sin(w*t)/1e3)}
+  label='SINE A='+f(A,2)+' mrad, f='+f(f_,2)+' Hz, α_pk='+f(Math.max(...aAry.map(Math.abs)),2)+' rad/s²';
+ }
+ if(info)info.textContent=label;
+ const tr=[
+  {x:tAry,y:phiAry,type:'scatter',mode:'lines',name:'φ (mrad)',line:{color:'rgba(239,68,68,.85)',width:2},fill:'tozeroy',fillcolor:'rgba(239,68,68,.1)'},
+  {x:tAry,y:aAry,type:'scatter',mode:'lines',name:'α (rad/s²)',yaxis:'y2',line:{color:'rgba(245,158,11,.7)',width:1.2,dash:'dot'}}
+ ];
+ const lo={...pltCommon,margin:{t:10,r:40,b:25,l:40},xaxis:{tickfont:{size:9,color:'#64748b',family:'JetBrains Mono'},gridcolor:'rgba(30,41,59,.4)'},yaxis:{title:'φ mrad',titlefont:{size:8},tickfont:{size:9,color:'#64748b',family:'JetBrains Mono'},gridcolor:'rgba(30,41,59,.4)'},yaxis2:{title:'α',titlefont:{size:8,color:'#f59e0b70'},overlaying:'y',side:'right',tickfont:{size:8,color:'#f59e0b70',family:'JetBrains Mono'},showgrid:false},showlegend:false};
+ Plotly.react('stabPrev',tr,lo,pltCfg);
 }
 
 // === FILE IMPORT ===
@@ -898,6 +1111,59 @@ function dlTemplate(){
  const csv='time,torque,speed\n0,0,0\n0.1,5.0,10\n0.2,15.0,50\n0.3,30.0,100\n0.5,25.0,120\n0.7,10.0,80\n1.0,5.0,30\n1.5,2.0,0\n2.0,0,0\n';
  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='torque_profile_template.csv';a.click()}
 
+// === STAB DISTURBANCE IMPORT ===
+function handleStabImport(e){
+ const file=e.target.files[0];if(!file)return;
+ const reader=new FileReader();
+ reader.onload=function(ev){
+  const txt=ev.target.result;let data;
+  try{
+   if(file.name.endsWith('.json')){const j=JSON.parse(txt);data=Array.isArray(j)?j:(j.data||[]);data=data.map(d=>({t:d.t??d.time??0,phi:d.phi??d.p??d.angle??0,omega:d.omega??d.w??null,alpha:d.alpha??d.a??null}))}
+   else{const lines=txt.trim().split('\n');const hdr=lines[0].toLowerCase();const hasW=hdr.includes('omega')||hdr.includes('speed');const hasA=hdr.includes('alpha')||hdr.includes('accel');
+    data=lines.slice(1).map(l=>{const p=l.split(/[,;\t]/).map(Number);return{t:p[0],phi:p[1],omega:hasW?p[2]:null,alpha:hasA?(hasW?p[3]:p[2]):null}}).filter(d=>!isNaN(d.t)&&!isNaN(d.phi))}
+  }catch(ex){data=[];alert('Parse error: '+ex.message)}
+  ISM[ax]=data.length>2?data:null;
+  sT('stabImportInfo',data.length>2?'Loaded: '+data.length+' pts, φ_pk='+f(Math.max(...data.map(d=>Math.abs(d.phi))),2)+' mrad, Δt='+f(data[data.length-1].t-data[0].t,2)+'s':'Parse failed (need ≥3 pts)');
+  drawProfPreview();markStale();
+ };reader.readAsText(file);e.target.value=''}
+
+function dlStabTemplate(){
+ // Example: 5Hz sinusoidal at 2mrad amplitude, 2s duration
+ let csv='time,phi,omega,alpha\n';
+ for(let t=0;t<=2;t+=.01){const A=2,w=2*Math.PI*5;const phi=A*Math.sin(w*t),om=A*w*Math.cos(w*t),al=-A*w*w*Math.sin(w*t);csv+=f(t,3)+','+f(phi,4)+','+f(om,4)+','+f(al,4)+'\n'}
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='stab_disturbance_template.csv';a.click()}
+
+function onStab(){const sel=document.getElementById('stabSel');SM[ax]=sel.value;updStabVis();markStale();drawProfPreview()}
+
+// === UNITS TOGGLE (deg/rad for speed/accel/angle inputs) ===
+function setUnits(u){
+ if(u===UNITS)return;rd();
+ const k=u==='rad'?U2R:1/U2R;
+ // Convert stored values in AP for both axes (they share display labels)
+ ['elevation','traverse'].forEach(a=>{const p=AP[a].performance;if(p.targetSpeed)p.targetSpeed*=k;if(p.targetAccel)p.targetAccel*=k;if(p.travelAngle)p.travelAngle*=k});
+ UNITS=u;
+ // Update UI button states
+ const d=document.getElementById('u-deg'),r=document.getElementById('u-rad');
+ if(u==='deg'){d.style.background='#2563eb';d.style.color='#fff';r.style.background='';r.style.color='#94a3b8'}
+ else{r.style.background='#2563eb';r.style.color='#fff';d.style.background='';d.style.color='#94a3b8'}
+ // Update .pu labels
+ document.querySelectorAll('.u-spd').forEach(e=>e.textContent=u==='rad'?'rad/s':'deg/s');
+ document.querySelectorAll('.u-acc').forEach(e=>{e.innerHTML=u==='rad'?'rad/s²':'deg/s²'});
+ document.querySelectorAll('.u-ang').forEach(e=>e.textContent=u==='rad'?'rad':'deg');
+ pop();markStale();
+}
+
+// === GEAR MODE (step-by-step vs single ratio) ===
+function onGearMode(){const sel=document.getElementById('gearSel');GM[ax]=sel.value;updGearVis();markStale();drawInputsVisuals()}
+function updGearVis(){const m=GM[ax];
+ document.getElementById('gm-step').style.display=m==='step'?'block':'none';
+ document.getElementById('gm-single').style.display=m==='single'?'block':'none';
+}
+function updStabVis(){const m=SM[ax];
+ document.getElementById('sb-sine').style.display=m==='sine'?'block':'none';
+ document.getElementById('sb-import').style.display=m==='import'?'block':'none';
+ const d=ISM[ax];sT('stabImportInfo',d?'Loaded: '+d.length+' pts, φ_pk='+f(Math.max(...d.map(p=>Math.abs(p.phi))),2)+' mrad':'No data loaded')}
+
 function updateImportInfo(){const d=IM[ax];sT('importInfo',d?'Loaded: '+d.length+' pts, '+f(d[d.length-1].t-d[0].t,2)+'s':'No file loaded')}
 
 // === PROFILE MODE ===
@@ -910,13 +1176,15 @@ function updProfVis(){const m=PM[ax];
 
 // === FORM SYNC ===
 function pop(){const p=AP[ax];document.querySelectorAll('input.inp').forEach(e=>{const[c,k]=e.dataset.key.split('.');if(p[c]&&p[c].hasOwnProperty(k))e.value=p[c][k]});
- document.getElementById('profSel').value=PM[ax];updProfVis()}
+ document.getElementById('profSel').value=PM[ax];updProfVis();
+ const ss=document.getElementById('stabSel');if(ss){ss.value=SM[ax];updStabVis()}
+ const gs=document.getElementById('gearSel');if(gs){gs.value=GM[ax];updGearVis()}}
 function rd(){const p=AP[ax];document.querySelectorAll('input.inp').forEach(e=>{if(e.offsetParent===null)return;const[c,k]=e.dataset.key.split('.');if(!p[c]||!p[c].hasOwnProperty(k))return;const v=parseFloat(e.value);if(!isNaN(v))p[c][k]=v})}
 function rc(){rd();const r=calc(AP[ax],ax);uR(r);uC(r);uB(r.Jrat)}
 
 // === VIEW SWITCHING & SOLVE ===
 let solved=false;let currentView='inputs';let curSub='overview';
-function markStale(){solved=false;const p=document.getElementById('statusPill');if(p){p.className='pill-status pill-ready ml-2';p.textContent='NOT SOLVED'}drawProfPreview()}
+function markStale(){solved=false;const p=document.getElementById('statusPill');if(p){p.className='pill-status pill-ready ml-2';p.textContent='NOT SOLVED'}drawProfPreview();drawInputsVisuals()}
 function swView(v){currentView=v;
  document.getElementById('view-inputs').style.display=v==='inputs'?'block':'none';
  document.getElementById('view-results').style.display=v==='results'?'block':'none';
@@ -974,7 +1242,7 @@ function uV(a){const isE=a==='elevation';
  document.querySelectorAll('.trav-only-inline').forEach(e=>e.style.display=isE?'none':'inline');
  const mn=document.getElementById('mn');if(mn)mn.textContent=isE?'Linear actuator: rollerscrew + gear + lever':'Ring gear + gearbox drive system'}
 function sw(a){rd();ax=a;document.querySelectorAll('.axis-tab').forEach(b=>{b.classList.remove('tab-active');b.classList.add('tab-inactive')});document.getElementById('tab-'+a).classList.remove('tab-inactive');document.getElementById('tab-'+a).classList.add('tab-active');uV(a);pop();markStale();swView('inputs');drawProfPreview()}
-document.addEventListener('DOMContentLoaded',()=>{uV(ax);pop();updScnSel();document.querySelectorAll('input.inp').forEach(e=>e.addEventListener('input',markStale));setTimeout(drawProfPreview,100)});
+document.addEventListener('DOMContentLoaded',()=>{uV(ax);pop();updScnSel();document.querySelectorAll('input.inp').forEach(e=>e.addEventListener('input',markStale));setTimeout(()=>{drawProfPreview();drawInputsVisuals()},100)});
 document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();solve()}});
 window.addEventListener('resize',()=>setTimeout(resizeAll,100));
 </script>
