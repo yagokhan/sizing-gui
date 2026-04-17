@@ -921,7 +921,7 @@ function drawActuatorGeom(r,targetId,elPhysDeg){
   ['Stroke max',f(Lmax_mm-Lmin_mm,0)+' mm'],
   ['F_peak',f((r.Fp||0)/1e3,2)+' kN']
  ];
- for(const [k,v] of infoLines){pdf_textRow(html,ix,iy,k,v);html+=`<text x="${ix}" y="${iy}" font-family="JetBrains Mono" font-size="8" fill="#94a3b8">${k}</text>`;html+=`<text x="${VBW-15}" y="${iy}" text-anchor="end" font-family="JetBrains Mono" font-size="8" fill="#e2e8f0">${v}</text>`;iy+=10}
+ for(const il of infoLines){const k=il[0],v=il[1];html+=`<text x="${ix}" y="${iy}" font-family="JetBrains Mono" font-size="8" fill="#94a3b8">${k}</text>`;html+=`<text x="${VBW-15}" y="${iy}" text-anchor="end" font-family="JetBrains Mono" font-size="8" fill="#e2e8f0">${v}</text>`;iy+=10}
  // Sweep range arc indicator at trunnion
  const arcR=18,a1=-elMaxDeg*Math.PI/180,a2=-elMinDeg*Math.PI/180;
  const arcX1=Tx_svg+arcR*Math.cos(a1),arcY1=Ty_svg+arcR*Math.sin(a1);
@@ -939,14 +939,16 @@ function startActAnim(r,targetId){
  if(actAnim.raf){cancelAnimationFrame(actAnim.raf);actAnim.raf=null}
  actAnim.t0=performance.now();
  const tick=()=>{
-  const ufn=UNITS.ang==='rad'?1:U2R;
-  const m=AP.elevation.mechanical;
-  const elMin=(m.elevMin!=null?m.elevMin:-10)*ufn/U2R;
-  const elMax=(m.elevMax!=null?m.elevMax:60)*ufn/U2R;
-  const el=(performance.now()-actAnim.t0)*.0008;
-  const mid=(elMin+elMax)/2,amp=(elMax-elMin)/2;
-  const ang=mid+amp*Math.sin(el);
-  drawActuatorGeom(actAnim.lastR,actAnim.targetId,ang);
+  try{
+   const ufn=UNITS.ang==='rad'?1:U2R;
+   const m=AP.elevation.mechanical;
+   const elMin=(m.elevMin!=null?m.elevMin:-10)*ufn/U2R;
+   const elMax=(m.elevMax!=null?m.elevMax:60)*ufn/U2R;
+   const el=(performance.now()-actAnim.t0)*.0008;
+   const mid=(elMin+elMax)/2,amp=(elMax-elMin)/2;
+   const ang=mid+amp*Math.sin(el);
+   drawActuatorGeom(actAnim.lastR,actAnim.targetId,ang);
+  }catch(e){console.error('actAnim tick:',e)}
   actAnim.raf=requestAnimationFrame(tick);
  };
  tick();
@@ -1596,8 +1598,8 @@ function uV(a){const isE=a==='elevation';
  document.querySelectorAll('.trav-only-inline').forEach(e=>e.style.display=isE?'none':'inline');
  const mn=document.getElementById('mn');if(mn)mn.textContent=isE?'Linear actuator: rollerscrew + gear + lever':'Ring gear + gearbox drive system'}
 function sw(a){rd();ax=a;document.querySelectorAll('.axis-tab').forEach(b=>{b.classList.remove('tab-active');b.classList.add('tab-inactive')});document.getElementById('tab-'+a).classList.remove('tab-inactive');document.getElementById('tab-'+a).classList.add('tab-active');uV(a);pop();markStale();swView('inputs');drawProfPreview()}
-document.addEventListener('DOMContentLoaded',()=>{uV(ax);pop();updScnSel();updUnitLabels();document.querySelectorAll('input.inp').forEach(e=>e.addEventListener('input',markStale));setTimeout(()=>{drawProfPreview();drawInputsVisuals()},100);
- // Tooltip portal
+function initTooltips(){
+ if(document.getElementById('globalTip'))return;
  const tip=document.createElement('div');tip.id='globalTip';document.body.appendChild(tip);
  const showTip=el=>{const t=el.getAttribute('data-tip');if(!t)return;tip.textContent=t;tip.style.display='block';
   const r=el.getBoundingClientRect();let x=r.left,y=r.top-tip.offsetHeight-8;
@@ -1608,6 +1610,16 @@ document.addEventListener('DOMContentLoaded',()=>{uV(ax);pop();updScnSel();updUn
  document.addEventListener('mouseout',e=>{const el=e.target.closest('[data-tip]');if(el)hideTip()});
  document.addEventListener('click',e=>{const el=e.target.closest('[data-tip]');if(el){e.stopPropagation();showTip(el);clearTimeout(window._tipT);window._tipT=setTimeout(hideTip,3500)}});
  document.addEventListener('scroll',hideTip,true);
+}
+document.addEventListener('DOMContentLoaded',()=>{
+ // Init tooltips first so they work even if downstream init fails
+ try{initTooltips()}catch(e){console.error('initTooltips:',e)}
+ try{uV(ax)}catch(e){console.error('uV:',e)}
+ try{pop()}catch(e){console.error('pop:',e)}
+ try{updScnSel()}catch(e){console.error('updScnSel:',e)}
+ try{updUnitLabels()}catch(e){console.error('updUnitLabels:',e)}
+ document.querySelectorAll('input.inp').forEach(e=>e.addEventListener('input',markStale));
+ setTimeout(()=>{try{drawProfPreview()}catch(e){console.error('drawProfPreview:',e)}try{drawInputsVisuals()}catch(e){console.error('drawInputsVisuals:',e)}},100);
 });
 document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();solve()}});
 window.addEventListener('resize',()=>setTimeout(resizeAll,100));
