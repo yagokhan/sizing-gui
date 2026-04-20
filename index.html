@@ -716,20 +716,26 @@ aB('bdg-peak',gS(r.pU,70,90),f(r.pU,1)+'%',fA(r.Tpm)+'/'+f(r.Tpk,1)+' Nm/motor')
 function uB(r){const b=document.getElementById('ibf'),l=document.getElementById('ibv');if(!b)return;b.style.width=Math.min(r,15)/15*100+'%';let c=r<=5?'#22c55e':r<=10?lC('#22c55e','#f59e0b',(r-5)/5):lC('#f59e0b','#ef4444',Math.min((r-10)/5,1));b.style.background='linear-gradient(90deg,#22c55e,'+c+')';l.textContent=(isFinite(r)?f(r,1):'---')+':1';l.style.color=c}
 
 function uC(r){
-// Torque-Speed chart
+// Torque-Speed chart (x-axis in RPM)
+const W2RPM=60/(2*Math.PI);
 const wX=Math.max(r.wNL,r.wM)*1.25,N=100;const wP=[],tP=[],wC=[],tC=[];
-for(let j=0;j<=N;j++){const w=(j/N)*wX,Tv=r.Kt*Math.max(0,(r.Vb-r.Ke*w))/r.R;wP.push(w);tP.push(Math.max(0,Math.min(r.Tpk,Tv)));wC.push(w);tC.push(Math.max(0,Math.min(r.Tco,Tv)))}
+for(let j=0;j<=N;j++){const w=(j/N)*wX,Tv=r.Kt*Math.max(0,(r.Vb-r.Ke*w))/r.R;wP.push(w*W2RPM);tP.push(Math.max(0,Math.min(r.Tpk,Tv)));wC.push(w*W2RPM);tC.push(Math.max(0,Math.min(r.Tco,Tv)))}
+const xX=wX*W2RPM;
 const tr=[
 {x:wP,y:tP,type:'scatter',mode:'lines',name:'Peak Env.',fill:'tozeroy',line:{color:'rgba(239,68,68,.65)',width:2},fillcolor:'rgba(239,68,68,.05)'},
 {x:wC,y:tC,type:'scatter',mode:'lines',name:'Cont. Env.',fill:'tozeroy',line:{color:'rgba(96,165,250,.55)',width:1.5,dash:'dash'},fillcolor:'rgba(59,130,246,.03)'},
-{x:[r.wM],y:[r.Tpm],type:'scatter',mode:'markers+text',name:'Laying/mot',text:['LAYING'],textposition:'top center',textfont:{size:9,color:'#93c5fd'},marker:{color:'#3b82f6',size:14,line:{color:'#93c5fd',width:2}}},
-{x:[r.wSp],y:[r.TsRm],type:'scatter',mode:'markers+text',name:'Stab/mot',text:['STAB'],textposition:'top center',textfont:{size:9,color:'#fca5a5'},marker:{color:'#ef4444',size:14,symbol:'diamond',line:{color:'#fca5a5',width:2}}}];
+{x:[r.wM*W2RPM],y:[r.Tpm],type:'scatter',mode:'markers+text',name:'Laying/mot',text:['LAYING '+fA(r.Tpm)+' Nm'],textposition:'top center',textfont:{size:9,color:'#93c5fd'},marker:{color:'#3b82f6',size:14,line:{color:'#93c5fd',width:2}}},
+{x:[r.wSp*W2RPM],y:[r.TsRm],type:'scatter',mode:'markers+text',name:'Stab/mot',text:['STAB '+fA(r.TsRm)+' Nm'],textposition:'top center',textfont:{size:9,color:'#fca5a5'},marker:{color:'#ef4444',size:14,symbol:'diamond',line:{color:'#fca5a5',width:2}}}];
 const yX=Math.max(r.Tpk,r.Tpm,r.TsRm)*1.4;
 const lo={paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'#080d1a',font:{family:'Inter',color:'#94a3b8',size:10},margin:{t:25,r:15,b:45,l:55},
-xaxis:{title:'Motor Speed (rad/s)',tickfont:{family:'JetBrains Mono',size:9,color:'#64748b'},gridcolor:'rgba(30,41,59,.4)',range:[0,wX]},
+xaxis:{title:'Motor Speed (rpm)',tickfont:{family:'JetBrains Mono',size:9,color:'#64748b'},gridcolor:'rgba(30,41,59,.4)',range:[0,xX]},
 yaxis:{title:'Torque/Motor (Nm)',tickfont:{family:'JetBrains Mono',size:9,color:'#64748b'},gridcolor:'rgba(30,41,59,.4)',range:[0,yX]},
 legend:{x:.01,y:.99,bgcolor:'rgba(12,18,34,.85)',bordercolor:'#1e293b',font:{size:8}},hovermode:'closest',
-shapes:[{type:'line',x0:0,x1:wX,y0:r.Tpk,y1:r.Tpk,line:{color:'rgba(239,68,68,.2)',width:1,dash:'dot'}},{type:'line',x0:0,x1:wX,y0:r.Tco,y1:r.Tco,line:{color:'rgba(96,165,250,.2)',width:1,dash:'dot'}}]};
+shapes:[{type:'line',x0:0,x1:xX,y0:r.Tpk,y1:r.Tpk,line:{color:'rgba(239,68,68,.2)',width:1,dash:'dot'}},{type:'line',x0:0,x1:xX,y0:r.Tco,y1:r.Tco,line:{color:'rgba(96,165,250,.2)',width:1,dash:'dot'}}],
+annotations:[
+ {x:xX*.98,y:r.Tpk,text:'T<sub>peak</sub> = '+fA(r.Tpk)+' Nm',xanchor:'right',yanchor:'bottom',showarrow:false,font:{size:9,color:'#f87171',family:'JetBrains Mono'},bgcolor:'rgba(12,18,34,.8)',bordercolor:'rgba(239,68,68,.4)',borderwidth:1,borderpad:3},
+ {x:xX*.98,y:r.Tco,text:'T<sub>cont</sub> = '+fA(r.Tco)+' Nm',xanchor:'right',yanchor:'bottom',showarrow:false,font:{size:9,color:'#60a5fa',family:'JetBrains Mono'},bgcolor:'rgba(12,18,34,.8)',bordercolor:'rgba(96,165,250,.4)',borderwidth:1,borderpad:3}
+]};
 const cf={responsive:true,displaylogo:false,modeBarButtonsToRemove:['lasso2d','select2d','autoScale2d']};
 if(!pi){Plotly.newPlot('tsC',tr,lo,cf);pi=true}else Plotly.react('tsC',tr,lo,cf);
 sT('cl',ax.toUpperCase()+' (n='+r.n+')');
