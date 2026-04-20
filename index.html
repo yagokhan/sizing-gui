@@ -148,7 +148,7 @@ input[type="number"]{-moz-appearance:textfield;box-sizing:border-box}input::-web
 <span class="pl font-bold text-blue-300">Gear Input Mode</span>
 <select id="gearSel" onchange="onGearMode()" class="sel" style="width:8.5rem">
 <option value="step">Step-by-step</option>
-<option value="single">Single ratio</option>
+<option value="single" id="gearSelSingle">Single ratio</option>
 </select></div>
 <div id="gm-single" style="display:none">
 <div class="pr"><span class="pl">Total Ratio<span class="ps">i<sub>tot</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.iTotSingle" step="0.1" min="0.1"><span class="pu">[-]</span></div></div>
@@ -412,11 +412,21 @@ input[type="number"]{-moz-appearance:textfield;box-sizing:border-box}input::-web
 
 <!-- ============== SUB: PRECISION ============== -->
 <div id="sub-precision" class="subview" style="display:none">
+<div class="flex items-center justify-between mb-2 flex-wrap gap-2">
+ <div class="text-[10px] font-bold tracking-widest uppercase text-slate-400">Pointing Resolution · Unit</div>
+ <div class="flex items-center gap-1" id="precUnitBar">
+  <button onclick="setPrecUnit('mrad')" data-u="mrad" class="btn-sm bg-blue-600 text-white">mrad</button>
+  <button onclick="setPrecUnit('urad')" data-u="urad" class="btn-sm bg-slate-700 text-slate-300">μrad</button>
+  <button onclick="setPrecUnit('mil')" data-u="mil" class="btn-sm bg-slate-700 text-slate-300">mil (milyem)</button>
+  <button onclick="setPrecUnit('arcsec')" data-u="arcsec" class="btn-sm bg-slate-700 text-slate-300">arcsec</button>
+  <button onclick="setPrecUnit('rad')" data-u="rad" class="btn-sm bg-slate-700 text-slate-300">rad</button>
+ </div>
+</div>
 <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-3">
  <div class="card px-3 py-3"><div class="text-[9px] font-bold tracking-widest uppercase text-slate-500 mb-1">Encoder Resolution</div><div class="text-lg font-bold font-mono" id="pr-cpr">--<span class="text-[10px] text-slate-500"> counts/rev</span></div></div>
- <div class="card px-3 py-3"><div class="text-[9px] font-bold tracking-widest uppercase text-slate-500 mb-1">Δθ at Motor</div><div class="text-lg font-bold font-mono text-blue-300" id="pr-dtm">--<span class="text-[10px] text-slate-500"> μrad</span></div></div>
- <div class="card px-3 py-3"><div class="text-[9px] font-bold tracking-widest uppercase text-slate-500 mb-1">Δθ at Load</div><div class="text-lg font-bold font-mono text-emerald-300" id="pr-dtl">--<span class="text-[10px] text-slate-500"> μrad</span></div></div>
- <div class="card px-3 py-3"><div class="text-[9px] font-bold tracking-widest uppercase text-slate-500 mb-1">Δθ at Load</div><div class="text-lg font-bold font-mono text-emerald-300" id="pr-dtlar">--<span class="text-[10px] text-slate-500"> arcsec</span></div></div>
+ <div class="card px-3 py-3"><div class="text-[9px] font-bold tracking-widest uppercase text-slate-500 mb-1">Δθ at Motor</div><div class="text-lg font-bold font-mono text-blue-300" id="pr-dtm">--<span class="text-[10px] text-slate-500 pru"> μrad</span></div></div>
+ <div class="card px-3 py-3"><div class="text-[9px] font-bold tracking-widest uppercase text-slate-500 mb-1">Δθ at Load</div><div class="text-lg font-bold font-mono text-emerald-300" id="pr-dtl">--<span class="text-[10px] text-slate-500 pru"> μrad</span></div></div>
+ <div class="card px-3 py-3"><div class="text-[9px] font-bold tracking-widest uppercase text-slate-500 mb-1">Δθ at Load (alt)</div><div class="text-lg font-bold font-mono text-emerald-300" id="pr-dtlar">--<span class="text-[10px] text-slate-500 pru"> arcsec</span></div></div>
 </div>
 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
  <div class="card">
@@ -426,7 +436,7 @@ input[type="number"]{-moz-appearance:textfield;box-sizing:border-box}input::-web
    <div class="rr"><span class="rl">Resolution @ 1 km range</span><span><span class="rv" id="pr-range1">--</span><span class="ru">cm</span></span></div>
    <div class="rr"><span class="rl">Resolution @ 4 km range</span><span><span class="rv" id="pr-range4">--</span><span class="ru">cm</span></span></div>
    <div class="rr"><span class="rl">Max slew rate (encoder limited)</span><span><span class="rv" id="pr-slew">--</span><span class="ru">rad/s</span></span></div>
-   <div class="rr"><span class="rl">Quantization LSB at barrel</span><span><span class="rv" id="pr-lsb">--</span><span class="ru">mrad</span></span></div>
+   <div class="rr"><span class="rl">Quantization LSB at barrel</span><span><span class="rv" id="pr-lsb">--</span><span class="ru pru">mrad</span></span></div>
   </div>
  </div>
  <div class="card">
@@ -440,7 +450,7 @@ input[type="number"]{-moz-appearance:textfield;box-sizing:border-box}input::-web
 <div id="sub-charts" class="subview" style="display:none">
 <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
  <div class="card"><div class="ch"><h3 class="text-[9px] font-bold tracking-widest uppercase text-slate-400">Torque Budget (B1)</h3></div><div class="p-2"><div id="tbC" style="width:100%;height:320px"></div></div></div>
- <div class="card"><div class="ch"><h3 class="text-[9px] font-bold tracking-widest uppercase text-slate-400">Efficiency Map η(T,ω) (B2)</h3></div><div class="p-2"><div id="emC" style="width:100%;height:320px"></div></div></div>
+ <div class="card"><div class="ch"><h3 class="text-[9px] font-bold tracking-widest uppercase text-slate-400">Efficiency Map η(T,ω) (B2)</h3></div><div class="p-2"><div id="emC" style="width:100%;height:320px"></div><div class="px-1 pb-1 pt-0.5 text-[9.5px] text-slate-400 leading-snug"><b class="text-blue-300">How to read:</b> Contours show motor efficiency η(T,ω) = P<sub>mech</sub>/P<sub>elec</sub> over the operating envelope. Each curve is an iso-efficiency line; the red cross marks the duty-cycle peak operating point (T<sub>pk</sub>/motor, ω<sub>pk</sub>). <b class="text-emerald-300">Target:</b> the cross should sit inside the high-η band (typ. 80–90 %). Sitting on a low-η contour means the gearing is mismatched — reduce/increase ratio, or pick a motor with a peak in that region.</div></div></div>
 </div>
 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
  <div class="card"><div class="ch"><h3 class="text-[9px] font-bold tracking-widest uppercase text-slate-400">Power – Speed Overlay (B3)</h3></div><div class="p-2"><div id="ps2C" style="width:100%;height:320px"></div></div></div>
@@ -690,9 +700,11 @@ sT('e-cycle',f(r.En/3600,3));sT('e-mission',f(r.Emis/3600,2));sT('e-ah',f(r.Ah_r
 sT('e-ipk',f(r.Ipk_bus,1));sT('e-tmis',f(r.tMis,0));sT('e-ncyc',f(r.nCyc,1));
 sT('e-regm',f(r.Ereg_mis/3600,3));sT('e-net',f(r.EnetMis/3600,2));sT('e-batrec',f(r.Ah_rec,2));sT('e-heat',f(r.Qheat,1));
 // A5 Precision
-sT('pr-cpr',f(r.encCPR,0));sT('pr-dtm',f(r.dthM*1e6,2));sT('pr-dtl',f(r.dthL_urad,2));sT('pr-dtlar',f(r.dthL_arcsec,2));
+sT('pr-cpr',f(r.encCPR,0));
+window._lastPrec={dthM_rad:r.dthM,dthL_rad:r.dthL,dthL_arcsec:r.dthL_arcsec,lsb_mrad:r.lsb_mrad};
+updatePrecDisplay();
 sT('pr-itot',f(r.iT,1));sT('pr-range1',f(r.res_1km,2));sT('pr-range4',f(r.res_4km,2));
-sT('pr-slew',f(r.slewMax,1));sT('pr-lsb',f(r.lsb_mrad,4));
+sT('pr-slew',f(r.slewMax,1));
 const ln=document.getElementById('layNote');if(ln)ln.textContent={trap:'Trapezoidal profile',sine:'Sinusoidal profile',import:'Imported data profile'}[r.mode];
 aB('bdg-inertia',gS(r.Jrat,5,10),f(r.Jrat,1)+':1','J<sub>eff</sub>='+r.Je.toExponential(3)+' i<sub>tot</sub>='+f(r.iT,1)+' n='+r.n);
 aB('bdg-voltage',gSH(r.vP,15,5),(r.vM>=0?'+':'')+f(r.vM,1)+'V',f(r.vP,1)+'% '+f(r.Vr,1)+'V/'+f(r.Vb,0)+'V');
@@ -781,7 +793,7 @@ function drawFFT(r){
  const sp=computeFFT(sig,dtx);
  const freqs=sp.map(p=>p.f),mags=sp.map(p=>p.m);
  const mechF=r.fmp;
- const tr=[{x:freqs,y:mags,type:'bar',marker:{color:'rgba(59,130,246,.7)',line:{color:'#3b82f6',width:.5}},name:'|T(f)|'}];
+ const tr=[{x:freqs,y:mags,type:'scatter',mode:'lines',line:{color:'#3b82f6',width:2,shape:'spline',smoothing:.8},fill:'tozeroy',fillcolor:'rgba(59,130,246,.18)',name:'|T(f)|'}];
  Plotly.react('fftC',tr,Object.assign({},pltCommon,{margin:{t:20,r:15,b:45,l:55},xaxis:{title:'Frequency (Hz)',gridcolor:'rgba(30,41,59,.4)',type:'log'},yaxis:{title:'|T| (Nm)',gridcolor:'rgba(30,41,59,.4)'},shapes:[{type:'line',x0:mechF,x1:mechF,y0:0,y1:Math.max(...mags)*1.05,line:{color:'rgba(239,68,68,.7)',width:1.5,dash:'dash'}}],annotations:[{x:Math.log10(mechF||1),y:Math.max(...mags)*1.02,text:'f<sub>m</sub>='+f(mechF,2)+' Hz',font:{size:9,color:'#fca5a5'},showarrow:false,xref:'x',yref:'y'}],showlegend:false}),pltCfg);
 }
 
@@ -1665,12 +1677,36 @@ function renderCompare(){const body=document.getElementById('cmpBody');if(!body)
  body.innerHTML=html;
 }
 
+// === PRECISION UNIT SELECTOR ===
+window._precUnit='mrad';
+function setPrecUnit(u){
+ window._precUnit=u;
+ document.querySelectorAll('#precUnitBar button').forEach(b=>{
+  const on=b.dataset.u===u;b.className='btn-sm '+(on?'bg-blue-600 text-white':'bg-slate-700 text-slate-300');
+ });
+ updatePrecDisplay();
+}
+function updatePrecDisplay(){
+ const p=window._lastPrec;if(!p)return;
+ const u=window._precUnit||'mrad';
+ // 1 mil (NATO/milyem) = π/3200 rad ≈ 0.9817 mrad · full turn = 6400 mil
+ const conv=(rad,unit)=>{switch(unit){case 'mrad':return{v:rad*1e3,u:'mrad',d:4};case 'urad':return{v:rad*1e6,u:'μrad',d:2};case 'mil':return{v:rad/(Math.PI/3200),u:'mil',d:3};case 'arcsec':return{v:rad*206264.806,u:'arcsec',d:2};case 'rad':return{v:rad,u:'rad',d:6}}};
+ const m=conv(p.dthM_rad,u),l=conv(p.dthL_rad,u),lsb=conv(p.lsb_mrad/1e3,u);
+ sT('pr-dtm',f(m.v,m.d));sT('pr-dtl',f(l.v,l.d));sT('pr-lsb',f(lsb.v,lsb.d));
+ document.querySelectorAll('.pru').forEach(e=>e.textContent=(e.classList.contains('ru')?'':' ')+m.u);
+ // 4th card keeps arcsec as a second reference (fixed)
+ sT('pr-dtlar',f(p.dthL_arcsec,2));
+}
 function uV(a){const isE=a==='elevation';
  document.querySelectorAll('.elev-only').forEach(e=>e.style.display=isE?'flex':'none');
  document.querySelectorAll('.trav-only').forEach(e=>e.style.display=isE?'none':'flex');
  document.querySelectorAll('.elev-only-inline').forEach(e=>e.style.display=isE?'inline':'none');
  document.querySelectorAll('.trav-only-inline').forEach(e=>e.style.display=isE?'none':'inline');
- const mn=document.getElementById('mn');if(mn)mn.textContent=isE?'Linear actuator: rollerscrew + gear + lever':'Ring gear + gearbox drive system'}
+ const mn=document.getElementById('mn');if(mn)mn.textContent=isE?'Linear actuator: rollerscrew + gear + lever':'Ring gear + gearbox drive system';
+ // Elevation uses rollerscrew + lever (no lumped single-ratio mode). Hide "single" option and force step.
+ const singleOpt=document.getElementById('gearSelSingle');
+ if(singleOpt)singleOpt.style.display=isE?'none':'';
+ if(isE&&GM.elevation==='single'){GM.elevation='step';const gs=document.getElementById('gearSel');if(gs)gs.value='step';updGearVis()}}
 function sw(a){rd();ax=a;document.querySelectorAll('.axis-tab').forEach(b=>{b.classList.remove('tab-active');b.classList.add('tab-inactive')});document.getElementById('tab-'+a).classList.remove('tab-inactive');document.getElementById('tab-'+a).classList.add('tab-active');uV(a);pop();markStale();swView('inputs');drawProfPreview()}
 function initTooltips(){
  if(document.getElementById('globalTip'))return;
