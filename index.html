@@ -853,16 +853,20 @@ function drawActuatorGeom(r,targetId,elPhysDeg){
  const validLbl=violMin?'< L_min!':violMax?'> L_max!':'OK';
  // SVG layout: scale physical mm → SVG px so geometry fits in viewBox (500x260)
  const VBW=500,VBH=260;
- const Tx_svg=130,Ty_svg=170;   // trunnion in SVG
+ const Tx_svg=100,Ty_svg=170;   // trunnion in SVG (left half; right half is label panel)
  // Compute extents in mm to determine scale
  const corners=[{x:0,y:0},{x:Bx_mm,y:By_mm},{x:Math.cos(thRad)*Math.max(Lh_mm,Lmax_mm)*1.1,y:Math.sin(thRad)*Math.max(Lh_mm,Lmax_mm)*1.1},{x:Lh_mm*1.5,y:0},{x:0,y:Lh_mm*1.2}];
  let xMin=Math.min(...corners.map(c=>c.x)),xMax=Math.max(...corners.map(c=>c.x));
  let yMin=Math.min(...corners.map(c=>c.y)),yMax=Math.max(...corners.map(c=>c.y));
  const padMM=Math.max(xMax-xMin,yMax-yMin)*.15;
  xMin-=padMM;xMax+=padMM;yMin-=padMM;yMax+=padMM;
- const drawW=320,drawH=140;
+ // Drawing area capped to left region (panel occupies ~x>=316)
+ const drawW=260,drawH=170;
  const scaleX=drawW/(xMax-xMin),scaleY=drawH/(yMax-yMin);
- const scale=Math.min(scaleX,scaleY);
+ // Also cap so drawing right edge stays left of side panel (~310 px)
+ const maxScaleRight=(305-Tx_svg)/Math.max(xMax,1);
+ const maxScaleLeft=(Tx_svg-10)/Math.max(-xMin,1);
+ const scale=Math.min(scaleX,scaleY,maxScaleRight,maxScaleLeft);
  // Map physical → SVG (origin = trunnion)
  const px=mm=>Tx_svg+(mm)*scale;
  const py=mm=>Ty_svg-(mm)*scale; // y-up
@@ -912,54 +916,53 @@ function drawActuatorGeom(r,targetId,elPhysDeg){
  const mx=Bx_svg-15*Math.sin(theta),my=By_svg+15*Math.cos(theta);
  html+=`<rect x="${mx-12}" y="${my-8}" width="24" height="16" rx="3" fill="#1e40af" stroke="#60a5fa" stroke-width="1"/>`;
  html+=`<text x="${mx}" y="${my+3}" text-anchor="middle" font-family="Inter" font-size="8" font-weight="700" fill="#fff">M×${r.n}</text>`;
- // Length stack labels (mm)
- const lblMidX=(Bx_svg+Hx_svg)/2,lblMidY=(By_svg+Hy_svg)/2-26;
- html+=`<rect x="${lblMidX-58}" y="${lblMidY-15}" width="116" height="30" rx="3" fill="rgba(12,18,34,.92)" stroke="${validCol}" stroke-width="1.2"/>`;
- html+=`<text x="${lblMidX}" y="${lblMidY-4}" text-anchor="middle" font-family="JetBrains Mono" font-size="9" font-weight="700" fill="#c084fc">L_act = ${f(Lact_mm,1)} mm</text>`;
- html+=`<text x="${lblMidX}" y="${lblMidY+5}" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#86efac">stroke = ${f(stroke_mm,1)} mm</text>`;
- html+=`<text x="${lblMidX}" y="${lblMidY+13}" text-anchor="middle" font-family="JetBrains Mono" font-size="7" fill="${validCol}">${validLbl}</text>`;
- // Info annotation box
- html+=`<rect x="${VBW-180}" y="35" width="170" height="116" rx="6" fill="rgba(30,41,59,.94)" stroke="#7c3aed" stroke-width="1"/>`;
- html+=`<text x="${VBW-172}" y="50" font-family="Inter" font-size="9.5" font-weight="700" fill="#c084fc">GEOMETRY (mm)</text>`;
- const ix=VBW-172;let iy=63;
- const infoLines=[
-  ['L_h (hinge)',f(Lh_mm,0)+' mm'],
-  ['Base ΔX',f(Bx_mm,0)+' mm'],
-  ['Base ΔY',f(By_mm,0)+' mm'],
-  ['L_min',f(Lmin_mm,0)+' mm'],
-  ['L_max',f(Lmax_mm,0)+' mm'],
-  ['θ range',f(elMinDeg,0)+'° → '+f(elMaxDeg,0)+'°'],
-  ['Stroke max',f(Lmax_mm-Lmin_mm,0)+' mm'],
-  ['F_peak',f((r.Fp||0)/1e3,2)+' kN']
- ];
- for(const il of infoLines){const k=il[0],v=il[1];html+=`<text x="${ix}" y="${iy}" font-family="JetBrains Mono" font-size="8" fill="#94a3b8">${k}</text>`;html+=`<text x="${VBW-15}" y="${iy}" text-anchor="end" font-family="JetBrains Mono" font-size="8" fill="#e2e8f0">${v}</text>`;iy+=10}
  // Sweep range arc indicator at trunnion
  const arcR=18,a1=-elMaxDeg*Math.PI/180,a2=-elMinDeg*Math.PI/180;
  const arcX1=Tx_svg+arcR*Math.cos(a1),arcY1=Ty_svg+arcR*Math.sin(a1);
  const arcX2=Tx_svg+arcR*Math.cos(a2),arcY2=Ty_svg+arcR*Math.sin(a2);
  const lg=Math.abs(elMaxDeg-elMinDeg)>180?1:0;
  html+=`<path d="M ${arcX1} ${arcY1} A ${arcR} ${arcR} 0 ${lg} 1 ${arcX2} ${arcY2}" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="2 2"/>`;
- html+=`<text x="${Tx_svg+arcR+4}" y="${Ty_svg-arcR}" font-family="JetBrains Mono" font-size="7" fill="#fbbf24">${f(elMinDeg,0)}°…${f(elMaxDeg,0)}°</text>`;
- // --- Angle annotations (physical angles) ---
- // 1) Current elevation θ at trunnion
- html+=`<text x="${Tx_svg+26}" y="${Ty_svg+6}" font-family="JetBrains Mono" font-size="8" font-weight="700" fill="#60a5fa">θ=${f(travelDeg,1)}°</text>`;
- // 2) Base mounting angle from vertical (physical, independent of barrel)
- const baseAngDeg=Math.atan2(Bx_mm,-By_mm)*180/Math.PI; // 0° = straight down; +ve = forward of trunnion
+ // Dashed trunnion→base baseline (no text label)
+ html+=`<line x1="${Tx_svg}" y1="${Ty_svg}" x2="${Bx_svg}" y2="${By_svg}" stroke="rgba(100,116,139,.35)" stroke-width=".7" stroke-dasharray="3 3"/>`;
+ // Physical angles (computed here, labels drawn in side panel)
+ const baseAngDeg=Math.atan2(Bx_mm,-By_mm)*180/Math.PI;
  const baseDist=Math.sqrt(Bx_mm*Bx_mm+By_mm*By_mm);
- // Dashed line trunnion→base w/ angle label
- html+=`<line x1="${Tx_svg}" y1="${Ty_svg}" x2="${Bx_svg}" y2="${By_svg}" stroke="rgba(100,116,139,.4)" stroke-width=".8" stroke-dasharray="3 3"/>`;
- const bmx=(Tx_svg+Bx_svg)/2,bmy=(Ty_svg+By_svg)/2;
- html+=`<rect x="${bmx-40}" y="${bmy-6}" width="80" height="13" rx="2" fill="rgba(12,18,34,.85)" stroke="rgba(100,116,139,.5)" stroke-width=".6"/>`;
- html+=`<text x="${bmx}" y="${bmy+4}" text-anchor="middle" font-family="JetBrains Mono" font-size="7.5" fill="#94a3b8">∠base=${f(baseAngDeg,1)}°·${f(baseDist,0)}mm</text>`;
- // 3) Transmission angle μ at hinge between actuator and barrel (critical for smooth force transfer)
- //    μ = angle between actuator direction (hinge→base) and barrel tangent direction at hinge.
  const barrelDirX=Math.cos(thRad),barrelDirY=Math.sin(thRad);
  const actDirX=(Bx_mm-Hx_mm)/Math.max(Lact_mm,.1),actDirY=(By_mm-Hy_mm)/Math.max(Lact_mm,.1);
  const dotA=Math.max(-1,Math.min(1,barrelDirX*actDirX+barrelDirY*actDirY));
  const muDeg=Math.abs(90-Math.acos(dotA)*180/Math.PI);
  const muCol=muDeg<30?'#ef4444':muDeg<45?'#f59e0b':'#22c55e';
- html+=`<rect x="${Hx_svg+8}" y="${Hy_svg-18}" width="66" height="13" rx="2" fill="rgba(12,18,34,.88)" stroke="${muCol}" stroke-width=".8"/>`;
- html+=`<text x="${Hx_svg+41}" y="${Hy_svg-8}" text-anchor="middle" font-family="JetBrains Mono" font-size="7.5" font-weight="700" fill="${muCol}">μ=${f(muDeg,1)}°</text>`;
+ // Small colored indicator at hinge showing transmission-angle band (no text)
+ html+=`<circle cx="${Hx_svg}" cy="${Hy_svg}" r="10" fill="none" stroke="${muCol}" stroke-width="1.2" stroke-dasharray="2 2" opacity=".75"/>`;
+ // --- SIDE PANEL (right) — all numeric labels consolidated here, out of the drawing ---
+ const panX=VBW-184,panW=176,panY=30,panH=220;
+ html+=`<rect x="${panX}" y="${panY}" width="${panW}" height="${panH}" rx="6" fill="rgba(12,18,34,.96)" stroke="#7c3aed" stroke-width="1"/>`;
+ // LIVE section (moving values)
+ html+=`<rect x="${panX}" y="${panY}" width="${panW}" height="16" rx="6" fill="rgba(124,58,237,.25)"/>`;
+ html+=`<text x="${panX+8}" y="${panY+11}" font-family="Inter" font-size="9" font-weight="700" fill="#c084fc" letter-spacing="1.5">LIVE @ θ = ${f(travelDeg,1)}°</text>`;
+ const ix=panX+8;let iy=panY+28;
+ const liveLines=[
+  ['L_act',f(Lact_mm,1)+' mm',validCol],
+  ['stroke',f(stroke_mm,1)+' mm','#86efac'],
+  ['status',validLbl,validCol],
+  ['μ (transmission)',f(muDeg,1)+'°',muCol],
+  ['F_peak',f((r.Fp||0)/1e3,2)+' kN','#fbbf24']
+ ];
+ for(const l of liveLines){html+=`<text x="${ix}" y="${iy}" font-family="JetBrains Mono" font-size="8" fill="#94a3b8">${l[0]}</text>`;html+=`<text x="${panX+panW-8}" y="${iy}" text-anchor="end" font-family="JetBrains Mono" font-size="8" font-weight="700" fill="${l[2]}">${l[1]}</text>`;iy+=11}
+ // Divider
+ iy+=2;html+=`<line x1="${panX+6}" y1="${iy}" x2="${panX+panW-6}" y2="${iy}" stroke="rgba(124,58,237,.4)" stroke-width=".7"/>`;iy+=3;
+ // GEOMETRY section (static)
+ html+=`<text x="${ix}" y="${iy+10}" font-family="Inter" font-size="9" font-weight="700" fill="#a78bfa" letter-spacing="1.5">GEOMETRY (mm)</text>`;iy+=22;
+ const geomLines=[
+  ['L_h (hinge)',f(Lh_mm,0)],
+  ['Base ΔX',f(Bx_mm,0)],
+  ['Base ΔY',f(By_mm,0)],
+  ['Base ∠·d',f(baseAngDeg,1)+'°·'+f(baseDist,0)],
+  ['L_min / L_max',f(Lmin_mm,0)+' / '+f(Lmax_mm,0)],
+  ['θ range',f(elMinDeg,0)+'° → '+f(elMaxDeg,0)+'°'],
+  ['Stroke max',f(Lmax_mm-Lmin_mm,0)]
+ ];
+ for(const l of geomLines){html+=`<text x="${ix}" y="${iy}" font-family="JetBrains Mono" font-size="8" fill="#94a3b8">${l[0]}</text>`;html+=`<text x="${panX+panW-8}" y="${iy}" text-anchor="end" font-family="JetBrains Mono" font-size="8" fill="#e2e8f0">${l[1]}</text>`;iy+=10}
  svg.innerHTML=html;
  // Update live validation strip if present
  updateGeomValidStrip(Lact_mm,Lmin_mm,Lmax_mm,muDeg,travelDeg,elMinDeg,elMaxDeg,Lh_mm,Bx_mm,By_mm);
