@@ -1002,13 +1002,15 @@ function openVisModal(){
  const m=document.getElementById('visModal');if(!m)return;
  m.style.display='flex';visModalActive=true;
  try{
-  rd();const r=actAnim.lastR||calc(AP[ax],ax);
-  // Render once immediately so the modal shows content right away
+  // Always compute fresh r for the CURRENT axis — actAnim.lastR can be stale
+  // (holds elevation result after user switched to traverse).
+  rd();const r=calc(AP[ax],ax);
   if(GM[ax]==='single')drawSingleBlock(r,'svgKinModal');
   else if(r.isL)drawActuatorGeom(r,'svgKinModal');
   else drawGearDiagram(r,'svgKinModal');
-  // If actuator anim is running, also drive modal SVG each frame
+  // If actuator anim is running AND we're on the linear-actuator axis, mirror it into modal
   if(actAnim.raf&&r.isL&&GM[ax]!=='single'){actAnim.targetIdAlt='svgKinModal'}
+  else {actAnim.targetIdAlt=null}
  }catch(e){console.error('modal render:',e)}
 }
 function closeVisModal(){
@@ -1039,7 +1041,7 @@ function startActAnim(r,targetId){
  };
  tick();
 }
-function stopActAnim(){if(actAnim.raf){cancelAnimationFrame(actAnim.raf);actAnim.raf=null}}
+function stopActAnim(){if(actAnim.raf){cancelAnimationFrame(actAnim.raf);actAnim.raf=null}actAnim.lastR=null;actAnim.targetIdAlt=null}
 
 function drawGearDiagram(r,targetId){
  const svg=document.getElementById(targetId||'svgGear');if(!svg||r.isL)return;
