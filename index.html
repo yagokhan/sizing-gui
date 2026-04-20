@@ -203,9 +203,12 @@ input[type="number"]{-moz-appearance:textfield;box-sizing:border-box}input::-web
 <div id="pf-trap">
 <div class="sl" style="border-top:none;margin-top:0">Gun Laying (Trapezoidal)</div>
 <div class="pr"><span class="pl" data-tip="Peak angular speed of the gun/load. Used to compute required motor speed ω_M = ω_L·i_tot and size the drive for voltage headroom.">Target Speed</span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="performance.targetSpeed" step="1" min="0"><span class="pu u-click u-spd" onclick="tglUnit('spd')" title="Click to toggle deg/s ↔ rad/s">deg/s</span></div></div>
+<div class="text-[9px] font-mono text-slate-500 pl-1 -mt-0.5 mb-0.5">→ motor: <span id="der-wm" class="text-blue-300 font-bold">--</span></div>
 <div class="pr"><span class="pl" data-tip="Angular acceleration during the ramp-up phase. Higher values need more peak torque: T_acc = J_eff · α_M.">Target Accel</span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="performance.targetAccel" step="1" min="0"><span class="pu u-click u-acc" onclick="tglUnit('acc')" title="Click to toggle deg/s² ↔ rad/s²">deg/s&sup2;</span></div></div>
+<div class="text-[9px] font-mono text-slate-500 pl-1 -mt-0.5 mb-0.5">→ motor: <span id="der-am" class="text-blue-300 font-bold">--</span></div>
 <div class="pr"><span class="pl" data-tip="Total travel angle per laying cycle. Sets the duration of accel/constant/decel phases used in trap RMS.">Travel Angle</span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="performance.travelAngle" step="1" min="0"><span class="pu u-click u-ang" onclick="tglUnit('ang')" title="Click to toggle deg ↔ rad">deg</span></div></div>
-<div class="pr"><span class="pl">Dwell Time</span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="performance.dwellTime" step="0.5" min="0"><span class="pu">s</span></div></div>
+<div class="pr"><span class="pl" data-tip="Dwell = pause at rest between slews (motor at zero speed). Used for cycle-average torque and thermal duty: longer dwell = more cooling between moves, lower RMS current. Set to 0 for back-to-back slews.">Dwell Time<span class="ps">t<sub>4</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="performance.dwellTime" step="0.5" min="0"><span class="pu">s</span></div></div>
+<div class="text-[9px] font-mono text-slate-500 pl-1 -mt-0.5 mb-0.5" data-tip="Slew time = accel (t₁) + constant-speed (t₂) + decel (t₃) phases. Excludes dwell. If 2·θ_accel > travel, the profile collapses to a triangle (no constant-speed phase); slew time becomes 2·√(θ/α).">Slew time <span class="text-slate-600">t₁+t₂+t₃</span>: <span id="der-slew" class="text-amber-300 font-bold">--</span> · Cycle: <span id="der-cyc" class="text-emerald-300 font-bold">--</span></div>
 </div>
 
 <!-- SINE FIELDS -->
@@ -1165,7 +1168,27 @@ function drawInputsVisuals(){
   // Live metrics strip
   sT('ls-itot',f(r.iT,2));sT('ls-je',r.Je.toExponential(2));sT('ls-wm',f(r.wM,1)+' rad/s · '+f(r.rpm,0)+' rpm');
   sT('ls-tp',fA(r.Tp/r.n)+' Nm/mot');sT('ls-jrat',f(r.Jrat,1)+':1');sT('ls-vr',f(r.Vr,1)+' V');
+  updateDerivedReadouts(r);
  }catch(e){console.error('drawInputsVisuals:',e)}
+}
+
+// === Gun-laying derived readouts (motor-side speed/accel, slew time, cycle time) ===
+function updateDerivedReadouts(r){
+ try{
+  const p=AP[ax];if(!p||PM[ax]!=='trap')return;
+  const iT=r&&r.iT?r.iT:1;
+  const ufs=UNITS.spd==='rad'?1:U2R,ufa=UNITS.acc==='rad'?1:U2R,ufn=UNITS.ang==='rad'?1:U2R;
+  const ws=(p.performance.targetSpeed||0)*ufs,as_=(p.performance.targetAccel||0)*ufa,thT=(p.performance.travelAngle||0)*ufn,tDw=p.performance.dwellTime||0;
+  const wM=ws*iT,aM=as_*iT,rpm=wM*60/(2*Math.PI);
+  // Trap timing (mirror genTrap)
+  const tA=as_>0?ws/as_:0,thA=.5*as_*tA*tA;let t1,t2,t3;
+  if(2*thA<=thT){t1=tA;t3=tA;t2=ws>0?(thT-2*thA)/ws:0}else{t1=as_>0?Math.sqrt(thT/as_):0;t3=t1;t2=0}
+  const slew=t1+t2+t3,tC=slew+tDw,isTri=(2*thA>thT);
+  sT('der-wm',f(rpm,0)+' rpm ('+f(wM,1)+' rad/s)');
+  sT('der-am',f(aM,1)+' rad/s² ('+f(aM/U2R,0)+' deg/s²)');
+  sT('der-slew',f(slew,2)+' s'+(isTri?' ▲tri':' ⬒trap'));
+  sT('der-cyc',f(tC,2)+' s');
+ }catch(e){console.error('updateDerivedReadouts:',e)}
 }
 
 // Single-ratio lumped drive block visualization
@@ -1223,7 +1246,8 @@ function drawProfPreview(){
   let iT,eT,Td,Th,Tfire=0;
   if(ax==='elevation'){const h=(p.mechanical.screwLead||25)/1e3,L=p.mechanical.leverArm||.3,ig=p.mechanical.motorScrewRatio||1,es=p.mechanical.screwEfficiency||.9,eg=p.mechanical.gearEfficiency||.95;iT=ig*2*Math.PI*L/h;eT=es*eg;const Tw=p.mechanical.windTorque||0,Tfi=p.mechanical.firingTorque||0,Tfr=p.mechanical.frictionTorque||0,Tub=p.mechanical.unbalanceTorque||0;Td=(Tw+Tfr+Tub)/(eT*iT);Tfire=Tfi/(eT*iT);Th=Tub/(eT*iT)}
   else{const z1=p.mechanical.ringTeeth||1,z2=p.mechanical.pinionTeeth||1,igb=p.mechanical.gearboxRatio||1;eT=p.mechanical.efficiency||.85;iT=(z1/z2)*igb;const Tfr=p.mechanical.frictionTorque||0,Tub=p.mechanical.unbalanceTorque||0;Td=(Tfr+Tub)/(eT*iT);Th=Tub/(eT*iT)}
-  const aL=(p.performance.targetAccel||0)*Math.PI/180,wL=(p.performance.targetSpeed||0)*Math.PI/180,wM=wL*iT,aM=aL*iT;
+  const uf_spd=UNITS.spd==='rad'?1:U2R,uf_acc=UNITS.acc==='rad'?1:U2R;
+  const aL=(p.performance.targetAccel||0)*uf_acc,wL=(p.performance.targetSpeed||0)*uf_spd,wM=wL*iT,aM=aL*iT;
   const Je=n*Jm+Jgb+JL/(eT*iT*iT),Ta=Je*aM;
   prof=genTrap(p,{Ta,Td,Th,Tfire,wM,n});col='rgba(59,130,246,.85)';fillCol='rgba(59,130,246,.12)';title='Trapezoidal — '+prof.label
  }
