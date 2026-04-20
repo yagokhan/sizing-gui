@@ -122,8 +122,8 @@ input[type="number"]{-moz-appearance:textfield;box-sizing:border-box}input::-web
   <div class="p-2"><svg id="svgBlockIn" viewBox="0 0 900 200" style="width:100%;height:160px"></svg></div>
  </div>
  <div class="card">
-  <div class="ch flex items-center justify-between"><div class="flex items-center gap-2"><div class="w-1 h-3.5 rounded-full bg-violet-500"></div><h3 class="text-[9px] font-bold tracking-widest uppercase text-slate-400" id="kinTitle">Kinematics — Live</h3></div><span class="text-[8px] text-slate-600 font-mono" id="kinHint">—</span></div>
-  <div class="p-2"><svg id="svgKinIn" viewBox="0 0 500 260" onclick="openVisModal()" style="width:100%;height:200px;cursor:zoom-in" data-tip="Click to enlarge in full-screen view"></svg></div>
+  <div class="ch flex items-center justify-between"><div class="flex items-center gap-2"><div class="w-1 h-3.5 rounded-full bg-violet-500"></div><h3 class="text-[9px] font-bold tracking-widest uppercase text-slate-400" id="kinTitle">Kinematics — Live</h3></div><div class="flex items-center gap-2"><span class="text-[8px] text-slate-600 font-mono" id="kinHint">—</span><button type="button" onclick="openVisModal()" style="padding:.2rem .55rem;background:rgba(59,130,246,.2);color:#93c5fd;border:1px solid rgba(59,130,246,.5);border-radius:.3rem;font-size:.62rem;font-weight:700;letter-spacing:.1em;cursor:pointer">⛶ ENLARGE</button></div></div>
+  <div class="p-2"><svg id="svgKinIn" viewBox="0 0 500 260" onclick="openVisModal()" style="width:100%;height:200px;cursor:zoom-in"></svg><div id="geomValid" class="text-[9px] font-mono px-1 pt-1" style="color:#64748b;min-height:1em"></div></div>
  </div>
 </div>
 
@@ -482,7 +482,7 @@ input[type="number"]{-moz-appearance:textfield;box-sizing:border-box}input::-web
 
 <script>
 const D={elevation:{
- mechanical:{screwLead:25,leverArm:.3,motorScrewRatio:3,screwEfficiency:.9,gearEfficiency:.95,gearboxInertia:5e-4,loadInertia:3500,unbalanceTorque:1500,frictionTorque:400,windTorque:80,firingTorque:400,iTotSingle:226.2,etaTotSingle:.855,hingeOffset:300,baseDx:450,baseDy:-250,actLmin:700,actLmax:1100,elevMin:-10,elevMax:60},
+ mechanical:{screwLead:25,leverArm:.3,motorScrewRatio:3,screwEfficiency:.9,gearEfficiency:.95,gearboxInertia:5e-4,loadInertia:3500,unbalanceTorque:1500,frictionTorque:400,windTorque:80,firingTorque:400,iTotSingle:226.2,etaTotSingle:.855,hingeOffset:800,baseDx:200,baseDy:-400,actLmin:620,actLmax:1130,elevMin:-10,elevMax:60},
  performance:{targetSpeed:40,targetAccel:80,travelAngle:25,dwellTime:1.5,stabAmplitude:2,stabFrequency:3,sineAmp:30,sineFreq:2,sineDur:4},
  motor:{motorCount:1,kt:.126,ke:.126,resistance:.012,rotorInertia:.005,peakTorque:80,contTorque:50,busVoltage:24,encoderBits:20,missionTime:600,targetBW:10}
 },traverse:{
@@ -940,24 +940,61 @@ function drawActuatorGeom(r,targetId,elPhysDeg){
  const lg=Math.abs(elMaxDeg-elMinDeg)>180?1:0;
  html+=`<path d="M ${arcX1} ${arcY1} A ${arcR} ${arcR} 0 ${lg} 1 ${arcX2} ${arcY2}" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="2 2"/>`;
  html+=`<text x="${Tx_svg+arcR+4}" y="${Ty_svg-arcR}" font-family="JetBrains Mono" font-size="7" fill="#fbbf24">${f(elMinDeg,0)}°…${f(elMaxDeg,0)}°</text>`;
+ // --- Angle annotations (physical angles) ---
+ // 1) Current elevation θ at trunnion
+ html+=`<text x="${Tx_svg+26}" y="${Ty_svg+6}" font-family="JetBrains Mono" font-size="8" font-weight="700" fill="#60a5fa">θ=${f(travelDeg,1)}°</text>`;
+ // 2) Base mounting angle from vertical (physical, independent of barrel)
+ const baseAngDeg=Math.atan2(Bx_mm,-By_mm)*180/Math.PI; // 0° = straight down; +ve = forward of trunnion
+ const baseDist=Math.sqrt(Bx_mm*Bx_mm+By_mm*By_mm);
+ // Dashed line trunnion→base w/ angle label
+ html+=`<line x1="${Tx_svg}" y1="${Ty_svg}" x2="${Bx_svg}" y2="${By_svg}" stroke="rgba(100,116,139,.4)" stroke-width=".8" stroke-dasharray="3 3"/>`;
+ const bmx=(Tx_svg+Bx_svg)/2,bmy=(Ty_svg+By_svg)/2;
+ html+=`<rect x="${bmx-40}" y="${bmy-6}" width="80" height="13" rx="2" fill="rgba(12,18,34,.85)" stroke="rgba(100,116,139,.5)" stroke-width=".6"/>`;
+ html+=`<text x="${bmx}" y="${bmy+4}" text-anchor="middle" font-family="JetBrains Mono" font-size="7.5" fill="#94a3b8">∠base=${f(baseAngDeg,1)}°·${f(baseDist,0)}mm</text>`;
+ // 3) Transmission angle μ at hinge between actuator and barrel (critical for smooth force transfer)
+ //    μ = angle between actuator direction (hinge→base) and barrel tangent direction at hinge.
+ const barrelDirX=Math.cos(thRad),barrelDirY=Math.sin(thRad);
+ const actDirX=(Bx_mm-Hx_mm)/Math.max(Lact_mm,.1),actDirY=(By_mm-Hy_mm)/Math.max(Lact_mm,.1);
+ const dotA=Math.max(-1,Math.min(1,barrelDirX*actDirX+barrelDirY*actDirY));
+ const muDeg=Math.abs(90-Math.acos(dotA)*180/Math.PI);
+ const muCol=muDeg<30?'#ef4444':muDeg<45?'#f59e0b':'#22c55e';
+ html+=`<rect x="${Hx_svg+8}" y="${Hy_svg-18}" width="66" height="13" rx="2" fill="rgba(12,18,34,.88)" stroke="${muCol}" stroke-width=".8"/>`;
+ html+=`<text x="${Hx_svg+41}" y="${Hy_svg-8}" text-anchor="middle" font-family="JetBrains Mono" font-size="7.5" font-weight="700" fill="${muCol}">μ=${f(muDeg,1)}°</text>`;
  svg.innerHTML=html;
+ // Update live validation strip if present
+ updateGeomValidStrip(Lact_mm,Lmin_mm,Lmax_mm,muDeg,travelDeg,elMinDeg,elMaxDeg,Lh_mm,Bx_mm,By_mm);
  return Lact_mm;
+}
+
+// Live validation strip — shows L at θmin / θmid / θmax and flags violations
+function updateGeomValidStrip(Lcur,Lmin,Lmax,mu,thCur,thMin,thMax,Lh,Bx,By){
+ const el=document.getElementById('geomValid');if(!el)return;
+ const Lat=th=>{const c=Math.cos(th*Math.PI/180),s=Math.sin(th*Math.PI/180);return Math.sqrt((Lh*c-Bx)**2+(Lh*s-By)**2)};
+ const Ln=Lat(thMin),Lx=Lat(thMax),Lmid=Lat((thMin+thMax)/2);
+ const ok=v=>v>=Lmin-1&&v<=Lmax+1;
+ const col=v=>ok(v)?'#86efac':'#fca5a5';
+ const mark=v=>ok(v)?'✓':'✗';
+ const muCol=mu<30?'#fca5a5':mu<45?'#fbbf24':'#86efac';
+ el.innerHTML=`<span style="color:#64748b">@θ=${f(thMin,0)}°:</span> <span style="color:${col(Ln)};font-weight:700">${mark(Ln)} ${f(Ln,0)}mm</span> · `+
+  `<span style="color:#64748b">@mid:</span> <span style="color:${col(Lmid)};font-weight:700">${mark(Lmid)} ${f(Lmid,0)}mm</span> · `+
+  `<span style="color:#64748b">@θ=${f(thMax,0)}°:</span> <span style="color:${col(Lx)};font-weight:700">${mark(Lx)} ${f(Lx,0)}mm</span> · `+
+  `<span style="color:#64748b">range:</span> <span style="color:#cbd5e1">${f(Lmin,0)}–${f(Lmax,0)}mm</span> · `+
+  `<span style="color:#64748b">μ<sub>now</sub>:</span> <span style="color:${muCol};font-weight:700">${f(mu,1)}°</span>`;
 }
 // === ENLARGE MODAL FOR KINEMATICS VISUAL ===
 let visModalActive=false;
 function openVisModal(){
  const m=document.getElementById('visModal');if(!m)return;
  m.style.display='flex';visModalActive=true;
- // If actuator anim is running, also drive modal SVG
- if(actAnim.raf&&actAnim.lastR&&actAnim.lastR.isL&&GM[ax]!=='single'){actAnim.targetIdAlt='svgKinModal'}
- else {
-  // Static: render once into modal SVG
-  try{const r=actAnim.lastR||calc(AP[ax],ax);
-   if(GM[ax]==='single')drawSingleBlock(r,'svgKinModal');
-   else if(r.isL)drawActuatorGeom(r,'svgKinModal');
-   else drawGearDiagram(r,'svgKinModal');
-  }catch(e){console.error('modal render:',e)}
- }
+ try{
+  rd();const r=actAnim.lastR||calc(AP[ax],ax);
+  // Render once immediately so the modal shows content right away
+  if(GM[ax]==='single')drawSingleBlock(r,'svgKinModal');
+  else if(r.isL)drawActuatorGeom(r,'svgKinModal');
+  else drawGearDiagram(r,'svgKinModal');
+  // If actuator anim is running, also drive modal SVG each frame
+  if(actAnim.raf&&r.isL&&GM[ax]!=='single'){actAnim.targetIdAlt='svgKinModal'}
+ }catch(e){console.error('modal render:',e)}
 }
 function closeVisModal(){
  const m=document.getElementById('visModal');if(m)m.style.display='none';
