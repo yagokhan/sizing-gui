@@ -11,7 +11,7 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{overflow-x:hidden;-webkit-text-size-adjust:100%}
-body{font-family:'Inter',-apple-system,sans-serif;background:#060A13;margin:0;padding:0;min-width:320px;overflow-x:hidden;-webkit-font-smoothing:antialiased;color:#e2e8f0;line-height:1.5}
+body{font-family:'Inter','Segoe UI','Roboto',-apple-system,BlinkMacSystemFont,sans-serif;background:#060A13;margin:0;padding:0;min-width:320px;overflow-x:hidden;-webkit-font-smoothing:antialiased;color:#e2e8f0;line-height:1.5}
 img,svg{display:block;max-width:100%}button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
 input[type="number"]{-moz-appearance:textfield;box-sizing:border-box}input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none}
 ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:#0a0f1a}::-webkit-scrollbar-thumb{background:#2d3748;border-radius:3px}
@@ -1304,6 +1304,7 @@ function drawSingleBlock(r,targetId){
 // ============ LIVE PROFILE PREVIEW (Inputs view) ============
 function drawProfPreview(){
  const div=document.getElementById('profPrev');if(!div)return;
+ if(typeof Plotly==='undefined'){div.innerHTML='<div style="padding:20px;color:#f59e0b;font-size:11px;text-align:center">Plotly CDN not loaded — chart preview unavailable offline</div>';return}
  rd(); // sync inputs to AP
  const p=AP[ax],mode=PM[ax],n=Math.max(Math.round(p.motor.motorCount)||1,1);
  let prof,col,fillCol,title;
@@ -1333,6 +1334,7 @@ function drawProfPreview(){
 
 function drawStabPreview(){
  const div=document.getElementById('stabPrev');if(!div)return;
+ if(typeof Plotly==='undefined'){div.innerHTML='<div style="padding:20px;color:#f59e0b;font-size:11px;text-align:center">Plotly CDN not loaded</div>';return}
  const p=AP[ax],mode=SM[ax],info=document.getElementById('stabPrevInfo');
  let tAry=[],phiAry=[],aAry=[],label;
  if(mode==='import'){
@@ -1449,7 +1451,7 @@ function rc(){rd();const r=calc(AP[ax],ax);uR(r);uC(r);uB(r.Jrat)}
 
 // === VIEW SWITCHING & SOLVE ===
 let solved=false;let currentView='inputs';let curSub='overview';
-function markStale(){solved=false;const p=document.getElementById('statusPill');if(p){p.className='pill-status pill-ready ml-2';p.textContent='NOT SOLVED'}drawProfPreview();drawInputsVisuals()}
+function markStale(){solved=false;const p=document.getElementById('statusPill');if(p){p.className='pill-status pill-ready ml-2';p.textContent='NOT SOLVED'}try{drawProfPreview()}catch(e){console.error('drawProfPreview:',e)}try{drawInputsVisuals()}catch(e){console.error('drawInputsVisuals:',e)}try{drawStabPreview()}catch(e){console.error('drawStabPreview:',e)}}
 function swView(v){currentView=v;
  if(v!=='inputs')stopActAnim();
  document.getElementById('view-inputs').style.display=v==='inputs'?'block':'none';
