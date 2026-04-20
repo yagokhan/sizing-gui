@@ -1468,11 +1468,19 @@ function swSub(s){curSub=s;
  });
  setTimeout(()=>{resizeAll()},50)}
 function resizeAll(){['tsC','dcC','psC','ps2C','tbC','emC','fftC','ebC'].forEach(id=>{try{Plotly.Plots.resize(id)}catch(e){}})}
-function solve(){rc();solved=true;
- const now=new Date();const stamp=now.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
- const ss=document.getElementById('solveStamp');if(ss)ss.textContent='AXIS: '+ax.toUpperCase()+' · SOLVED @ '+stamp;
- const p=document.getElementById('statusPill');if(p){p.className='pill-status pill-solved ml-2';p.textContent='SOLVED'}
- swView('results');setTimeout(resizeAll,80)}
+function solve(){
+ if(typeof Plotly==='undefined'){alert('Plotly kütüphanesi yüklenemedi — internet bağlantısını kontrol edin veya CDN erişimi için ağ yöneticisiyle iletişime geçin.\n(Plotly library failed to load — check internet/CDN access.)');return}
+ let calcErr=null;
+ try{rc()}catch(e){calcErr=e;console.error('solve/rc error:',e)}
+ try{
+  solved=true;
+  const now=new Date();const stamp=now.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const ss=document.getElementById('solveStamp');if(ss)ss.textContent='AXIS: '+ax.toUpperCase()+' · SOLVED @ '+stamp+(calcErr?' ⚠':'');
+  const p=document.getElementById('statusPill');if(p){p.className='pill-status pill-solved ml-2';p.textContent=calcErr?'SOLVED (warn)':'SOLVED'}
+  swView('results');setTimeout(resizeAll,80);
+  if(calcErr)alert('Hesaplama sırasında hata: '+calcErr.message+'\n(Console için F12.)');
+ }catch(e){console.error('solve error:',e);alert('Solve hatası: '+e.message)}
+}
 
 // === D2: SCENARIO SAVE/LOAD (localStorage) ===
 function loadScnList(){const raw=localStorage.getItem('wmsz.scn')||'{}';try{return JSON.parse(raw)}catch(e){return{}}}
