@@ -833,7 +833,7 @@ function drawBlockDiagram(r,targetId){
  }
  // Labels
  html+='<text x="30" y="40" font-family="Inter" font-size="11" font-weight="700" fill="#94a3b8" letter-spacing="2">POWER FLOW — '+(isL?'ELEVATION LINEAR ACTUATOR':'TRAVERSE RING GEAR')+'</text>';
- html+=`<text x="30" y="180" font-family="JetBrains Mono" font-size="10" fill="#64748b">ω_M=${f(r.wM,1)} rad/s · T_pk=${fA(r.Tp)} Nm · P=${f(r.Pmech_pk,0)} W · η=${f(r.etaSys*100,1)}%</text>`;
+ html+=`<text x="30" y="180" font-family="JetBrains Mono" font-size="10" fill="#64748b">ω_M=${f(r.wM,1)} rad/s (${f(r.rpm,0)} rpm) · ω_L=${f(r.wM/r.iT*180/Math.PI,2)}°/s · T_pk=${fA(r.Tp)} Nm · P=${f(r.Pmech_pk,0)} W · η=${f(r.etaSys*100,1)}%</text>`;
  svg.innerHTML=html;
 }
 
@@ -958,6 +958,8 @@ function drawActuatorGeom(r,targetId,elPhysDeg){
   ['stroke',f(stroke_mm,1)+' mm','#86efac'],
   ['status',validLbl,validCol],
   ['μ (transmission)',f(muDeg,1)+'°',muCol],
+  ['ω_motor',f(r.rpm,0)+' rpm','#60a5fa'],
+  ['v_load',f(r.vL||0,1)+' mm/s','#a78bfa'],
   ['F_peak',f((r.Fp||0)/1e3,2)+' kN','#fbbf24']
  ];
  for(const l of liveLines){html+=`<text x="${ix}" y="${iy}" font-family="JetBrains Mono" font-size="8" fill="#94a3b8">${l[0]}</text>`;html+=`<text x="${panX+panW-8}" y="${iy}" text-anchor="end" font-family="JetBrains Mono" font-size="8" font-weight="700" fill="${l[2]}">${l[1]}</text>`;iy+=11}
@@ -1091,7 +1093,7 @@ function drawGearDiagram(r,targetId){
  // Info strip
  html+=`<rect x="20" y="198" width="460" height="52" rx="6" fill="rgba(30,41,59,.7)" stroke="#475569"/>`;
  html+=`<text x="30" y="216" font-family="JetBrains Mono" font-size="10" fill="#cbd5e1">i_tot = (z₁/z₂) · i_gb = ${f(r.iT,2)} · η = ${f(r.eT*100,1)}%</text>`;
- html+=`<text x="30" y="234" font-family="JetBrains Mono" font-size="10" fill="#cbd5e1">ω_load=${f(r.wM/r.iT,3)} rad/s · ω_motor=${f(r.wM,1)} rad/s · T_load=${fA(r.Tp*r.iT*r.eT)} Nm</text>`;
+ html+=`<text x="30" y="234" font-family="JetBrains Mono" font-size="10" fill="#cbd5e1">ω_motor=${f(r.wM,1)} rad/s (${f(r.rpm,0)} rpm) · ω_load=${f(r.wM/r.iT,3)} rad/s (${f(r.wM/r.iT*180/Math.PI,2)}°/s) · T_load=${fA(r.Tp*r.iT*r.eT)} Nm</text>`;
  svg.innerHTML=html;
 }
 
@@ -1161,7 +1163,7 @@ function drawInputsVisuals(){
   else if(r.isL){startActAnim(r,'svgKinIn');if(kt)kt.textContent='Actuator Geometry — Live (animated)';if(kh)kh.textContent='LEVER + SCREW'}
   else{stopActAnim();drawGearDiagram(r,'svgKinIn');if(kt)kt.textContent='Internal Ring Gear — Live';if(kh)kh.textContent='z₁ internal · z₂ pinion'}
   // Live metrics strip
-  sT('ls-itot',f(r.iT,2));sT('ls-je',r.Je.toExponential(2));sT('ls-wm',f(r.wM,1)+' rad/s');
+  sT('ls-itot',f(r.iT,2));sT('ls-je',r.Je.toExponential(2));sT('ls-wm',f(r.wM,1)+' rad/s · '+f(r.rpm,0)+' rpm');
   sT('ls-tp',fA(r.Tp/r.n)+' Nm/mot');sT('ls-jrat',f(r.Jrat,1)+':1');sT('ls-vr',f(r.Vr,1)+' V');
  }catch(e){console.error('drawInputsVisuals:',e)}
 }
@@ -1202,7 +1204,7 @@ function drawSingleBlock(r,targetId){
  html+=`<text x="${bx+bw+100}" y="${my+45}" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#86efac">J=${fA(r.Je)}</text>`;
  // Info strip
  html+=`<rect x="20" y="210" width="460" height="40" rx="6" fill="rgba(30,41,59,.7)" stroke="#475569"/>`;
- html+=`<text x="30" y="225" font-family="JetBrains Mono" font-size="10" fill="#cbd5e1">i_tot = ${f(r.iT,2)} · η = ${f(r.eT*100,1)}% · ω_motor = ${f(r.wM,1)} rad/s · ω_load = ${f(r.wM/r.iT,3)} rad/s</text>`;
+ html+=`<text x="30" y="225" font-family="JetBrains Mono" font-size="10" fill="#cbd5e1">i_tot=${f(r.iT,2)} · η=${f(r.eT*100,1)}% · ω_motor=${f(r.wM,1)} rad/s (${f(r.rpm,0)} rpm) · ω_load=${f(r.wM/r.iT,3)} rad/s (${f(r.wM/r.iT*180/Math.PI,2)}°/s)</text>`;
  html+=`<text x="30" y="242" font-family="JetBrains Mono" font-size="9" fill="#64748b">Lumped transmission — individual components hidden (step-by-step view available in Gear Input Mode)</text>`;
  svg.innerHTML=html;
 }
