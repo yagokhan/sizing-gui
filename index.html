@@ -1231,9 +1231,10 @@ function drawInputsVisuals(){
   rd();const r=calc(AP[ax],ax);
   drawBlockDiagram(r,'svgBlockIn');
   const kt=document.getElementById('kinTitle'),kh=document.getElementById('kinHint');
-  if(GM[ax]==='single'){stopActAnim();drawSingleBlock(r,'svgKinIn');if(kt)kt.textContent='Lumped Drive Block — Live';if(kh)kh.textContent='SINGLE RATIO i_tot'}
+  const gv=document.getElementById('geomValid');
+  if(GM[ax]==='single'){stopActAnim();drawSingleBlock(r,'svgKinIn');if(kt)kt.textContent='Lumped Drive Block — Live';if(kh)kh.textContent='SINGLE RATIO i_tot';if(gv)gv.innerHTML=`<span style="color:#64748b">i<sub>tot</sub>:</span> <span style="color:#93c5fd;font-weight:700">${f(r.iT,2)}:1</span> · <span style="color:#64748b">η<sub>tot</sub>:</span> <span style="color:#86efac;font-weight:700">${f(r.eT*100,1)}%</span>`}
   else if(r.isL){startActAnim(r,'svgKinIn');if(kt)kt.textContent='Actuator Geometry — Live (animated)';if(kh)kh.textContent='LEVER + SCREW'}
-  else{stopActAnim();drawGearDiagram(r,'svgKinIn');if(kt)kt.textContent='Internal Ring Gear — Live';if(kh)kh.textContent='z₁ internal · z₂ pinion'}
+  else{stopActAnim();drawGearDiagram(r,'svgKinIn');if(kt)kt.textContent='Internal Ring Gear — Live';if(kh)kh.textContent='z₁ internal · z₂ pinion';if(gv){const m=AP[ax].mechanical,z1=Math.max(m.ringTeeth||1,1),z2=Math.max(m.pinionTeeth||1,1),igb=Math.max(m.gearboxRatio||1,1);gv.innerHTML=`<span style="color:#64748b">z₁/z₂:</span> <span style="color:#e2e8f0;font-weight:700">${z1}/${z2}</span> · <span style="color:#64748b">i<sub>gb</sub>:</span> <span style="color:#e2e8f0;font-weight:700">${igb}:1</span> · <span style="color:#64748b">i<sub>tot</sub>:</span> <span style="color:#93c5fd;font-weight:700">${f(r.iT,2)}:1</span> · <span style="color:#64748b">η<sub>tot</sub>:</span> <span style="color:#86efac;font-weight:700">${f(r.eT*100,1)}%</span>`}}
   // Live metrics strip
   sT('ls-itot',f(r.iT,2));sT('ls-je',r.Je.toExponential(2));sT('ls-wm',f(r.wM,1)+' rad/s · '+f(r.rpm,0)+' rpm');
   sT('ls-tp',fA(r.Tp/r.n)+' Nm/mot');sT('ls-jrat',f(r.Jrat,1)+':1');sT('ls-vr',f(r.Vr,1)+' V');
