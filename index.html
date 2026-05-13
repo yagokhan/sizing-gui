@@ -1302,30 +1302,30 @@ function drawMotorTimeSeries(r){
  const cfg={responsive:true,displaylogo:false,modeBarButtonsToRemove:['lasso2d','select2d','autoScale2d']};
  const gunlayLine=(x,y,nm,col,fcol)=>({x:x,y:y,type:'scatter',mode:'lines',name:nm,line:{color:col,width:2},fill:'tozeroy',fillcolor:fcol});
  const stabLine=(x,y,nm)=>({x:x,y:y,type:'scatter',mode:'lines',name:nm,line:{color:'#f59e0b',width:1.5,dash:'dot'}});
+ console.log('drawMotorTimeSeries: data ready — t_g.len=',t_g.length,'t_s.len=',(t_s?t_s.length:0),'_mtsInit=',_mtsInit);
  // Use newPlot the first time we ever render these IDs; Plotly.react afterwards.
  const drawFn=_mtsInit?Plotly.react.bind(Plotly):Plotly.newPlot.bind(Plotly);
  _mtsInit=true;
- // Plot each chart in its own try/catch so one failure doesn't block the others
- try{
-  const tr=[gunlayLine(t_g,rpm_g,'Gunlay','#60a5fa','rgba(96,165,250,0.10)')];
-  if(t_s)tr.push(stabLine(t_s,rpm_s,'Stab'));
-  const lay=Object.assign({},baseLay,{yaxis:{title:'rpm',gridcolor:'rgba(30,41,59,.4)',tickfont:{family:'JetBrains Mono',size:9,color:'#64748b'}}});
-  drawFn('rpmTC',tr,lay,cfg);
- }catch(e){console.error('rpmTC plot:',e);_mtsPaintErr('rpmTC','rpmTC failed: '+(e&&e.message||e))}
- try{
-  const tr=[gunlayLine(t_g,I_g,'Gunlay |I|','#60a5fa','rgba(96,165,250,0.10)')];
-  if(t_s)tr.push(stabLine(t_s,I_s,'Stab |I|'));
-  const lay=Object.assign({},baseLay,{yaxis:{title:'|I| per motor (A)',gridcolor:'rgba(30,41,59,.4)',tickfont:{family:'JetBrains Mono',size:9,color:'#64748b'},rangemode:'tozero'}});
-  drawFn('ampTC',tr,lay,cfg);
- }catch(e){console.error('ampTC plot:',e);_mtsPaintErr('ampTC','ampTC failed: '+(e&&e.message||e))}
- try{
-  const tr=[gunlayLine(t_g,Pe_g,'Gunlay P_elec','#86efac','rgba(134,239,172,0.10)')];
-  if(t_s)tr.push(stabLine(t_s,Pe_s,'Stab P_elec'));
-  const lay=Object.assign({},baseLay,{yaxis:{title:'P_elec per motor (W)',gridcolor:'rgba(30,41,59,.4)',tickfont:{family:'JetBrains Mono',size:9,color:'#64748b'}}});
-  drawFn('pwrTC',tr,lay,cfg);
- }catch(e){console.error('pwrTC plot:',e);_mtsPaintErr('pwrTC','pwrTC failed: '+(e&&e.message||e))}
- // Force a resize once the deferred frame paints, in case the chart was drawn at zero size
- setTimeout(()=>{['rpmTC','ampTC','pwrTC'].forEach(id=>{try{Plotly.Plots.resize(id)}catch(e){}})},120);
+ // Helper that calls Plotly and routes BOTH sync throws AND async Promise rejections to the visible fallback.
+ const doPlot=(id,tr,lay)=>{
+  try{
+   const ret=drawFn(id,tr,lay,cfg);
+   if(ret&&typeof ret.then==='function'){
+    ret.then(()=>console.log(id+': Plotly resolved'))
+       .catch(err=>{console.error(id+' Plotly async:',err);try{_mtsPaintErr(id,id+' async failed: '+(err&&err.message||err))}catch(_){}});
+   }else{
+    console.log(id+': Plotly returned (no promise)');
+   }
+  }catch(e){console.error(id+' Plotly sync:',e);try{_mtsPaintErr(id,id+' sync failed: '+(e&&e.message||e))}catch(_){}}
+ };
+ const tr1=[gunlayLine(t_g,rpm_g,'Gunlay','#60a5fa','rgba(96,165,250,0.10)')];if(t_s)tr1.push(stabLine(t_s,rpm_s,'Stab'));
+ doPlot('rpmTC',tr1,Object.assign({},baseLay,{yaxis:{title:'rpm',gridcolor:'rgba(30,41,59,.4)',tickfont:{family:'JetBrains Mono',size:9,color:'#64748b'}}}));
+ const tr2=[gunlayLine(t_g,I_g,'Gunlay |I|','#60a5fa','rgba(96,165,250,0.10)')];if(t_s)tr2.push(stabLine(t_s,I_s,'Stab |I|'));
+ doPlot('ampTC',tr2,Object.assign({},baseLay,{yaxis:{title:'|I| per motor (A)',gridcolor:'rgba(30,41,59,.4)',tickfont:{family:'JetBrains Mono',size:9,color:'#64748b'},rangemode:'tozero'}}));
+ const tr3=[gunlayLine(t_g,Pe_g,'Gunlay P_elec','#86efac','rgba(134,239,172,0.10)')];if(t_s)tr3.push(stabLine(t_s,Pe_s,'Stab P_elec'));
+ doPlot('pwrTC',tr3,Object.assign({},baseLay,{yaxis:{title:'P_elec per motor (W)',gridcolor:'rgba(30,41,59,.4)',tickfont:{family:'JetBrains Mono',size:9,color:'#64748b'}}}));
+ // Force a resize once the deferred frame paints, in case the chart was drawn at zero size.
+ setTimeout(()=>{['rpmTC','ampTC','pwrTC'].forEach(id=>{try{Plotly.Plots.resize(id);console.log(id+': resized')}catch(e){console.warn(id+' resize:',e)}})},150);
 }
 
 function drawExtras(r){
