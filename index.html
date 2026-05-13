@@ -236,6 +236,11 @@ input[type="number"]{-moz-appearance:textfield;box-sizing:border-box}input::-web
 <div class="pr elev-only"><span class="pl" data-tip="Fully extended actuator length (cylinder + max rod stroke). Defines maximum geometric reach.">L<sub>max</sub> (extended)</span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.actLmax" step="10" min="100"><span class="pu">mm</span></div></div>
 <div class="pr elev-only"><span class="pl" data-tip="Minimum elevation angle the barrel travels to (e.g. depression). Used for animation sweep range.">Elev θ<sub>min</sub></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.elevMin" step="1"><span class="pu u-click u-ang" onclick="tglUnit('ang')">deg</span></div></div>
 <div class="pr elev-only"><span class="pl" data-tip="Maximum elevation angle (max barrel up). Animation sweeps from θ_min to θ_max.">Elev θ<sub>max</sub></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.elevMax" step="1"><span class="pu u-click u-ang" onclick="tglUnit('ang')">deg</span></div></div>
+<div class="elev-only" id="actGeomBox" onclick="openActGeomModal()" title="Click to enlarge" style="cursor:zoom-in;padding:.4rem .35rem .35rem;background:rgba(124,58,237,.07);border-radius:.35rem;margin:.2rem 0 .15rem;border:1px solid rgba(167,139,250,.22);position:relative">
+<svg id="svgActGeom" viewBox="0 0 360 200" style="width:100%;height:auto;max-height:200px;pointer-events:none"></svg>
+<div id="actGeomTxt" style="font-family:'JetBrains Mono',monospace;font-size:.62rem;color:#94a3b8;text-align:center;margin-top:.15rem;line-height:1.4;pointer-events:none"></div>
+<div style="position:absolute;bottom:3px;right:6px;font-size:.55rem;color:#475569;letter-spacing:.05em;pointer-events:none">↗ click to enlarge</div>
+</div>
 <div class="sl trav-only" style="border-top:none;margin-top:0">Internal Ring Gear &amp; Pinion (enter any 2 of 3 — auto-linked: d = z · m)</div>
 <div class="pr trav-only"><span class="pl" data-tip="Module — common to meshing gears. d = z·m (mm). Editing m holds tooth counts (z) constant and recomputes both pitch diameters.">Module<span class="ps">m</span></span><div class="flex items-center gap-1"><input type="number" class="inp gear-link" data-key="mechanical.gearModule" data-gear-role="m" step="0.1" min="0.1"><span class="pu">mm</span></div></div>
 <div class="pr trav-only"><span class="pl" data-tip="Ring (internal) gear pitch diameter. d₁ = z₁·m. Editing d₁ holds module constant and recomputes z₁ = round(d₁/m).">Ring Pitch ⌀<span class="ps">d<sub>1</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp gear-link" data-key="mechanical.ringPitchDia" data-gear-role="d1" step="1" min="1"><span class="pu">mm</span></div></div>
@@ -1243,7 +1248,7 @@ function drawInputsVisuals(){
   const kt=document.getElementById('kinTitle'),kh=document.getElementById('kinHint');
   const gv=document.getElementById('geomValid');
   if(GM[ax]==='single'){stopActAnim();drawSingleBlock(r,'svgKinIn');if(kt)kt.textContent='Lumped Drive Block — Live';if(kh)kh.textContent='SINGLE RATIO i_tot';if(gv)gv.innerHTML=`<span style="color:#64748b">i<sub>tot</sub>:</span> <span style="color:#93c5fd;font-weight:700">${f(r.iT,2)}:1</span> · <span style="color:#64748b">η<sub>tot</sub>:</span> <span style="color:#86efac;font-weight:700">${f(r.eT*100,1)}%</span>`}
-  else if(r.isL){startActAnim(r,'svgKinIn');if(kt)kt.textContent='Actuator Geometry — Live (animated)';if(kh)kh.textContent='LEVER + SCREW'}
+  else if(r.isL){startActAnim(r,'svgKinIn');try{drawActGeom()}catch(err){console.error('drawActGeom:',err)}if(kt)kt.textContent='Actuator Geometry — Live (animated)';if(kh)kh.textContent='LEVER + SCREW'}
   else{stopActAnim();drawGearDiagram(r,'svgKinIn');try{drawGearRatio()}catch(err){console.error('drawGearRatio:',err)}if(kt)kt.textContent='Internal Ring Gear — Live';if(kh)kh.textContent='z₁ internal · z₂ pinion';if(gv){const m=AP[ax].mechanical,z1=Math.max(m.ringTeeth||1,1),z2=Math.max(m.pinionTeeth||1,1),igb=Math.max(m.gearboxRatio||1,1);gv.innerHTML=`<span style="color:#64748b">z₁/z₂:</span> <span style="color:#e2e8f0;font-weight:700">${z1}/${z2}</span> · <span style="color:#64748b">i<sub>gb</sub>:</span> <span style="color:#e2e8f0;font-weight:700">${igb}:1</span> · <span style="color:#64748b">i<sub>tot</sub>:</span> <span style="color:#93c5fd;font-weight:700">${f(r.iT,2)}:1</span> · <span style="color:#64748b">η<sub>tot</sub>:</span> <span style="color:#86efac;font-weight:700">${f(r.eT*100,1)}%</span>`}}
   // Live metrics strip
   sT('ls-itot',f(r.iT,2));sT('ls-je',r.Je.toExponential(2));sT('ls-wm',f(r.wM,1)+' rad/s · '+f(r.rpm,0)+' rpm');
@@ -1562,6 +1567,180 @@ function openGearRatioModal(){
 }
 function closeGearRatioModal(){
  const m=document.getElementById('gearRatioModal');if(m)m.style.display='none';
+}
+
+// === Elevation actuator-geometry parameter map (static labelled schematic) ===
+// Shows trunnion T, base B, barrel at θ_mean (with ghost barrels at θ_min/max),
+// actuator (cylinder + rod), and on-canvas callouts for every geometric parameter.
+function drawActGeom(targetId,vbW,vbH,txtId){
+ if(ax!=='elevation')return;
+ targetId=targetId||'svgActGeom';vbW=vbW||360;vbH=vbH||200;txtId=txtId||'actGeomTxt';
+ const svg=document.getElementById(targetId);if(!svg)return;
+ const mm=AP.elevation.mechanical;
+ const Lh=Math.max(mm.hingeOffset||800,10);
+ const Bx=mm.baseDx!=null?mm.baseDx:200;
+ const By=mm.baseDy!=null?mm.baseDy:-400;
+ const Lmin=Math.max(mm.actLmin||620,50);
+ const Lmax=Math.max(mm.actLmax||1130,Lmin+10);
+ const Llev=Math.max(mm.leverArm||0.3,0.001);
+ const ufn=UNITS.ang==='rad'?1:U2R;
+ const elMin=(mm.elevMin!=null?mm.elevMin:-10)*ufn/U2R;
+ const elMax=(mm.elevMax!=null?mm.elevMax:60)*ufn/U2R;
+ const elMid=(elMin+elMax)/2;
+ const rad=d=>d*Math.PI/180;
+ const hingeAt=d=>({x:Lh*Math.cos(rad(d)),y:Lh*Math.sin(rad(d))});
+ const Hmid=hingeAt(elMid),Hmin=hingeAt(elMin),Hmax=hingeAt(elMax);
+ const Lact_mid=Math.sqrt((Hmid.x-Bx)**2+(Hmid.y-By)**2);
+ const fS=vbW/360;
+ const fLab=Math.max(7,8*fS),fSm=Math.max(6.5,7.3*fS);
+ const infoW=vbW*0.30;
+ const visX0=infoW+vbW*0.015,visW=vbW-visX0-vbW*0.02;
+ // Bounding box of geometry in mm; include barrel-tip at 1.5×Lh
+ const corners=[{x:0,y:0},{x:Bx,y:By},Hmid,Hmin,Hmax,
+  {x:Lh*1.5*Math.cos(rad(elMid)),y:Lh*1.5*Math.sin(rad(elMid))},
+  {x:Lh*1.4*Math.cos(rad(elMin)),y:Lh*1.4*Math.sin(rad(elMin))},
+  {x:Lh*1.4*Math.cos(rad(elMax)),y:Lh*1.4*Math.sin(rad(elMax))}];
+ let xMin=Math.min(...corners.map(c=>c.x)),xMax=Math.max(...corners.map(c=>c.x));
+ let yMin=Math.min(...corners.map(c=>c.y)),yMax=Math.max(...corners.map(c=>c.y));
+ const padMM=Math.max(xMax-xMin,yMax-yMin)*0.18;
+ xMin-=padMM;xMax+=padMM;yMin-=padMM;yMax+=padMM;
+ const drawW=visW*0.92,drawH=vbH*0.82;
+ const scale=Math.min(drawW/(xMax-xMin),drawH/(yMax-yMin));
+ const cxVis=visX0+visW*0.5,cyVis=vbH*0.48;
+ const geomMx=(xMin+xMax)/2,geomMy=(yMin+yMax)/2;
+ const px=v=>cxVis+(v-geomMx)*scale;
+ const py=v=>cyVis-(v-geomMy)*scale; // flip y to "y-up" engineering convention
+ const Tx=px(0),Ty=py(0);
+ const Bsx=px(Bx),Bsy=py(By);
+ const Hmx=px(Hmid.x),Hmy=py(Hmid.y);
+ const Hnx=px(Hmin.x),Hny=py(Hmin.y);
+ const Hxx=px(Hmax.x),Hxy=py(Hmax.y);
+ let html='';
+ html+=`<rect x="0" y="0" width="${vbW}" height="${vbH}" fill="transparent"/>`;
+ // === Info column (left) ===
+ const ix=vbW*0.025;let iy=fLab*1.7;const dy=fLab*1.45;
+ html+=`<text x="${ix}" y="${iy}" font-family="Inter" font-size="${fLab*0.95}" font-weight="700" fill="#3b82f6" letter-spacing=".5">BARREL · TRUNNION</text>`;iy+=dy;
+ html+=`<text x="${ix}" y="${iy}" font-family="JetBrains Mono" font-size="${fLab}" fill="#94a3b8">L<tspan font-size="${fSm}" baseline-shift="sub">h</tspan> = <tspan font-weight="700" fill="#93c5fd">${f(Lh,0)}</tspan> mm</text>`;iy+=dy*0.9;
+ html+=`<text x="${ix}" y="${iy}" font-family="JetBrains Mono" font-size="${fLab}" fill="#94a3b8">θ: <tspan font-weight="700" fill="#fbbf24">${f(elMin,0)}°→${f(elMax,0)}°</tspan></text>`;iy+=dy*1.25;
+ html+=`<text x="${ix}" y="${iy}" font-family="Inter" font-size="${fLab*0.95}" font-weight="700" fill="#a78bfa" letter-spacing=".5">BASE</text>`;iy+=dy;
+ html+=`<text x="${ix}" y="${iy}" font-family="JetBrains Mono" font-size="${fLab}" fill="#94a3b8">ΔX = <tspan font-weight="700" fill="#cbd5e1">${f(Bx,0)}</tspan> mm</text>`;iy+=dy*0.9;
+ html+=`<text x="${ix}" y="${iy}" font-family="JetBrains Mono" font-size="${fLab}" fill="#94a3b8">ΔY = <tspan font-weight="700" fill="#cbd5e1">${f(By,0)}</tspan> mm</text>`;iy+=dy*1.25;
+ html+=`<text x="${ix}" y="${iy}" font-family="Inter" font-size="${fLab*0.95}" font-weight="700" fill="#f59e0b" letter-spacing=".5">ACTUATOR</text>`;iy+=dy;
+ html+=`<text x="${ix}" y="${iy}" font-family="JetBrains Mono" font-size="${fLab}" fill="#94a3b8">L<tspan font-size="${fSm}" baseline-shift="sub">min</tspan> = <tspan font-weight="700" fill="#a78bfa">${f(Lmin,0)}</tspan> mm</text>`;iy+=dy*0.9;
+ html+=`<text x="${ix}" y="${iy}" font-family="JetBrains Mono" font-size="${fLab}" fill="#94a3b8">L<tspan font-size="${fSm}" baseline-shift="sub">max</tspan> = <tspan font-weight="700" fill="#fbbf24">${f(Lmax,0)}</tspan> mm</text>`;iy+=dy*0.9;
+ html+=`<text x="${ix}" y="${iy}" font-family="JetBrains Mono" font-size="${fLab}" fill="#94a3b8">L (lever) = <tspan font-weight="700" fill="#86efac">${f(Llev*1000,0)}</tspan> mm</text>`;
+ // === Visual (right) ===
+ // Horizontal datum line through trunnion (tiny)
+ html+=`<line x1="${Tx-15*fS}" y1="${Ty}" x2="${Tx+10*fS}" y2="${Ty}" stroke="rgba(71,85,105,.45)" stroke-width="${0.5*fS}" stroke-dasharray="${2*fS} ${2*fS}"/>`;
+ // θ-range arc + labels at trunnion
+ const arcRpx=Math.max(14*fS,Math.min(28*fS,Lh*scale*0.22));
+ const a1=-elMax*Math.PI/180,a2=-elMin*Math.PI/180;
+ const aX1=Tx+arcRpx*Math.cos(a1),aY1=Ty+arcRpx*Math.sin(a1);
+ const aX2=Tx+arcRpx*Math.cos(a2),aY2=Ty+arcRpx*Math.sin(a2);
+ const lg=Math.abs(elMax-elMin)>180?1:0;
+ html+=`<path d="M ${aX1} ${aY1} A ${arcRpx} ${arcRpx} 0 ${lg} 1 ${aX2} ${aY2}" fill="none" stroke="#f59e0b" stroke-width="${1*fS}" stroke-dasharray="${2*fS} ${2*fS}"/>`;
+ const tmLab={x:Tx+(arcRpx+10*fS)*Math.cos(a1),y:Ty+(arcRpx+10*fS)*Math.sin(a1)};
+ html+=`<text x="${tmLab.x}" y="${tmLab.y}" font-family="JetBrains Mono" font-size="${fSm}" font-weight="700" fill="#f59e0b">θ_max</text>`;
+ const tnLab={x:Tx+(arcRpx+10*fS)*Math.cos(a2),y:Ty+(arcRpx+10*fS)*Math.sin(a2)};
+ html+=`<text x="${tnLab.x}" y="${tnLab.y+(elMin<0?5*fS:0)}" font-family="JetBrains Mono" font-size="${fSm}" font-weight="700" fill="#f59e0b">θ_min</text>`;
+ // Ghost barrels at θ_min/max
+ const bTmin={x:px(Lh*1.35*Math.cos(rad(elMin))),y:py(Lh*1.35*Math.sin(rad(elMin)))};
+ const bTmax={x:px(Lh*1.35*Math.cos(rad(elMax))),y:py(Lh*1.35*Math.sin(rad(elMax)))};
+ html+=`<line x1="${Tx}" y1="${Ty}" x2="${bTmin.x}" y2="${bTmin.y}" stroke="rgba(59,130,246,.22)" stroke-width="${2.5*fS}" stroke-linecap="round"/>`;
+ html+=`<line x1="${Tx}" y1="${Ty}" x2="${bTmax.x}" y2="${bTmax.y}" stroke="rgba(59,130,246,.22)" stroke-width="${2.5*fS}" stroke-linecap="round"/>`;
+ html+=`<circle cx="${Hnx}" cy="${Hny}" r="${2.5*fS}" fill="none" stroke="rgba(245,158,11,.45)" stroke-width="${0.7*fS}"/>`;
+ html+=`<circle cx="${Hxx}" cy="${Hxy}" r="${2.5*fS}" fill="none" stroke="rgba(245,158,11,.45)" stroke-width="${0.7*fS}"/>`;
+ // Active barrel at θ_mid
+ const barTip={x:px(Lh*1.5*Math.cos(rad(elMid))),y:py(Lh*1.5*Math.sin(rad(elMid)))};
+ html+=`<line x1="${Tx}" y1="${Ty}" x2="${barTip.x}" y2="${barTip.y}" stroke="#3b82f6" stroke-width="${4*fS}" stroke-linecap="round" opacity=".92"/>`;
+ // L_h label perpendicular to barrel midpoint
+ const bdx=Hmx-Tx,bdy=Hmy-Ty,blen=Math.sqrt(bdx*bdx+bdy*bdy)||1;
+ const bux=bdx/blen,buy=bdy/blen;
+ const bMid={x:(Tx+Hmx)/2,y:(Ty+Hmy)/2};
+ const lhLab={x:bMid.x+buy*10*fS,y:bMid.y-bux*10*fS};
+ html+=`<text x="${lhLab.x}" y="${lhLab.y}" text-anchor="middle" font-family="JetBrains Mono" font-size="${fSm}" font-weight="700" fill="#60a5fa">L_h</text>`;
+ // Hinge marker (mean)
+ html+=`<circle cx="${Hmx}" cy="${Hmy}" r="${5*fS}" fill="#f59e0b" stroke="#fbbf24" stroke-width="${1*fS}"/>`;
+ html+=`<circle cx="${Hmx}" cy="${Hmy}" r="${2*fS}" fill="#7c2d12"/>`;
+ // Actuator (cylinder + rod) from base to hinge
+ const adx=Hmx-Bsx,ady=Hmy-Bsy;const alen=Math.sqrt(adx*adx+ady*ady)||1;
+ const aux=adx/alen,auy=ady/alen;
+ const cylFrac=Math.min(Lmin/Lact_mid,1);
+ const cylEnd={x:Bsx+aux*alen*cylFrac,y:Bsy+auy*alen*cylFrac};
+ html+=`<line x1="${Bsx}" y1="${Bsy}" x2="${cylEnd.x}" y2="${cylEnd.y}" stroke="#5b21b6" stroke-width="${8*fS}" stroke-linecap="round"/>`;
+ html+=`<line x1="${Bsx+aux*5*fS}" y1="${Bsy+auy*5*fS}" x2="${cylEnd.x-aux*4*fS}" y2="${cylEnd.y-auy*4*fS}" stroke="#a855f7" stroke-width="${5*fS}" opacity=".65"/>`;
+ html+=`<line x1="${cylEnd.x}" y1="${cylEnd.y}" x2="${Hmx}" y2="${Hmy}" stroke="#94a3b8" stroke-width="${3*fS}" stroke-linecap="round"/>`;
+ html+=`<line x1="${cylEnd.x}" y1="${cylEnd.y}" x2="${Hmx}" y2="${Hmy}" stroke="#e2e8f0" stroke-width="${1.4*fS}"/>`;
+ // Perpendicular outward (away from trunnion) for dimension brackets
+ const aMid={x:(Bsx+Hmx)/2,y:(Bsy+Hmy)/2};
+ let aPerp={x:-auy,y:aux};
+ if(aPerp.x*(Tx-aMid.x)+aPerp.y*(Ty-aMid.y)>0){aPerp.x=-aPerp.x;aPerp.y=-aPerp.y}
+ const off1=12*fS,off2=22*fS;
+ // L_min bracket
+ const mn1={x:Bsx+aPerp.x*off1,y:Bsy+aPerp.y*off1};
+ const mn2={x:cylEnd.x+aPerp.x*off1,y:cylEnd.y+aPerp.y*off1};
+ html+=`<line x1="${mn1.x}" y1="${mn1.y}" x2="${mn2.x}" y2="${mn2.y}" stroke="#a855f7" stroke-width="${0.8*fS}"/>`;
+ html+=`<line x1="${Bsx+aPerp.x*4*fS}" y1="${Bsy+aPerp.y*4*fS}" x2="${mn1.x+aPerp.x*3*fS}" y2="${mn1.y+aPerp.y*3*fS}" stroke="#a855f7" stroke-width="${0.5*fS}" stroke-dasharray="${1.5*fS} ${1.5*fS}"/>`;
+ html+=`<line x1="${cylEnd.x+aPerp.x*4*fS}" y1="${cylEnd.y+aPerp.y*4*fS}" x2="${mn2.x+aPerp.x*3*fS}" y2="${mn2.y+aPerp.y*3*fS}" stroke="#a855f7" stroke-width="${0.5*fS}" stroke-dasharray="${1.5*fS} ${1.5*fS}"/>`;
+ const mnMid={x:(mn1.x+mn2.x)/2+aPerp.x*5*fS,y:(mn1.y+mn2.y)/2+aPerp.y*5*fS};
+ html+=`<text x="${mnMid.x}" y="${mnMid.y}" text-anchor="middle" font-family="JetBrains Mono" font-size="${fSm}" font-weight="700" fill="#a855f7">L_min</text>`;
+ // L_max bracket (extending past the hinge along same actuator direction)
+ const lmaxEnd={x:Bsx+aux*alen*(Lmax/Lact_mid),y:Bsy+auy*alen*(Lmax/Lact_mid)};
+ const mx1={x:Bsx+aPerp.x*off2,y:Bsy+aPerp.y*off2};
+ const mx2={x:lmaxEnd.x+aPerp.x*off2,y:lmaxEnd.y+aPerp.y*off2};
+ html+=`<line x1="${mx1.x}" y1="${mx1.y}" x2="${mx2.x}" y2="${mx2.y}" stroke="#fbbf24" stroke-width="${0.8*fS}"/>`;
+ html+=`<line x1="${Bsx+aPerp.x*4*fS}" y1="${Bsy+aPerp.y*4*fS}" x2="${mx1.x+aPerp.x*3*fS}" y2="${mx1.y+aPerp.y*3*fS}" stroke="#fbbf24" stroke-width="${0.5*fS}" stroke-dasharray="${1.5*fS} ${1.5*fS}"/>`;
+ html+=`<line x1="${lmaxEnd.x+aPerp.x*4*fS}" y1="${lmaxEnd.y+aPerp.y*4*fS}" x2="${mx2.x+aPerp.x*3*fS}" y2="${mx2.y+aPerp.y*3*fS}" stroke="#fbbf24" stroke-width="${0.5*fS}" stroke-dasharray="${1.5*fS} ${1.5*fS}"/>`;
+ const mxMid={x:(mx1.x+mx2.x)/2+aPerp.x*5*fS,y:(mx1.y+mx2.y)/2+aPerp.y*5*fS};
+ html+=`<text x="${mxMid.x}" y="${mxMid.y}" text-anchor="middle" font-family="JetBrains Mono" font-size="${fSm}" font-weight="700" fill="#fbbf24">L_max</text>`;
+ // Trunnion + Base markers
+ html+=`<circle cx="${Tx}" cy="${Ty}" r="${5*fS}" fill="#475569" stroke="#94a3b8" stroke-width="${1*fS}"/>`;
+ html+=`<circle cx="${Tx}" cy="${Ty}" r="${2*fS}" fill="#0f172a"/>`;
+ html+=`<text x="${Tx-8*fS}" y="${Ty-7*fS}" text-anchor="end" font-family="JetBrains Mono" font-size="${fSm}" font-weight="700" fill="#64748b">T</text>`;
+ html+=`<circle cx="${Bsx}" cy="${Bsy}" r="${5*fS}" fill="#94a3b8" stroke="#e2e8f0" stroke-width="${1*fS}"/>`;
+ html+=`<circle cx="${Bsx}" cy="${Bsy}" r="${2*fS}" fill="#0f172a"/>`;
+ html+=`<text x="${Bsx+8*fS}" y="${Bsy+8*fS}" font-family="JetBrains Mono" font-size="${fSm}" font-weight="700" fill="#64748b">B</text>`;
+ // ΔX horizontal dimension (drawn at bottom of all geometry)
+ const allYs=[Ty,Bsy,Hmy,Hny,Hxy,bTmin.y,bTmax.y,barTip.y,mx2.y,mn2.y];
+ const yBot=Math.max(...allYs)+15*fS;
+ if(Math.abs(Bsx-Tx)>5){
+  html+=`<line x1="${Tx}" y1="${yBot}" x2="${Bsx}" y2="${yBot}" stroke="#a78bfa" stroke-width="${0.8*fS}"/>`;
+  html+=`<line x1="${Tx}" y1="${Ty+6*fS}" x2="${Tx}" y2="${yBot+3*fS}" stroke="#a78bfa" stroke-width="${0.5*fS}" stroke-dasharray="${1*fS} ${1*fS}"/>`;
+  html+=`<line x1="${Bsx}" y1="${Bsy+6*fS}" x2="${Bsx}" y2="${yBot+3*fS}" stroke="#a78bfa" stroke-width="${0.5*fS}" stroke-dasharray="${1*fS} ${1*fS}"/>`;
+  html+=`<text x="${(Tx+Bsx)/2}" y="${yBot-3*fS}" text-anchor="middle" font-family="JetBrains Mono" font-size="${fSm}" font-weight="700" fill="#a78bfa">ΔX</text>`;
+ }
+ // ΔY vertical dimension at the right edge of geometry
+ const allXs=[Tx,Bsx,Hmx,Hnx,Hxx,bTmin.x,bTmax.x,barTip.x,mx2.x,mn2.x];
+ const xR=Math.max(...allXs)+15*fS;
+ if(Math.abs(Bsy-Ty)>5){
+  html+=`<line x1="${xR}" y1="${Ty}" x2="${xR}" y2="${Bsy}" stroke="#a78bfa" stroke-width="${0.8*fS}"/>`;
+  html+=`<line x1="${Tx+6*fS}" y1="${Ty}" x2="${xR+3*fS}" y2="${Ty}" stroke="#a78bfa" stroke-width="${0.5*fS}" stroke-dasharray="${1*fS} ${1*fS}"/>`;
+  html+=`<line x1="${Bsx+6*fS}" y1="${Bsy}" x2="${xR+3*fS}" y2="${Bsy}" stroke="#a78bfa" stroke-width="${0.5*fS}" stroke-dasharray="${1*fS} ${1*fS}"/>`;
+  html+=`<text x="${xR+5*fS}" y="${(Ty+Bsy)/2+3*fS}" font-family="JetBrains Mono" font-size="${fSm}" font-weight="700" fill="#a78bfa">ΔY</text>`;
+ }
+ svg.innerHTML=html;
+ // Bottom status strip — transmission angle μ + derived stroke + L_act @ mid
+ const txt=document.getElementById(txtId);
+ if(txt){
+  const stroke=Lmax-Lmin;
+  const actDirX=(Bx-Hmid.x)/Math.max(Lact_mid,.1),actDirY=(By-Hmid.y)/Math.max(Lact_mid,.1);
+  const barDirX=Math.cos(rad(elMid)),barDirY=Math.sin(rad(elMid));
+  const dotA=Math.max(-1,Math.min(1,barDirX*actDirX+barDirY*actDirY));
+  const muDeg=Math.abs(90-Math.acos(dotA)*180/Math.PI);
+  const muCol=muDeg<30?'#ef4444':muDeg<45?'#fbbf24':'#86efac';
+  const reachOk=(Lact_mid>=Lmin-1&&Lact_mid<=Lmax+1);
+  const reachCol=reachOk?'#86efac':'#ef4444';
+  txt.innerHTML=`<span style="display:inline-flex;align-items:center;gap:.3rem;margin-right:.4rem"><span style="display:inline-block;width:.5rem;height:.5rem;border-radius:50%;background:${reachCol}"></span><b style="color:${reachCol};font-size:.6rem;letter-spacing:.06em">${reachOk?'IN RANGE':'OUT OF RANGE'}</b></span><span style="color:#64748b">stroke:</span> <b style="color:#86efac">${f(stroke,0)}&nbsp;mm</b> &nbsp;·&nbsp; <span style="color:#64748b">L<sub>act</sub>@θ<sub>mid</sub>:</span> <b style="color:#fbbf24">${f(Lact_mid,0)}&nbsp;mm</b> &nbsp;·&nbsp; <span style="color:#64748b">θ<sub>mid</sub>:</span> <b style="color:#93c5fd">${f(elMid,0)}°</b> &nbsp;·&nbsp; <span style="color:#64748b">μ:</span> <b style="color:${muCol}">${f(muDeg,0)}°</b>`;
+ }
+}
+function openActGeomModal(){
+ if(ax!=='elevation')return;
+ const m=document.getElementById('actGeomModal');if(!m)return;
+ m.style.display='flex';
+ try{drawActGeom('svgActGeomBig',720,400,'actGeomBigTxt')}catch(e){console.error('drawActGeom(big):',e)}
+}
+function closeActGeomModal(){
+ const m=document.getElementById('actGeomModal');if(m)m.style.display='none';
 }
 function updStabVis(){const m=SM[ax];
  document.getElementById('sb-sine').style.display=m==='sine'?'block':'none';
@@ -1980,10 +2159,23 @@ document.addEventListener('DOMContentLoaded',()=>{
 });
 document.addEventListener('keydown',e=>{
  if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();solve()}
- if(e.key==='Escape'){const m=document.getElementById('gearRatioModal');if(m&&m.style.display==='flex'){closeGearRatioModal()}}
+ if(e.key==='Escape'){
+  const gm=document.getElementById('gearRatioModal');if(gm&&gm.style.display==='flex'){closeGearRatioModal()}
+  const am=document.getElementById('actGeomModal');if(am&&am.style.display==='flex'){closeActGeomModal()}
+ }
 });
 window.addEventListener('resize',()=>setTimeout(resizeAll,100));
 </script>
+<!-- Actuator geometry enlarge modal -->
+<div id="actGeomModal" onclick="closeActGeomModal()" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.88);justify-content:center;align-items:center;padding:2rem">
+ <div onclick="event.stopPropagation()" style="background:#0c1222;border:1px solid #a78bfa;border-radius:.7rem;padding:1.2rem 1.4rem 1rem;max-width:92vw;max-height:92vh;position:relative;box-shadow:0 30px 80px rgba(0,0,0,.7)">
+  <button onclick="closeActGeomModal()" aria-label="Close" style="position:absolute;top:.45rem;right:.6rem;width:1.8rem;height:1.8rem;border-radius:50%;background:rgba(30,41,59,.7);color:#cbd5e1;font-size:1.1rem;line-height:1;display:flex;align-items:center;justify-content:center;border:1px solid rgba(71,85,105,.5)">×</button>
+  <div style="font-family:Inter,sans-serif;font-size:.7rem;font-weight:700;letter-spacing:.12em;color:#94a3b8;text-transform:uppercase;margin-bottom:.6rem">Elevation Actuator — Geometry Parameter Map</div>
+  <svg id="svgActGeomBig" viewBox="0 0 720 400" style="width:min(86vw,1000px);height:auto;background:#060A13;border-radius:.4rem;border:1px solid rgba(30,41,59,.7)"></svg>
+  <div id="actGeomBigTxt" style="font-family:'JetBrains Mono',monospace;font-size:.78rem;color:#94a3b8;text-align:center;margin-top:.75rem;line-height:1.5"></div>
+  <div style="font-size:.6rem;color:#475569;text-align:right;margin-top:.4rem;letter-spacing:.05em">Esc or click outside to close</div>
+ </div>
+</div>
 <!-- Gear ratio enlarge modal -->
 <div id="gearRatioModal" onclick="closeGearRatioModal()" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.88);justify-content:center;align-items:center;padding:2rem">
  <div onclick="event.stopPropagation()" style="background:#0c1222;border:1px solid #3b82f6;border-radius:.7rem;padding:1.2rem 1.4rem 1rem;max-width:92vw;max-height:92vh;position:relative;box-shadow:0 30px 80px rgba(0,0,0,.7)">
