@@ -1237,62 +1237,81 @@ function drawPointCircle(r){
 
 
 function drawMotorTimeSeries(r){
- if(!document.getElementById('rpmTC')){console.warn('drawMotorTimeSeries: rpmTC div missing');return}
- if(!r||!r.prof){console.warn('drawMotorTimeSeries: missing r.prof');return}
- const Kt=Math.max(r.Kt||.001,.001),R=Math.max(r.R||.001,.001),Ke=Math.max(r.Ke||.001,.001),n=Math.max(r.n||1,1);
+ if(typeof Plotly==='undefined'){console.warn('drawMotorTimeSeries: Plotly not loaded');return}
+ const rpmDiv=document.getElementById('rpmTC'),ampDiv=document.getElementById('ampTC'),pwrDiv=document.getElementById('pwrTC');
+ if(!rpmDiv||!ampDiv||!pwrDiv){console.warn('drawMotorTimeSeries: target div(s) missing');return}
+ if(!r||!r.prof){console.warn('drawMotorTimeSeries: r.prof missing');return}
+ const Kt=Math.max(r.Kt||.001,.001),R=Math.max(r.R||.001,.001),Ke=Math.max(r.Ke||.001,.001);
+ const n=Math.max(r.n||1,1),Je=Math.max(r.Je||.001,.001);
  const W2RPM=60/(2*Math.PI);
- // Gunlay duty profile (always exists)
  const pf=r.prof;
- const t_g=pf.tArr||[],T_g=pf.TArr||[],w_g=pf.wArr||[];
- const rpm_g=w_g.map(w=>w*W2RPM);
- const I_g=T_g.map(T=>Math.abs(T)/Kt);
- const Pe_g=T_g.map((T,i)=>{const I=T/Kt,w=w_g[i]||0;return I*I*R+Ke*w*I});
- // Stab profile — synthesise sine; or use imported arrays as-is
- let t_s=null,rpm_s=null,I_s=null,Pe_s=null,stabLabel=null;
- if(r.stabProf){
-  if(r.stabProf.mode==='sine'){
-   const Am=r.stabProf.Am||0,wsf=r.stabProf.wsf||0;
-   if(Am>0&&wsf>0){
-    const period=2*Math.PI/wsf;
-    const dur=Math.min(period*3,Math.max(period*1.5,1.5));
-    const dt=Math.min(.005,dur/220);
-    const tt=[],ww=[],TT=[];
-    for(let t=0;t<=dur;t+=dt){
-     const w_motor=Am*wsf*Math.cos(wsf*t);
-     const a_motor=-Am*wsf*wsf*Math.sin(wsf*t);
-     const T_pm=r.Je*a_motor/n;
-     tt.push(t);ww.push(w_motor);TT.push(T_pm);
+ const t_g=Array.isArray(pf.tArr)?pf.tArr:[];
+ const T_g=Array.isArray(pf.TArr)?pf.TArr:[];
+ const w_g=Array.isArray(pf.wArr)?pf.wArr:[];
+ const rpm_g=w_g.map(w=>(w||0)*W2RPM);
+ const I_g=T_g.map(T=>Math.abs(T||0)/Kt);
+ const Pe_g=T_g.map((T,i)=>{const Iv=(T||0)/Kt,wv=w_g[i]||0;return Iv*Iv*R+Ke*wv*Iv});
+ // Stab — synthesise sine or use imported arrays
+ let t_s=null,rpm_s=null,I_s=null,Pe_s=null;
+ try{
+  if(r.stabProf){
+   if(r.stabProf.mode==='sine'){
+    const Am=r.stabProf.Am||0,wsf=r.stabProf.wsf||0;
+    if(Am>0&&wsf>0){
+     const period=2*Math.PI/wsf;
+     const dur=Math.min(period*3,Math.max(period*1.5,1.5));
+     const dt=Math.min(.005,dur/220);
+     const tt=[],ww=[],TT=[];
+     for(let t=0;t<=dur;t+=dt){
+      const w_m=Am*wsf*Math.cos(wsf*t);
+      const a_m=-Am*wsf*wsf*Math.sin(wsf*t);
+      const T_pm=Je*a_m/n;
+      tt.push(t);ww.push(w_m);TT.push(T_pm);
+     }
+     t_s=tt;rpm_s=ww.map(w=>w*W2RPM);I_s=TT.map(T=>Math.abs(T)/Kt);
+     Pe_s=TT.map((T,i)=>{const Iv=T/Kt,wv=ww[i];return Iv*Iv*R+Ke*wv*Iv});
     }
-    t_s=tt;rpm_s=ww.map(w=>w*W2RPM);I_s=TT.map(T=>Math.abs(T)/Kt);
-    Pe_s=TT.map((T,i)=>{const I=T/Kt,w=ww[i];return I*I*R+Ke*w*I});
-    stabLabel='Stab '+r.stabProf.label;
+   }else if(Array.isArray(r.stabProf.t)&&Array.isArray(r.stabProf.w)&&Array.isArray(r.stabProf.T)){
+    t_s=r.stabProf.t.slice();
+    const w_s=r.stabProf.w,T_s=r.stabProf.T;
+    rpm_s=w_s.map(w=>(w||0)*W2RPM);
+    I_s=T_s.map(T=>Math.abs(T||0)/Kt);
+    Pe_s=T_s.map((T,i)=>{const Iv=(T||0)/Kt,wv=w_s[i]||0;return Iv*Iv*R+Ke*wv*Iv});
    }
-  }else if(r.stabProf.t&&r.stabProf.w&&r.stabProf.T){
-   t_s=r.stabProf.t.slice();
-   const w_s=r.stabProf.w,T_s=r.stabProf.T;
-   rpm_s=w_s.map(w=>w*W2RPM);
-   I_s=T_s.map(T=>Math.abs(T)/Kt);
-   Pe_s=T_s.map((T,i)=>{const I=T/Kt,w=w_s[i]||0;return I*I*R+Ke*w*I});
-   stabLabel='Stab '+(r.stabProf.label||'imported');
   }
- }
- const mkLay=(yt)=>Object.assign({},pltCommon,{margin:{t:18,r:15,b:38,l:55},xaxis:{title:'time (s)',gridcolor:'rgba(30,41,59,.4)',tickfont:{family:'JetBrains Mono',size:9,color:'#64748b'}},yaxis:{title:yt,gridcolor:'rgba(30,41,59,.4)',tickfont:{family:'JetBrains Mono',size:9,color:'#64748b'},rangemode:'tozero'},legend:{x:.01,y:.99,bgcolor:'rgba(12,18,34,.85)',bordercolor:'#1e293b',font:{size:9}},hovermode:'x unified'});
- const gT=(x,y,nm,col)=>({x,y,type:'scatter',mode:'lines',name:nm,line:{color:col,width:2},fill:'tozeroy',fillcolor:col.replace(')',',.08)').replace('rgb(','rgba(')});
- const sT2=(x,y,nm,col)=>({x,y,type:'scatter',mode:'lines',name:nm,line:{color:col,width:1.5,dash:'dot'}});
- // Speed
- const tr1=[gT(t_g,rpm_g,'Gunlay','rgb(96,165,250)')];
- if(t_s)tr1.push(sT2(t_s,rpm_s,stabLabel||'Stab','#f59e0b'));
- const lay1=mkLay('Motor Speed (rpm)');delete lay1.yaxis.rangemode;
- Plotly.react('rpmTC',tr1,lay1,pltCfg);
- // Current
- const tr2=[gT(t_g,I_g,'Gunlay |I|','rgb(96,165,250)')];
- if(t_s)tr2.push(sT2(t_s,I_s,'Stab |I|','#f59e0b'));
- Plotly.react('ampTC',tr2,mkLay('|I| per motor (A)'),pltCfg);
- // Power
- const tr3=[gT(t_g,Pe_g,'Gunlay P_elec','rgb(134,239,172)')];
- if(t_s)tr3.push(sT2(t_s,Pe_s,'Stab P_elec','#f59e0b'));
- const lay3=mkLay('P_elec per motor (W)');delete lay3.yaxis.rangemode;
- Plotly.react('pwrTC',tr3,lay3,pltCfg);
+ }catch(e){console.warn('drawMotorTimeSeries stab series:',e);t_s=null}
+ // Self-contained layout + config (no reliance on outer pltCommon/pltCfg)
+ const baseLay={
+  paper_bgcolor:'rgba(0,0,0,0)',
+  plot_bgcolor:'#080d1a',
+  font:{family:'Inter',color:'#94a3b8',size:10},
+  margin:{t:18,r:18,b:42,l:60},
+  xaxis:{title:'time (s)',gridcolor:'rgba(30,41,59,.4)',tickfont:{family:'JetBrains Mono',size:9,color:'#64748b'}},
+  legend:{x:.01,y:.99,bgcolor:'rgba(12,18,34,.85)',bordercolor:'#1e293b',font:{size:9}},
+  hovermode:'x unified'
+ };
+ const cfg={responsive:true,displaylogo:false,modeBarButtonsToRemove:['lasso2d','select2d','autoScale2d']};
+ const gunlayLine=(x,y,nm,col,fcol)=>({x:x,y:y,type:'scatter',mode:'lines',name:nm,line:{color:col,width:2},fill:'tozeroy',fillcolor:fcol});
+ const stabLine=(x,y,nm)=>({x:x,y:y,type:'scatter',mode:'lines',name:nm,line:{color:'#f59e0b',width:1.5,dash:'dot'}});
+ // Plot each chart in its own try/catch so a failure on one doesn't block the others
+ try{
+  const tr=[gunlayLine(t_g,rpm_g,'Gunlay','#60a5fa','rgba(96,165,250,0.10)')];
+  if(t_s)tr.push(stabLine(t_s,rpm_s,'Stab'));
+  const lay=Object.assign({},baseLay,{yaxis:{title:'rpm',gridcolor:'rgba(30,41,59,.4)',tickfont:{family:'JetBrains Mono',size:9,color:'#64748b'}}});
+  Plotly.react('rpmTC',tr,lay,cfg);
+ }catch(e){console.error('rpmTC plot:',e)}
+ try{
+  const tr=[gunlayLine(t_g,I_g,'Gunlay |I|','#60a5fa','rgba(96,165,250,0.10)')];
+  if(t_s)tr.push(stabLine(t_s,I_s,'Stab |I|'));
+  const lay=Object.assign({},baseLay,{yaxis:{title:'|I| per motor (A)',gridcolor:'rgba(30,41,59,.4)',tickfont:{family:'JetBrains Mono',size:9,color:'#64748b'},rangemode:'tozero'}});
+  Plotly.react('ampTC',tr,lay,cfg);
+ }catch(e){console.error('ampTC plot:',e)}
+ try{
+  const tr=[gunlayLine(t_g,Pe_g,'Gunlay P_elec','#86efac','rgba(134,239,172,0.10)')];
+  if(t_s)tr.push(stabLine(t_s,Pe_s,'Stab P_elec'));
+  const lay=Object.assign({},baseLay,{yaxis:{title:'P_elec per motor (W)',gridcolor:'rgba(30,41,59,.4)',tickfont:{family:'JetBrains Mono',size:9,color:'#64748b'}}});
+  Plotly.react('pwrTC',tr,lay,cfg);
+ }catch(e){console.error('pwrTC plot:',e)}
 }
 
 function drawExtras(r){
