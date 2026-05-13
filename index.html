@@ -220,11 +220,12 @@ input[type="number"]{-moz-appearance:textfield;box-sizing:border-box}input::-web
 <div class="pr elev-only"><span class="pl">Lever Arm<span class="ps">L</span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.leverArm" step="0.01" min="0.001"><span class="pu">m</span></div></div>
 </div>
 <div id="gm-step">
-<div class="sl elev-only" style="border-top:none;margin-top:0">Transmission</div>
-<div class="pr elev-only"><span class="pl" data-tip="Rollerscrew pitch — linear travel per screw revolution. 1 rev = h mm stroke. Used in i_tot = i_gk·2π·L/h.">Screw Lead<span class="ps">h</span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.screwLead" step="1" min="0.1"><span class="pu">mm/rev</span></div></div>
+<div class="sl elev-only" style="border-top:none;margin-top:0">Rollerscrew &amp; Gearbox</div>
+<div class="pr elev-only"><span class="pl" data-tip="Rollerscrew pitch (lead) — linear travel per screw revolution. 1 rev = h mm stroke. Used in i_tot = i_gk·2π·L/h.">Rollerscrew Pitch<span class="ps">h</span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.screwLead" step="1" min="0.1"><span class="pu">mm/rev</span></div></div>
+<div class="pr elev-only"><span class="pl" data-tip="Rollerscrew nominal (pitch-circle) diameter. Used for helix angle α = atan(h/(π·D)) and to bound axial-load/critical-speed checks.">Rollerscrew Diameter<span class="ps">D<sub>s</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.rollerscrewDia" step="1" min="1"><span class="pu">mm</span></div></div>
 <div class="pr elev-only"><span class="pl" data-tip="Distance from trunnion axis to actuator hinge. Converts linear stroke → angular travel of the barrel.">Lever Arm<span class="ps">L</span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.leverArm" step="0.01" min="0.001"><span class="pu">m</span></div></div>
 <div class="pr elev-only"><span class="pl" data-tip="Reduction between motor shaft and rollerscrew shaft.">Motor-Screw Ratio<span class="ps">i<sub>gk</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.motorScrewRatio" step="0.1" min="1"><span class="pu">[-]</span></div></div>
-<div class="pr elev-only"><span class="pl" data-tip="Rollerscrew mechanical efficiency. Typically 0.85–0.92 for preloaded rollerscrews.">Screw Eff.<span class="ps">&eta;<sub>s</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.screwEfficiency" step="0.01" min="0.01" max="1"><span class="pu">[-]</span></div></div>
+<div class="pr elev-only"><span class="pl" data-tip="Rollerscrew mechanical efficiency. Typically 0.85–0.92 for preloaded rollerscrews. Depends on helix angle and roller-to-thread friction.">Rollerscrew Efficiency<span class="ps">&eta;<sub>s</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.screwEfficiency" step="0.01" min="0.01" max="1"><span class="pu">[-]</span></div></div>
 <div class="pr elev-only"><span class="pl" data-tip="Motor-screw gear stage efficiency.">Gear Eff.<span class="ps">&eta;<sub>gk</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.gearEfficiency" step="0.01" min="0.01" max="1"><span class="pu">[-]</span></div></div>
 <div class="pr elev-only"><span class="pl" data-tip="Gearbox/drivetrain inertia reflected to motor shaft (excluding motor rotor).">Gearbox Inertia<span class="ps">J<sub>gb</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.gearboxInertia" step="0.0001" min="0"><span class="pu">kg&middot;m&sup2;</span></div></div>
 <div class="sl elev-only">Actuator Geometry</div>
@@ -567,7 +568,7 @@ input[type="number"]{-moz-appearance:textfield;box-sizing:border-box}input::-web
 
 <script>
 const D={elevation:{
- mechanical:{screwLead:25,leverArm:.3,motorScrewRatio:3,screwEfficiency:.9,gearEfficiency:.95,gearboxInertia:5e-4,loadInertia:3500,unbalanceTorque:1500,frictionTorque:400,windTorque:80,firingTorque:400,iTotSingle:226.2,etaTotSingle:.855,hingeOffset:800,baseDx:200,baseDy:-400,actLmin:620,actLmax:1130,elevMin:-10,elevMax:60},
+ mechanical:{screwLead:25,rollerscrewDia:32,leverArm:.3,motorScrewRatio:3,screwEfficiency:.9,gearEfficiency:.95,gearboxInertia:5e-4,loadInertia:3500,unbalanceTorque:1500,frictionTorque:400,windTorque:80,firingTorque:400,iTotSingle:226.2,etaTotSingle:.855,hingeOffset:800,baseDx:200,baseDy:-400,actLmin:620,actLmax:1130,elevMin:-10,elevMax:60},
  performance:{targetSpeed:40,targetAccel:80,travelAngle:25,dwellTime:1.5,stabAmplitude:2,stabFrequency:3,sineAmp:30,sineFreq:2,sineDur:4},
  motor:{motorCount:1,kt:.126,ke:.126,resistance:.012,rotorInertia:.005,peakTorque:80,contTorque:50,busVoltage:24,encoderBits:20,missionTime:600,targetBW:10}
 },traverse:{
@@ -1495,24 +1496,19 @@ function drawGearRatio(targetId,vbW,vbH,txtId){
  // Font sizes scale with viewBox width (relative to base 280)
  const fS=vbW/280;
  const fHdr=Math.max(8.5,9*fS),fLab=Math.max(7.5,8.5*fS),fBig=Math.max(8.5,10*fS),fSm=Math.max(7,8*fS);
- let html='';
- html+=`<rect x="0" y="0" width="${vbW}" height="${vbH}" fill="transparent"/>`;
- // === Header ===
- html+=`<text x="${vbW*0.03}" y="${fHdr*1.3}" font-family="Inter" font-size="${fHdr}" font-weight="700" fill="#94a3b8" letter-spacing="1">INTERNAL RING ↔ PINION (PITCH CIRCLES, TO SCALE)</text>`;
- // Status badge top-right
  const badgeCol=ok?'#22c55e':'#f59e0b';
  const badgeTxt=ok?'LINKED':'CHECK';
- html+=`<circle cx="${vbW-vbW*0.06-fLab*4}" cy="${fHdr*1.1}" r="${fLab*0.45}" fill="${badgeCol}"/>`;
- html+=`<text x="${vbW-vbW*0.03}" y="${fHdr*1.3}" text-anchor="end" font-family="JetBrains Mono" font-size="${fLab}" font-weight="700" fill="${badgeCol}">${badgeTxt}</text>`;
- // === Info column (left) ===
- const ix=vbW*0.03;let iy=fHdr*2.6;const dy=fLab*1.6;
- html+=`<text x="${ix}" y="${iy}" font-family="Inter" font-size="${fLab*0.95}" font-weight="700" fill="#3b82f6" letter-spacing=".5">RING (internal)</text>`;iy+=dy;
- html+=`<text x="${ix}" y="${iy}" font-family="JetBrains Mono" font-size="${fBig}" fill="#e2e8f0">z₁ = <tspan font-weight="700" fill="#93c5fd">${z1}</tspan></text>`;iy+=dy*0.92;
- html+=`<text x="${ix}" y="${iy}" font-family="JetBrains Mono" font-size="${fLab}" fill="#94a3b8">d₁ = <tspan font-weight="700" fill="#cbd5e1">${f(d1,1)}</tspan> mm</text>`;iy+=dy*1.15;
- html+=`<text x="${ix}" y="${iy}" font-family="Inter" font-size="${fLab*0.95}" font-weight="700" fill="#f59e0b" letter-spacing=".5">PINION (drive)</text>`;iy+=dy;
- html+=`<text x="${ix}" y="${iy}" font-family="JetBrains Mono" font-size="${fBig}" fill="#e2e8f0">z₂ = <tspan font-weight="700" fill="#fbbf24">${z2}</tspan></text>`;iy+=dy*0.92;
- html+=`<text x="${ix}" y="${iy}" font-family="JetBrains Mono" font-size="${fLab}" fill="#94a3b8">d₂ = <tspan font-weight="700" fill="#cbd5e1">${f(d2,1)}</tspan> mm</text>`;iy+=dy*1.25;
- html+=`<text x="${ix}" y="${iy}" font-family="JetBrains Mono" font-size="${fLab}" fill="#64748b">m = <tspan fill="#a78bfa" font-weight="700">${f(mod,2)}</tspan> mm</text>`;
+ let html='';
+ html+=`<rect x="0" y="0" width="${vbW}" height="${vbH}" fill="transparent"/>`;
+ // === Info column (left) — no SVG title, panel header above provides context ===
+ const ix=vbW*0.03;let iy=fHdr*1.5;const dy=fLab*1.55;
+ html+=`<text x="${ix}" y="${iy}" font-family="Inter" font-size="${fLab*0.95}" font-weight="700" fill="#3b82f6" letter-spacing=".5">RING</text>`;iy+=dy*0.95;
+ html+=`<text x="${ix}" y="${iy}" font-family="JetBrains Mono" font-size="${fBig}" fill="#e2e8f0">z₁ = <tspan font-weight="700" fill="#93c5fd">${z1}</tspan></text>`;iy+=dy*0.88;
+ html+=`<text x="${ix}" y="${iy}" font-family="JetBrains Mono" font-size="${fLab*0.95}" fill="#94a3b8">d₁ = <tspan font-weight="700" fill="#cbd5e1">${f(d1,1)}</tspan> mm</text>`;iy+=dy*1.15;
+ html+=`<text x="${ix}" y="${iy}" font-family="Inter" font-size="${fLab*0.95}" font-weight="700" fill="#f59e0b" letter-spacing=".5">PINION</text>`;iy+=dy*0.95;
+ html+=`<text x="${ix}" y="${iy}" font-family="JetBrains Mono" font-size="${fBig}" fill="#e2e8f0">z₂ = <tspan font-weight="700" fill="#fbbf24">${z2}</tspan></text>`;iy+=dy*0.88;
+ html+=`<text x="${ix}" y="${iy}" font-family="JetBrains Mono" font-size="${fLab*0.95}" fill="#94a3b8">d₂ = <tspan font-weight="700" fill="#cbd5e1">${f(d2,1)}</tspan> mm</text>`;iy+=dy*1.25;
+ html+=`<text x="${ix}" y="${iy}" font-family="JetBrains Mono" font-size="${fLab*0.95}" fill="#64748b">m = <tspan fill="#a78bfa" font-weight="700">${f(mod,2)}</tspan> mm</text>`;
  // === Visual column (right) ===
  // Ring outer body (annulus)
  html+=`<circle cx="${ringCx}" cy="${ringCy}" r="${R_outer}" fill="rgba(59,130,246,.18)" stroke="#3b82f6" stroke-width="${1.2*fS}"/>`;
@@ -1552,7 +1548,7 @@ function drawGearRatio(targetId,vbW,vbH,txtId){
  const txt=document.getElementById(txtId);
  if(txt){
   const ratio=z1/z2;
-  let s=`<span style="color:#64748b">z₁/z₂ =</span> <b style="color:#93c5fd">${z1}/${z2} = ${f(ratio,2)}</b>`;
+  let s=`<span style="display:inline-flex;align-items:center;gap:.3rem;margin-right:.4rem"><span style="display:inline-block;width:.5rem;height:.5rem;border-radius:50%;background:${badgeCol}"></span><b style="color:${badgeCol};font-size:.6rem;letter-spacing:.06em">${badgeTxt}</b></span><span style="color:#64748b">z₁/z₂ =</span> <b style="color:#93c5fd">${z1}/${z2} = ${f(ratio,2)}</b>`;
   if(igb>1)s+=` &nbsp;·&nbsp; <span style="color:#64748b">i<sub>gb</sub>:</span> <b style="color:#e2e8f0">${igb}:1</b> &nbsp;·&nbsp; <span style="color:#64748b">i<sub>tot</sub>:</span> <b style="color:#86efac">${f(ratio*igb,1)}:1</b>`;
   if(!ok)s+=` &nbsp;·&nbsp; <span style="color:#fbbf24">⚠ d ≠ z·m</span>`;
   txt.innerHTML=s;
