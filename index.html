@@ -1236,10 +1236,16 @@ function drawPointCircle(r){
 }
 
 
+// Module-scope first-init flag — first call uses Plotly.newPlot (more robust on fresh divs)
+let _mtsInit=false;
+function _mtsPaintErr(id,msg){const el=document.getElementById(id);if(el)el.innerHTML='<div style="padding:1rem;color:#fca5a5;font-family:monospace;font-size:11px;background:rgba(239,68,68,.06);border:1px dashed rgba(239,68,68,.35);border-radius:.3rem;height:100%;min-height:200px;display:flex;align-items:center;justify-content:center;text-align:center">'+msg+'</div>'}
 function drawMotorTimeSeries(r){
- if(typeof Plotly==='undefined'){console.warn('drawMotorTimeSeries: Plotly not loaded');return}
+ if(typeof Plotly==='undefined'){console.warn('drawMotorTimeSeries: Plotly not loaded');['rpmTC','ampTC','pwrTC'].forEach(id=>_mtsPaintErr(id,'Plotly library not loaded (check internet/CDN access)'));return}
  const rpmDiv=document.getElementById('rpmTC'),ampDiv=document.getElementById('ampTC'),pwrDiv=document.getElementById('pwrTC');
  if(!rpmDiv||!ampDiv||!pwrDiv){console.warn('drawMotorTimeSeries: target div(s) missing');return}
+ // If the chart containers are inside a hidden ancestor (display:none), defer until visible.
+ // Plotly.react/newPlot on a div whose offsetParent is null can produce a zero-size chart.
+ if(rpmDiv.offsetParent===null){setTimeout(()=>drawMotorTimeSeries(r),150);return}
  if(!r||!r.prof){console.warn('drawMotorTimeSeries: r.prof missing');return}
  const Kt=Math.max(r.Kt||.001,.001),R=Math.max(r.R||.001,.001),Ke=Math.max(r.Ke||.001,.001);
  const n=Math.max(r.n||1,1),Je=Math.max(r.Je||.001,.001);
@@ -1293,25 +1299,30 @@ function drawMotorTimeSeries(r){
  const cfg={responsive:true,displaylogo:false,modeBarButtonsToRemove:['lasso2d','select2d','autoScale2d']};
  const gunlayLine=(x,y,nm,col,fcol)=>({x:x,y:y,type:'scatter',mode:'lines',name:nm,line:{color:col,width:2},fill:'tozeroy',fillcolor:fcol});
  const stabLine=(x,y,nm)=>({x:x,y:y,type:'scatter',mode:'lines',name:nm,line:{color:'#f59e0b',width:1.5,dash:'dot'}});
- // Plot each chart in its own try/catch so a failure on one doesn't block the others
+ // Use newPlot the first time we ever render these IDs; Plotly.react afterwards.
+ const drawFn=_mtsInit?Plotly.react.bind(Plotly):Plotly.newPlot.bind(Plotly);
+ _mtsInit=true;
+ // Plot each chart in its own try/catch so one failure doesn't block the others
  try{
   const tr=[gunlayLine(t_g,rpm_g,'Gunlay','#60a5fa','rgba(96,165,250,0.10)')];
   if(t_s)tr.push(stabLine(t_s,rpm_s,'Stab'));
   const lay=Object.assign({},baseLay,{yaxis:{title:'rpm',gridcolor:'rgba(30,41,59,.4)',tickfont:{family:'JetBrains Mono',size:9,color:'#64748b'}}});
-  Plotly.react('rpmTC',tr,lay,cfg);
- }catch(e){console.error('rpmTC plot:',e)}
+  drawFn('rpmTC',tr,lay,cfg);
+ }catch(e){console.error('rpmTC plot:',e);_mtsPaintErr('rpmTC','rpmTC failed: '+(e&&e.message||e))}
  try{
   const tr=[gunlayLine(t_g,I_g,'Gunlay |I|','#60a5fa','rgba(96,165,250,0.10)')];
   if(t_s)tr.push(stabLine(t_s,I_s,'Stab |I|'));
   const lay=Object.assign({},baseLay,{yaxis:{title:'|I| per motor (A)',gridcolor:'rgba(30,41,59,.4)',tickfont:{family:'JetBrains Mono',size:9,color:'#64748b'},rangemode:'tozero'}});
-  Plotly.react('ampTC',tr,lay,cfg);
- }catch(e){console.error('ampTC plot:',e)}
+  drawFn('ampTC',tr,lay,cfg);
+ }catch(e){console.error('ampTC plot:',e);_mtsPaintErr('ampTC','ampTC failed: '+(e&&e.message||e))}
  try{
   const tr=[gunlayLine(t_g,Pe_g,'Gunlay P_elec','#86efac','rgba(134,239,172,0.10)')];
   if(t_s)tr.push(stabLine(t_s,Pe_s,'Stab P_elec'));
   const lay=Object.assign({},baseLay,{yaxis:{title:'P_elec per motor (W)',gridcolor:'rgba(30,41,59,.4)',tickfont:{family:'JetBrains Mono',size:9,color:'#64748b'}}});
-  Plotly.react('pwrTC',tr,lay,cfg);
- }catch(e){console.error('pwrTC plot:',e)}
+  drawFn('pwrTC',tr,lay,cfg);
+ }catch(e){console.error('pwrTC plot:',e);_mtsPaintErr('pwrTC','pwrTC failed: '+(e&&e.message||e))}
+ // Force a resize once the deferred frame paints, in case the chart was drawn at zero size
+ setTimeout(()=>{['rpmTC','ampTC','pwrTC'].forEach(id=>{try{Plotly.Plots.resize(id)}catch(e){}})},120);
 }
 
 function drawExtras(r){
