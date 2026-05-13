@@ -237,7 +237,7 @@ input[type="number"]{-moz-appearance:textfield;box-sizing:border-box}input::-web
 <div class="pr elev-only"><span class="pl" data-tip="Minimum elevation angle the barrel travels to (e.g. depression). Used for animation sweep range.">Elev θ<sub>min</sub></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.elevMin" step="1"><span class="pu u-click u-ang" onclick="tglUnit('ang')">deg</span></div></div>
 <div class="pr elev-only"><span class="pl" data-tip="Maximum elevation angle (max barrel up). Animation sweeps from θ_min to θ_max.">Elev θ<sub>max</sub></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.elevMax" step="1"><span class="pu u-click u-ang" onclick="tglUnit('ang')">deg</span></div></div>
 <div class="elev-only" id="actGeomBox" onclick="openActGeomModal()" title="Click to enlarge" style="cursor:zoom-in;padding:.4rem .35rem .35rem;background:rgba(124,58,237,.07);border-radius:.35rem;margin:.2rem 0 .15rem;border:1px solid rgba(167,139,250,.22);position:relative">
-<svg id="svgActGeom" viewBox="0 0 360 200" style="width:100%;height:auto;max-height:200px;pointer-events:none"></svg>
+<svg id="svgActGeom" viewBox="0 0 380 260" style="width:100%;height:auto;max-height:300px;pointer-events:none"></svg>
 <div id="actGeomTxt" style="font-family:'JetBrains Mono',monospace;font-size:.62rem;color:#94a3b8;text-align:center;margin-top:.15rem;line-height:1.4;pointer-events:none"></div>
 <div style="position:absolute;bottom:3px;right:6px;font-size:.55rem;color:#475569;letter-spacing:.05em;pointer-events:none">↗ click to enlarge</div>
 </div>
@@ -1572,9 +1572,11 @@ function closeGearRatioModal(){
 // === Elevation actuator-geometry parameter map (static labelled schematic) ===
 // Shows trunnion T, base B, barrel at θ_mean (with ghost barrels at θ_min/max),
 // actuator (cylinder + rod), and on-canvas callouts for every geometric parameter.
+// Each label is drawn with a subtle dark-rect background so it stays readable
+// when overlapping other geometry. Info column only renders for the enlarged modal.
 function drawActGeom(targetId,vbW,vbH,txtId){
  if(ax!=='elevation')return;
- targetId=targetId||'svgActGeom';vbW=vbW||360;vbH=vbH||200;txtId=txtId||'actGeomTxt';
+ targetId=targetId||'svgActGeom';vbW=vbW||380;vbH=vbH||260;txtId=txtId||'actGeomTxt';
  const svg=document.getElementById(targetId);if(!svg)return;
  const mm=AP.elevation.mechanical;
  const Lh=Math.max(mm.hingeOffset||800,10);
@@ -1591,10 +1593,13 @@ function drawActGeom(targetId,vbW,vbH,txtId){
  const hingeAt=d=>({x:Lh*Math.cos(rad(d)),y:Lh*Math.sin(rad(d))});
  const Hmid=hingeAt(elMid),Hmin=hingeAt(elMin),Hmax=hingeAt(elMax);
  const Lact_mid=Math.sqrt((Hmid.x-Bx)**2+(Hmid.y-By)**2);
- const fS=vbW/360;
- const fLab=Math.max(7,8*fS),fSm=Math.max(6.5,7.3*fS);
- const infoW=vbW*0.30;
- const visX0=infoW+vbW*0.015,visW=vbW-visX0-vbW*0.02;
+ const fS=Math.max(1,vbW/380);
+ const fLab=Math.max(8.5,8.5*fS),fSm=Math.max(8,7.5*fS);
+ // Info column only for the modal (wide) view; inline gets full-width visual
+ const showInfo=vbW>=520;
+ const infoW=showInfo?vbW*0.26:0;
+ const visX0=showInfo?infoW+vbW*0.015:vbW*0.03;
+ const visW=vbW-visX0-vbW*0.03;
  // Bounding box of geometry in mm; include barrel-tip at 1.5×Lh
  const corners=[{x:0,y:0},{x:Bx,y:By},Hmid,Hmin,Hmax,
   {x:Lh*1.5*Math.cos(rad(elMid)),y:Lh*1.5*Math.sin(rad(elMid))},
@@ -1604,7 +1609,7 @@ function drawActGeom(targetId,vbW,vbH,txtId){
  let yMin=Math.min(...corners.map(c=>c.y)),yMax=Math.max(...corners.map(c=>c.y));
  const padMM=Math.max(xMax-xMin,yMax-yMin)*0.18;
  xMin-=padMM;xMax+=padMM;yMin-=padMM;yMax+=padMM;
- const drawW=visW*0.92,drawH=vbH*0.82;
+ const drawW=visW*0.94,drawH=vbH*0.84;
  const scale=Math.min(drawW/(xMax-xMin),drawH/(yMax-yMin));
  const cxVis=visX0+visW*0.5,cyVis=vbH*0.48;
  const geomMx=(xMin+xMax)/2,geomMy=(yMin+yMax)/2;
@@ -1615,20 +1620,24 @@ function drawActGeom(targetId,vbW,vbH,txtId){
  const Hmx=px(Hmid.x),Hmy=py(Hmid.y);
  const Hnx=px(Hmin.x),Hny=py(Hmin.y);
  const Hxx=px(Hmax.x),Hxy=py(Hmax.y);
+ // Label with dark background rect for readability — every on-canvas label uses this
+ const tBg=(x,y,t,c,s,a)=>{a=a||'start';const cw=s*0.62,w=t.length*cw+5,h=s*1.18;let rx=x-2.5;if(a==='middle')rx=x-w/2;else if(a==='end')rx=x-w+2.5;return `<rect x="${rx}" y="${y-s*0.84}" width="${w}" height="${h}" fill="rgba(6,10,19,.82)" stroke="rgba(71,85,105,.5)" stroke-width="0.4" rx="2"/><text x="${x}" y="${y}" text-anchor="${a}" font-family="JetBrains Mono" font-size="${s}" font-weight="700" fill="${c}">${t}</text>`;};
  let html='';
  html+=`<rect x="0" y="0" width="${vbW}" height="${vbH}" fill="transparent"/>`;
- // === Info column (left) ===
- const ix=vbW*0.025;let iy=fLab*1.7;const dy=fLab*1.45;
- html+=`<text x="${ix}" y="${iy}" font-family="Inter" font-size="${fLab*0.95}" font-weight="700" fill="#3b82f6" letter-spacing=".5">BARREL · TRUNNION</text>`;iy+=dy;
- html+=`<text x="${ix}" y="${iy}" font-family="JetBrains Mono" font-size="${fLab}" fill="#94a3b8">L<tspan font-size="${fSm}" baseline-shift="sub">h</tspan> = <tspan font-weight="700" fill="#93c5fd">${f(Lh,0)}</tspan> mm</text>`;iy+=dy*0.9;
- html+=`<text x="${ix}" y="${iy}" font-family="JetBrains Mono" font-size="${fLab}" fill="#94a3b8">θ: <tspan font-weight="700" fill="#fbbf24">${f(elMin,0)}°→${f(elMax,0)}°</tspan></text>`;iy+=dy*1.25;
- html+=`<text x="${ix}" y="${iy}" font-family="Inter" font-size="${fLab*0.95}" font-weight="700" fill="#a78bfa" letter-spacing=".5">BASE</text>`;iy+=dy;
- html+=`<text x="${ix}" y="${iy}" font-family="JetBrains Mono" font-size="${fLab}" fill="#94a3b8">ΔX = <tspan font-weight="700" fill="#cbd5e1">${f(Bx,0)}</tspan> mm</text>`;iy+=dy*0.9;
- html+=`<text x="${ix}" y="${iy}" font-family="JetBrains Mono" font-size="${fLab}" fill="#94a3b8">ΔY = <tspan font-weight="700" fill="#cbd5e1">${f(By,0)}</tspan> mm</text>`;iy+=dy*1.25;
- html+=`<text x="${ix}" y="${iy}" font-family="Inter" font-size="${fLab*0.95}" font-weight="700" fill="#f59e0b" letter-spacing=".5">ACTUATOR</text>`;iy+=dy;
- html+=`<text x="${ix}" y="${iy}" font-family="JetBrains Mono" font-size="${fLab}" fill="#94a3b8">L<tspan font-size="${fSm}" baseline-shift="sub">min</tspan> = <tspan font-weight="700" fill="#a78bfa">${f(Lmin,0)}</tspan> mm</text>`;iy+=dy*0.9;
- html+=`<text x="${ix}" y="${iy}" font-family="JetBrains Mono" font-size="${fLab}" fill="#94a3b8">L<tspan font-size="${fSm}" baseline-shift="sub">max</tspan> = <tspan font-weight="700" fill="#fbbf24">${f(Lmax,0)}</tspan> mm</text>`;iy+=dy*0.9;
- html+=`<text x="${ix}" y="${iy}" font-family="JetBrains Mono" font-size="${fLab}" fill="#94a3b8">L (lever) = <tspan font-weight="700" fill="#86efac">${f(Llev*1000,0)}</tspan> mm</text>`;
+ // === Info column (left) — modal only ===
+ if(showInfo){
+  const ix=vbW*0.025;let iy=fLab*1.7;const dy=fLab*1.45;
+  html+=`<text x="${ix}" y="${iy}" font-family="Inter" font-size="${fLab*0.95}" font-weight="700" fill="#3b82f6" letter-spacing=".5">BARREL · TRUNNION</text>`;iy+=dy;
+  html+=`<text x="${ix}" y="${iy}" font-family="JetBrains Mono" font-size="${fLab}" fill="#94a3b8">L<tspan font-size="${fSm}" baseline-shift="sub">h</tspan> = <tspan font-weight="700" fill="#93c5fd">${f(Lh,0)}</tspan> mm</text>`;iy+=dy*0.9;
+  html+=`<text x="${ix}" y="${iy}" font-family="JetBrains Mono" font-size="${fLab}" fill="#94a3b8">θ: <tspan font-weight="700" fill="#fbbf24">${f(elMin,0)}°→${f(elMax,0)}°</tspan></text>`;iy+=dy*1.25;
+  html+=`<text x="${ix}" y="${iy}" font-family="Inter" font-size="${fLab*0.95}" font-weight="700" fill="#a78bfa" letter-spacing=".5">BASE</text>`;iy+=dy;
+  html+=`<text x="${ix}" y="${iy}" font-family="JetBrains Mono" font-size="${fLab}" fill="#94a3b8">ΔX = <tspan font-weight="700" fill="#cbd5e1">${f(Bx,0)}</tspan> mm</text>`;iy+=dy*0.9;
+  html+=`<text x="${ix}" y="${iy}" font-family="JetBrains Mono" font-size="${fLab}" fill="#94a3b8">ΔY = <tspan font-weight="700" fill="#cbd5e1">${f(By,0)}</tspan> mm</text>`;iy+=dy*1.25;
+  html+=`<text x="${ix}" y="${iy}" font-family="Inter" font-size="${fLab*0.95}" font-weight="700" fill="#f59e0b" letter-spacing=".5">ACTUATOR</text>`;iy+=dy;
+  html+=`<text x="${ix}" y="${iy}" font-family="JetBrains Mono" font-size="${fLab}" fill="#94a3b8">L<tspan font-size="${fSm}" baseline-shift="sub">min</tspan> = <tspan font-weight="700" fill="#a78bfa">${f(Lmin,0)}</tspan> mm</text>`;iy+=dy*0.9;
+  html+=`<text x="${ix}" y="${iy}" font-family="JetBrains Mono" font-size="${fLab}" fill="#94a3b8">L<tspan font-size="${fSm}" baseline-shift="sub">max</tspan> = <tspan font-weight="700" fill="#fbbf24">${f(Lmax,0)}</tspan> mm</text>`;iy+=dy*0.9;
+  html+=`<text x="${ix}" y="${iy}" font-family="JetBrains Mono" font-size="${fLab}" fill="#94a3b8">L (lever) = <tspan font-weight="700" fill="#86efac">${f(Llev*1000,0)}</tspan> mm</text>`;
+ }
  // === Visual (right) ===
  // Horizontal datum line through trunnion (tiny)
  html+=`<line x1="${Tx-15*fS}" y1="${Ty}" x2="${Tx+10*fS}" y2="${Ty}" stroke="rgba(71,85,105,.45)" stroke-width="${0.5*fS}" stroke-dasharray="${2*fS} ${2*fS}"/>`;
@@ -1639,10 +1648,10 @@ function drawActGeom(targetId,vbW,vbH,txtId){
  const aX2=Tx+arcRpx*Math.cos(a2),aY2=Ty+arcRpx*Math.sin(a2);
  const lg=Math.abs(elMax-elMin)>180?1:0;
  html+=`<path d="M ${aX1} ${aY1} A ${arcRpx} ${arcRpx} 0 ${lg} 1 ${aX2} ${aY2}" fill="none" stroke="#f59e0b" stroke-width="${1*fS}" stroke-dasharray="${2*fS} ${2*fS}"/>`;
- const tmLab={x:Tx+(arcRpx+10*fS)*Math.cos(a1),y:Ty+(arcRpx+10*fS)*Math.sin(a1)};
- html+=`<text x="${tmLab.x}" y="${tmLab.y}" font-family="JetBrains Mono" font-size="${fSm}" font-weight="700" fill="#f59e0b">θ_max</text>`;
- const tnLab={x:Tx+(arcRpx+10*fS)*Math.cos(a2),y:Ty+(arcRpx+10*fS)*Math.sin(a2)};
- html+=`<text x="${tnLab.x}" y="${tnLab.y+(elMin<0?5*fS:0)}" font-family="JetBrains Mono" font-size="${fSm}" font-weight="700" fill="#f59e0b">θ_min</text>`;
+ const tmLab={x:Tx+(arcRpx+16*fS)*Math.cos(a1),y:Ty+(arcRpx+16*fS)*Math.sin(a1)+fSm*0.3};
+ html+=tBg(tmLab.x,tmLab.y,'θ_max','#f59e0b',fSm,'middle');
+ const tnLab={x:Tx+(arcRpx+16*fS)*Math.cos(a2),y:Ty+(arcRpx+16*fS)*Math.sin(a2)+fSm*0.3};
+ html+=tBg(tnLab.x,tnLab.y,'θ_min','#f59e0b',fSm,'middle');
  // Ghost barrels at θ_min/max
  const bTmin={x:px(Lh*1.35*Math.cos(rad(elMin))),y:py(Lh*1.35*Math.sin(rad(elMin)))};
  const bTmax={x:px(Lh*1.35*Math.cos(rad(elMax))),y:py(Lh*1.35*Math.sin(rad(elMax)))};
@@ -1657,8 +1666,12 @@ function drawActGeom(targetId,vbW,vbH,txtId){
  const bdx=Hmx-Tx,bdy=Hmy-Ty,blen=Math.sqrt(bdx*bdx+bdy*bdy)||1;
  const bux=bdx/blen,buy=bdy/blen;
  const bMid={x:(Tx+Hmx)/2,y:(Ty+Hmy)/2};
- const lhLab={x:bMid.x+buy*10*fS,y:bMid.y-bux*10*fS};
- html+=`<text x="${lhLab.x}" y="${lhLab.y}" text-anchor="middle" font-family="JetBrains Mono" font-size="${fSm}" font-weight="700" fill="#60a5fa">L_h</text>`;
+ // Pick perpendicular pointing AWAY from base (and arc), so L_h doesn't collide with θ labels or actuator
+ const lhP1={x:-buy,y:bux},lhP2={x:buy,y:-bux};
+ const baseDir={x:Bsx-bMid.x,y:Bsy-bMid.y};
+ const lhPerp=(lhP1.x*baseDir.x+lhP1.y*baseDir.y<0)?lhP1:lhP2;
+ const lhLab={x:bMid.x+lhPerp.x*14*fS,y:bMid.y+lhPerp.y*14*fS+fSm*0.3};
+ html+=tBg(lhLab.x,lhLab.y,'L_h','#60a5fa',fSm,'middle');
  // Hinge marker (mean)
  html+=`<circle cx="${Hmx}" cy="${Hmy}" r="${5*fS}" fill="#f59e0b" stroke="#fbbf24" stroke-width="${1*fS}"/>`;
  html+=`<circle cx="${Hmx}" cy="${Hmy}" r="${2*fS}" fill="#7c2d12"/>`;
@@ -1682,8 +1695,8 @@ function drawActGeom(targetId,vbW,vbH,txtId){
  html+=`<line x1="${mn1.x}" y1="${mn1.y}" x2="${mn2.x}" y2="${mn2.y}" stroke="#a855f7" stroke-width="${0.8*fS}"/>`;
  html+=`<line x1="${Bsx+aPerp.x*4*fS}" y1="${Bsy+aPerp.y*4*fS}" x2="${mn1.x+aPerp.x*3*fS}" y2="${mn1.y+aPerp.y*3*fS}" stroke="#a855f7" stroke-width="${0.5*fS}" stroke-dasharray="${1.5*fS} ${1.5*fS}"/>`;
  html+=`<line x1="${cylEnd.x+aPerp.x*4*fS}" y1="${cylEnd.y+aPerp.y*4*fS}" x2="${mn2.x+aPerp.x*3*fS}" y2="${mn2.y+aPerp.y*3*fS}" stroke="#a855f7" stroke-width="${0.5*fS}" stroke-dasharray="${1.5*fS} ${1.5*fS}"/>`;
- const mnMid={x:(mn1.x+mn2.x)/2+aPerp.x*5*fS,y:(mn1.y+mn2.y)/2+aPerp.y*5*fS};
- html+=`<text x="${mnMid.x}" y="${mnMid.y}" text-anchor="middle" font-family="JetBrains Mono" font-size="${fSm}" font-weight="700" fill="#a855f7">L_min</text>`;
+ const mnMid={x:(mn1.x+mn2.x)/2+aPerp.x*6*fS,y:(mn1.y+mn2.y)/2+aPerp.y*6*fS+fSm*0.3};
+ html+=tBg(mnMid.x,mnMid.y,'L_min','#a855f7',fSm,'middle');
  // L_max bracket (extending past the hinge along same actuator direction)
  const lmaxEnd={x:Bsx+aux*alen*(Lmax/Lact_mid),y:Bsy+auy*alen*(Lmax/Lact_mid)};
  const mx1={x:Bsx+aPerp.x*off2,y:Bsy+aPerp.y*off2};
@@ -1691,15 +1704,15 @@ function drawActGeom(targetId,vbW,vbH,txtId){
  html+=`<line x1="${mx1.x}" y1="${mx1.y}" x2="${mx2.x}" y2="${mx2.y}" stroke="#fbbf24" stroke-width="${0.8*fS}"/>`;
  html+=`<line x1="${Bsx+aPerp.x*4*fS}" y1="${Bsy+aPerp.y*4*fS}" x2="${mx1.x+aPerp.x*3*fS}" y2="${mx1.y+aPerp.y*3*fS}" stroke="#fbbf24" stroke-width="${0.5*fS}" stroke-dasharray="${1.5*fS} ${1.5*fS}"/>`;
  html+=`<line x1="${lmaxEnd.x+aPerp.x*4*fS}" y1="${lmaxEnd.y+aPerp.y*4*fS}" x2="${mx2.x+aPerp.x*3*fS}" y2="${mx2.y+aPerp.y*3*fS}" stroke="#fbbf24" stroke-width="${0.5*fS}" stroke-dasharray="${1.5*fS} ${1.5*fS}"/>`;
- const mxMid={x:(mx1.x+mx2.x)/2+aPerp.x*5*fS,y:(mx1.y+mx2.y)/2+aPerp.y*5*fS};
- html+=`<text x="${mxMid.x}" y="${mxMid.y}" text-anchor="middle" font-family="JetBrains Mono" font-size="${fSm}" font-weight="700" fill="#fbbf24">L_max</text>`;
+ const mxMid={x:(mx1.x+mx2.x)/2+aPerp.x*6*fS,y:(mx1.y+mx2.y)/2+aPerp.y*6*fS+fSm*0.3};
+ html+=tBg(mxMid.x,mxMid.y,'L_max','#fbbf24',fSm,'middle');
  // Trunnion + Base markers
  html+=`<circle cx="${Tx}" cy="${Ty}" r="${5*fS}" fill="#475569" stroke="#94a3b8" stroke-width="${1*fS}"/>`;
  html+=`<circle cx="${Tx}" cy="${Ty}" r="${2*fS}" fill="#0f172a"/>`;
- html+=`<text x="${Tx-8*fS}" y="${Ty-7*fS}" text-anchor="end" font-family="JetBrains Mono" font-size="${fSm}" font-weight="700" fill="#64748b">T</text>`;
+ html+=tBg(Tx-8*fS,Ty-7*fS,'T','#cbd5e1',fSm,'end');
  html+=`<circle cx="${Bsx}" cy="${Bsy}" r="${5*fS}" fill="#94a3b8" stroke="#e2e8f0" stroke-width="${1*fS}"/>`;
  html+=`<circle cx="${Bsx}" cy="${Bsy}" r="${2*fS}" fill="#0f172a"/>`;
- html+=`<text x="${Bsx+8*fS}" y="${Bsy+8*fS}" font-family="JetBrains Mono" font-size="${fSm}" font-weight="700" fill="#64748b">B</text>`;
+ html+=tBg(Bsx+8*fS,Bsy+8*fS+fSm*0.3,'B','#cbd5e1',fSm);
  // ΔX horizontal dimension (drawn at bottom of all geometry)
  const allYs=[Ty,Bsy,Hmy,Hny,Hxy,bTmin.y,bTmax.y,barTip.y,mx2.y,mn2.y];
  const yBot=Math.max(...allYs)+15*fS;
@@ -1707,7 +1720,7 @@ function drawActGeom(targetId,vbW,vbH,txtId){
   html+=`<line x1="${Tx}" y1="${yBot}" x2="${Bsx}" y2="${yBot}" stroke="#a78bfa" stroke-width="${0.8*fS}"/>`;
   html+=`<line x1="${Tx}" y1="${Ty+6*fS}" x2="${Tx}" y2="${yBot+3*fS}" stroke="#a78bfa" stroke-width="${0.5*fS}" stroke-dasharray="${1*fS} ${1*fS}"/>`;
   html+=`<line x1="${Bsx}" y1="${Bsy+6*fS}" x2="${Bsx}" y2="${yBot+3*fS}" stroke="#a78bfa" stroke-width="${0.5*fS}" stroke-dasharray="${1*fS} ${1*fS}"/>`;
-  html+=`<text x="${(Tx+Bsx)/2}" y="${yBot-3*fS}" text-anchor="middle" font-family="JetBrains Mono" font-size="${fSm}" font-weight="700" fill="#a78bfa">ΔX</text>`;
+  html+=tBg((Tx+Bsx)/2,yBot-3*fS,'ΔX','#a78bfa',fSm,'middle');
  }
  // ΔY vertical dimension at the right edge of geometry
  const allXs=[Tx,Bsx,Hmx,Hnx,Hxx,bTmin.x,bTmax.x,barTip.x,mx2.x,mn2.x];
@@ -1716,7 +1729,7 @@ function drawActGeom(targetId,vbW,vbH,txtId){
   html+=`<line x1="${xR}" y1="${Ty}" x2="${xR}" y2="${Bsy}" stroke="#a78bfa" stroke-width="${0.8*fS}"/>`;
   html+=`<line x1="${Tx+6*fS}" y1="${Ty}" x2="${xR+3*fS}" y2="${Ty}" stroke="#a78bfa" stroke-width="${0.5*fS}" stroke-dasharray="${1*fS} ${1*fS}"/>`;
   html+=`<line x1="${Bsx+6*fS}" y1="${Bsy}" x2="${xR+3*fS}" y2="${Bsy}" stroke="#a78bfa" stroke-width="${0.5*fS}" stroke-dasharray="${1*fS} ${1*fS}"/>`;
-  html+=`<text x="${xR+5*fS}" y="${(Ty+Bsy)/2+3*fS}" font-family="JetBrains Mono" font-size="${fSm}" font-weight="700" fill="#a78bfa">ΔY</text>`;
+  html+=tBg(xR+5*fS,(Ty+Bsy)/2+3*fS,'ΔY','#a78bfa',fSm);
  }
  svg.innerHTML=html;
  // Bottom status strip — transmission angle μ + derived stroke + L_act @ mid
