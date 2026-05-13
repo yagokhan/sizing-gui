@@ -1240,13 +1240,16 @@ function drawPointCircle(r){
 let _mtsInit=false;
 function _mtsPaintErr(id,msg){const el=document.getElementById(id);if(el)el.innerHTML='<div style="padding:1rem;color:#fca5a5;font-family:monospace;font-size:11px;background:rgba(239,68,68,.06);border:1px dashed rgba(239,68,68,.35);border-radius:.3rem;height:100%;min-height:200px;display:flex;align-items:center;justify-content:center;text-align:center">'+msg+'</div>'}
 function drawMotorTimeSeries(r){
+ // Paint an immediate "in progress" status so we can tell from the UI whether the function was even entered.
+ ['rpmTC','ampTC','pwrTC'].forEach(id=>{const el=document.getElementById(id);if(el&&!el.querySelector('svg')&&!el.querySelector('canvas'))el.innerHTML='<div style="color:#94a3b8;font-family:monospace;font-size:10px;padding:.6rem;background:rgba(30,41,59,.4);border-radius:.3rem;height:100%;min-height:200px;display:flex;align-items:center;justify-content:center;text-align:center">drawing '+id+'…</div>'});
+ console.log('drawMotorTimeSeries called for axis',typeof ax!=='undefined'?ax:'?');
  if(typeof Plotly==='undefined'){console.warn('drawMotorTimeSeries: Plotly not loaded');['rpmTC','ampTC','pwrTC'].forEach(id=>_mtsPaintErr(id,'Plotly library not loaded (check internet/CDN access)'));return}
  const rpmDiv=document.getElementById('rpmTC'),ampDiv=document.getElementById('ampTC'),pwrDiv=document.getElementById('pwrTC');
  if(!rpmDiv||!ampDiv||!pwrDiv){console.warn('drawMotorTimeSeries: target div(s) missing');return}
- // If the chart containers are inside a hidden ancestor (display:none), defer until visible.
- // Plotly.react/newPlot on a div whose offsetParent is null can produce a zero-size chart.
- if(rpmDiv.offsetParent===null){setTimeout(()=>drawMotorTimeSeries(r),150);return}
- if(!r||!r.prof){console.warn('drawMotorTimeSeries: r.prof missing');return}
+ // If the chart container is hidden (parent display:none), schedule a retry — Plotly does not draw cleanly
+ // into a div whose offsetParent is null.
+ if(rpmDiv.offsetParent===null){console.log('drawMotorTimeSeries: container hidden, deferring');setTimeout(()=>drawMotorTimeSeries(r),150);return}
+ if(!r||!r.prof){console.warn('drawMotorTimeSeries: r.prof missing');_mtsPaintErr('rpmTC','No profile data (r.prof missing)');_mtsPaintErr('ampTC','No profile data');_mtsPaintErr('pwrTC','No profile data');return}
  const Kt=Math.max(r.Kt||.001,.001),R=Math.max(r.R||.001,.001),Ke=Math.max(r.Ke||.001,.001);
  const n=Math.max(r.n||1,1),Je=Math.max(r.Je||.001,.001);
  const W2RPM=60/(2*Math.PI);
@@ -1326,15 +1329,22 @@ function drawMotorTimeSeries(r){
 }
 
 function drawExtras(r){
+ // Each draw in its own try — a failure in one chart never skips the rest.
+ try{drawPowerSpeed(r,'psC')}catch(e){console.error('psC:',e)}
+ try{drawPowerSpeed(r,'ps2C')}catch(e){console.error('ps2C:',e)}
+ try{drawTorqueBudget(r)}catch(e){console.error('tbC:',e)}
+ try{drawEffMap(r)}catch(e){console.error('emC:',e)}
+ try{drawFFT(r)}catch(e){console.error('fftC:',e)}
+ try{drawEnergyBreakdown(r)}catch(e){console.error('ebC:',e)}
+ try{drawMotorTimeSeries(r)}catch(e){console.error('mts:',e);try{_mtsPaintErr('rpmTC','mts threw: '+(e&&e.message||e));_mtsPaintErr('ampTC','mts threw: '+(e&&e.message||e));_mtsPaintErr('pwrTC','mts threw: '+(e&&e.message||e))}catch(_){}}
+ try{drawBlockDiagram(r,'svgBlock')}catch(e){console.error('svgBlock:',e)}
+ try{drawGauges(r)}catch(e){console.error('gauges:',e)}
+ try{drawPointCircle(r)}catch(e){console.error('point:',e)}
  try{
-  drawPowerSpeed(r,'psC');drawPowerSpeed(r,'ps2C');
-  drawTorqueBudget(r);drawEffMap(r);drawFFT(r);drawEnergyBreakdown(r);
-  drawMotorTimeSeries(r);
-  drawBlockDiagram(r,'svgBlock');drawGauges(r);drawPointCircle(r);
   if(GM[ax]==='single'){drawSingleBlock(r,r.isL?'svgAct':'svgGear')}
   else if(r.isL){drawActuatorGeom(r,'svgAct')}
   else{drawGearDiagram(r,'svgGear')}
- }catch(e){console.error('drawExtras:',e)}
+ }catch(e){console.error('drawExtras kin:',e)}
 }
 
 // Live inputs-side visuals (updates as user types)
