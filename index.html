@@ -537,6 +537,12 @@ input[type="number"]{-moz-appearance:textfield;box-sizing:border-box}input::-web
  <div class="card"><div class="ch"><h3 class="text-[9px] font-bold tracking-widest uppercase text-slate-400">Power – Speed Overlay (B3)</h3></div><div class="p-2"><div id="ps2C" style="width:100%;height:320px"></div><div class="mt-2 px-3 py-2 text-[11px] leading-relaxed" style="background:rgba(30,41,59,.7);border-left:3px solid #3b82f6;border-radius:.3rem;color:#cbd5e1"><b class="text-blue-300">How to read:</b> The blue curve is mechanical output power P<sub>mech</sub>(ω) = T(ω)·ω along the motor torque-speed envelope; the orange curve is electrical input P<sub>elec</sub>(ω) = P<sub>mech</sub>/η. Their vertical gap is instantaneous dissipation. The red cross marks the duty-cycle peak operating point. <b class="text-emerald-300">Target:</b> the cross should sit near the knee of the P<sub>mech</sub> curve (max power region) with room below rated power; far from the knee means the motor/ratio pairing wastes either torque or speed headroom.</div></div></div>
  <div class="card"><div class="ch"><h3 class="text-[9px] font-bold tracking-widest uppercase text-slate-400">Duty Cycle FFT (B5)</h3></div><div class="p-2"><div id="fftC" style="width:100%;height:320px"></div><div class="mt-2 px-3 py-2 text-[11px] leading-relaxed" style="background:rgba(30,41,59,.7);border-left:3px solid #3b82f6;border-radius:.3rem;color:#cbd5e1"><b class="text-blue-300">How to read:</b> Frequency-domain magnitude |T(f)| of the torque duty profile. Peaks at low frequencies are the fundamental slew and its harmonics; the dashed red line marks the mechanical bandwidth f<sub>m</sub>. <b class="text-emerald-300">Target:</b> significant torque content should fall well below f<sub>m</sub> — energy above f<sub>m</sub> is what the drive cannot physically track, producing lag/overshoot. If a strong peak straddles f<sub>m</sub>, either raise drive bandwidth (stiffer gearing / higher ω<sub>M</sub>) or lower commanded profile aggressiveness.</div></div></div>
 </div>
+<!-- Motor time-series row -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-3 mt-3">
+ <div class="card"><div class="ch"><h3 class="text-[9px] font-bold tracking-widest uppercase text-slate-400">Motor Speed vs Time</h3></div><div class="p-2"><div id="rpmTC" style="width:100%;height:280px"></div><div class="mt-2 px-3 py-2 text-[11px] leading-relaxed" style="background:rgba(30,41,59,.7);border-left:3px solid #3b82f6;border-radius:.3rem;color:#cbd5e1"><b class="text-blue-300">How to read:</b> Motor angular speed (rpm) over the duty cycle. Blue is the gun-laying profile; amber (when present) is the stabilisation disturbance referred to the motor shaft. <b class="text-emerald-300">Target:</b> peak rpm stays below the no-load speed V<sub>dc</sub>/K<sub>e</sub>; otherwise the bus voltage cannot drive the back-EMF.</div></div></div>
+ <div class="card"><div class="ch"><h3 class="text-[9px] font-bold tracking-widest uppercase text-slate-400">Motor Current vs Time</h3></div><div class="p-2"><div id="ampTC" style="width:100%;height:280px"></div><div class="mt-2 px-3 py-2 text-[11px] leading-relaxed" style="background:rgba(30,41,59,.7);border-left:3px solid #3b82f6;border-radius:.3rem;color:#cbd5e1"><b class="text-blue-300">How to read:</b> Per-motor instantaneous current |I| = |T<sub>motor</sub>|/K<sub>t</sub> (A), absolute value to keep magnitudes positive. Blue is gun-laying, amber is stabilisation. <b class="text-emerald-300">Target:</b> peak current must stay within the drive&apos;s peak-current rating; RMS current sets thermal sizing of motor and bus cabling.</div></div></div>
+ <div class="card"><div class="ch"><h3 class="text-[9px] font-bold tracking-widest uppercase text-slate-400">Motor Power vs Time</h3></div><div class="p-2"><div id="pwrTC" style="width:100%;height:280px"></div><div class="mt-2 px-3 py-2 text-[11px] leading-relaxed" style="background:rgba(30,41,59,.7);border-left:3px solid #3b82f6;border-radius:.3rem;color:#cbd5e1"><b class="text-blue-300">How to read:</b> Per-motor electrical input power P<sub>elec</sub> = I²·R + K<sub>e</sub>·ω·I (W). Negative excursions indicate regenerative phases (load drives the motor). Blue is gun-laying, amber is stabilisation. <b class="text-emerald-300">Target:</b> peak P<sub>elec</sub> ≤ drive headroom; if regen is significant, plan dump-resistor or bus capacitance accordingly.</div></div></div>
+</div>
 </div><!-- /sub-charts -->
 
 <!-- ============== SUB: VISUALS ============== -->
@@ -1229,10 +1235,68 @@ function drawPointCircle(r){
 }
 
 
+function drawMotorTimeSeries(r){
+ const Kt=r.Kt,R=r.R,Ke=r.Ke,n=r.n;
+ const W2RPM=60/(2*Math.PI);
+ // Gunlay duty profile (always exists)
+ const pf=r.prof;
+ const t_g=pf.tArr||[],T_g=pf.TArr||[],w_g=pf.wArr||[];
+ const rpm_g=w_g.map(w=>w*W2RPM);
+ const I_g=T_g.map(T=>Math.abs(T)/Kt);
+ const Pe_g=T_g.map((T,i)=>{const I=T/Kt,w=w_g[i]||0;return I*I*R+Ke*w*I});
+ // Stab profile — synthesise sine; or use imported arrays as-is
+ let t_s=null,rpm_s=null,I_s=null,Pe_s=null,stabLabel=null;
+ if(r.stabProf){
+  if(r.stabProf.mode==='sine'){
+   const Am=r.stabProf.Am||0,wsf=r.stabProf.wsf||0;
+   if(Am>0&&wsf>0){
+    const period=2*Math.PI/wsf;
+    const dur=Math.min(period*3,Math.max(period*1.5,1.5));
+    const dt=Math.min(.005,dur/220);
+    const tt=[],ww=[],TT=[];
+    for(let t=0;t<=dur;t+=dt){
+     const w_motor=Am*wsf*Math.cos(wsf*t);
+     const a_motor=-Am*wsf*wsf*Math.sin(wsf*t);
+     const T_pm=r.Je*a_motor/n;
+     tt.push(t);ww.push(w_motor);TT.push(T_pm);
+    }
+    t_s=tt;rpm_s=ww.map(w=>w*W2RPM);I_s=TT.map(T=>Math.abs(T)/Kt);
+    Pe_s=TT.map((T,i)=>{const I=T/Kt,w=ww[i];return I*I*R+Ke*w*I});
+    stabLabel='Stab '+r.stabProf.label;
+   }
+  }else if(r.stabProf.t&&r.stabProf.w&&r.stabProf.T){
+   t_s=r.stabProf.t.slice();
+   const w_s=r.stabProf.w,T_s=r.stabProf.T;
+   rpm_s=w_s.map(w=>w*W2RPM);
+   I_s=T_s.map(T=>Math.abs(T)/Kt);
+   Pe_s=T_s.map((T,i)=>{const I=T/Kt,w=w_s[i]||0;return I*I*R+Ke*w*I});
+   stabLabel='Stab '+(r.stabProf.label||'imported');
+  }
+ }
+ const mkLay=(yt)=>Object.assign({},pltCommon,{margin:{t:18,r:15,b:38,l:55},xaxis:{title:'time (s)',gridcolor:'rgba(30,41,59,.4)',tickfont:{family:'JetBrains Mono',size:9,color:'#64748b'}},yaxis:{title:yt,gridcolor:'rgba(30,41,59,.4)',tickfont:{family:'JetBrains Mono',size:9,color:'#64748b'},rangemode:'tozero'},legend:{x:.01,y:.99,bgcolor:'rgba(12,18,34,.85)',bordercolor:'#1e293b',font:{size:9}},hovermode:'x unified'});
+ const gT=(x,y,nm,col)=>({x,y,type:'scatter',mode:'lines',name:nm,line:{color:col,width:2},fill:'tozeroy',fillcolor:col.replace(')',',.08)').replace('rgb(','rgba(')});
+ const sT2=(x,y,nm,col)=>({x,y,type:'scatter',mode:'lines',name:nm,line:{color:col,width:1.5,dash:'dot'}});
+ // Speed
+ const tr1=[gT(t_g,rpm_g,'Gunlay','rgb(96,165,250)')];
+ if(t_s)tr1.push(sT2(t_s,rpm_s,stabLabel||'Stab','#f59e0b'));
+ const lay1=mkLay('Motor Speed (rpm)');delete lay1.yaxis.rangemode;
+ Plotly.react('rpmTC',tr1,lay1,pltCfg);
+ // Current
+ const tr2=[gT(t_g,I_g,'Gunlay |I|','rgb(96,165,250)')];
+ if(t_s)tr2.push(sT2(t_s,I_s,'Stab |I|','#f59e0b'));
+ Plotly.react('ampTC',tr2,mkLay('|I| per motor (A)'),pltCfg);
+ // Power
+ const tr3=[gT(t_g,Pe_g,'Gunlay P_elec','rgb(134,239,172)')];
+ if(t_s)tr3.push(sT2(t_s,Pe_s,'Stab P_elec','#f59e0b'));
+ const lay3=mkLay('P_elec per motor (W)');delete lay3.yaxis.rangemode;
+ Plotly.react('pwrTC',tr3,lay3,pltCfg);
+}
+
 function drawExtras(r){
  try{
   drawPowerSpeed(r,'psC');drawPowerSpeed(r,'ps2C');
   drawTorqueBudget(r);drawEffMap(r);drawFFT(r);drawEnergyBreakdown(r);
+  drawMotorTimeSeries(r);
   drawBlockDiagram(r,'svgBlock');drawGauges(r);drawPointCircle(r);
   if(GM[ax]==='single'){drawSingleBlock(r,r.isL?'svgAct':'svgGear')}
   else if(r.isL){drawActuatorGeom(r,'svgAct')}
@@ -1800,7 +1864,7 @@ function swSub(s){curSub=s;
   const b=document.getElementById('stab-'+k);if(b)b.className='stab'+(k===s?' stab-active':'');
  });
  setTimeout(()=>{resizeAll()},50)}
-function resizeAll(){['tsC','dcC','psC','ps2C','tbC','emC','fftC','ebC'].forEach(id=>{try{Plotly.Plots.resize(id)}catch(e){}})}
+function resizeAll(){['tsC','dcC','psC','ps2C','tbC','emC','fftC','ebC','rpmTC','ampTC','pwrTC'].forEach(id=>{try{Plotly.Plots.resize(id)}catch(e){}})}
 function solve(){
  if(typeof Plotly==='undefined'){alert('Plotly kütüphanesi yüklenemedi — internet bağlantısını kontrol edin veya CDN erişimi için ağ yöneticisiyle iletişime geçin.\n(Plotly library failed to load — check internet/CDN access.)');return}
  let calcErr=null;
