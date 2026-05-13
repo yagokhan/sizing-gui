@@ -237,7 +237,7 @@ input[type="number"]{-moz-appearance:textfield;box-sizing:border-box}input::-web
 <div class="pr elev-only"><span class="pl" data-tip="Minimum elevation angle the barrel travels to (e.g. depression). Used for animation sweep range.">Elev θ<sub>min</sub></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.elevMin" step="1"><span class="pu u-click u-ang" onclick="tglUnit('ang')">deg</span></div></div>
 <div class="pr elev-only"><span class="pl" data-tip="Maximum elevation angle (max barrel up). Animation sweeps from θ_min to θ_max.">Elev θ<sub>max</sub></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.elevMax" step="1"><span class="pu u-click u-ang" onclick="tglUnit('ang')">deg</span></div></div>
 <div class="elev-only" id="actGeomBox" onclick="openActGeomModal()" title="Click to enlarge" style="cursor:zoom-in;padding:.4rem .35rem .35rem;background:rgba(124,58,237,.07);border-radius:.35rem;margin:.2rem 0 .15rem;border:1px solid rgba(167,139,250,.22);position:relative">
-<svg id="svgActGeom" viewBox="0 0 380 260" style="width:100%;height:auto;max-height:300px;pointer-events:none"></svg>
+<svg id="svgActGeom" viewBox="0 0 380 320" style="width:100%;height:auto;max-height:400px;pointer-events:none"></svg>
 <div id="actGeomTxt" style="font-family:'JetBrains Mono',monospace;font-size:.62rem;color:#94a3b8;text-align:center;margin-top:.15rem;line-height:1.4;pointer-events:none"></div>
 <div style="position:absolute;bottom:3px;right:6px;font-size:.55rem;color:#475569;letter-spacing:.05em;pointer-events:none">↗ click to enlarge</div>
 </div>
@@ -1576,7 +1576,7 @@ function closeGearRatioModal(){
 // when overlapping other geometry. Info column only renders for the enlarged modal.
 function drawActGeom(targetId,vbW,vbH,txtId){
  if(ax!=='elevation')return;
- targetId=targetId||'svgActGeom';vbW=vbW||380;vbH=vbH||260;txtId=txtId||'actGeomTxt';
+ targetId=targetId||'svgActGeom';vbW=vbW||380;vbH=vbH||320;txtId=txtId||'actGeomTxt';
  const svg=document.getElementById(targetId);if(!svg)return;
  const mm=AP.elevation.mechanical;
  const Lh=Math.max(mm.hingeOffset||800,10);
@@ -1600,18 +1600,20 @@ function drawActGeom(targetId,vbW,vbH,txtId){
  const infoW=showInfo?vbW*0.26:0;
  const visX0=showInfo?infoW+vbW*0.015:vbW*0.03;
  const visW=vbW-visX0-vbW*0.03;
- // Bounding box of geometry in mm; include barrel-tip at 1.5×Lh
- const corners=[{x:0,y:0},{x:Bx,y:By},Hmid,Hmin,Hmax,
-  {x:Lh*1.5*Math.cos(rad(elMid)),y:Lh*1.5*Math.sin(rad(elMid))},
-  {x:Lh*1.4*Math.cos(rad(elMin)),y:Lh*1.4*Math.sin(rad(elMin))},
-  {x:Lh*1.4*Math.cos(rad(elMax)),y:Lh*1.4*Math.sin(rad(elMax))}];
+ // Bounding box — tight: only mechanism endpoints + barrel tip just past hinge + L_max bracket reach
+ const ratioLmax=Lmax/Math.max(Lact_mid,.1);
+ const lmaxEndMM={x:Bx+(Hmid.x-Bx)*ratioLmax,y:By+(Hmid.y-By)*ratioLmax};
+ const corners=[{x:0,y:0},{x:Bx,y:By},Hmid,Hmin,Hmax,lmaxEndMM,
+  {x:Lh*1.1*Math.cos(rad(elMid)),y:Lh*1.1*Math.sin(rad(elMid))},
+  {x:Lh*1.05*Math.cos(rad(elMin)),y:Lh*1.05*Math.sin(rad(elMin))},
+  {x:Lh*1.05*Math.cos(rad(elMax)),y:Lh*1.05*Math.sin(rad(elMax))}];
  let xMin=Math.min(...corners.map(c=>c.x)),xMax=Math.max(...corners.map(c=>c.x));
  let yMin=Math.min(...corners.map(c=>c.y)),yMax=Math.max(...corners.map(c=>c.y));
- const padMM=Math.max(xMax-xMin,yMax-yMin)*0.18;
+ const padMM=Math.max(xMax-xMin,yMax-yMin)*0.08;
  xMin-=padMM;xMax+=padMM;yMin-=padMM;yMax+=padMM;
- const drawW=visW*0.94,drawH=vbH*0.84;
+ const drawW=visW*0.96,drawH=vbH*0.92;
  const scale=Math.min(drawW/(xMax-xMin),drawH/(yMax-yMin));
- const cxVis=visX0+visW*0.5,cyVis=vbH*0.48;
+ const cxVis=visX0+visW*0.5,cyVis=vbH*0.50;
  const geomMx=(xMin+xMax)/2,geomMy=(yMin+yMax)/2;
  const px=v=>cxVis+(v-geomMx)*scale;
  const py=v=>cyVis-(v-geomMy)*scale; // flip y to "y-up" engineering convention
@@ -1653,14 +1655,14 @@ function drawActGeom(targetId,vbW,vbH,txtId){
  const tnLab={x:Tx+(arcRpx+16*fS)*Math.cos(a2),y:Ty+(arcRpx+16*fS)*Math.sin(a2)+fSm*0.3};
  html+=tBg(tnLab.x,tnLab.y,'θ_min','#f59e0b',fSm,'middle');
  // Ghost barrels at θ_min/max
- const bTmin={x:px(Lh*1.35*Math.cos(rad(elMin))),y:py(Lh*1.35*Math.sin(rad(elMin)))};
- const bTmax={x:px(Lh*1.35*Math.cos(rad(elMax))),y:py(Lh*1.35*Math.sin(rad(elMax)))};
+ const bTmin={x:px(Lh*1.05*Math.cos(rad(elMin))),y:py(Lh*1.05*Math.sin(rad(elMin)))};
+ const bTmax={x:px(Lh*1.05*Math.cos(rad(elMax))),y:py(Lh*1.05*Math.sin(rad(elMax)))};
  html+=`<line x1="${Tx}" y1="${Ty}" x2="${bTmin.x}" y2="${bTmin.y}" stroke="rgba(59,130,246,.22)" stroke-width="${2.5*fS}" stroke-linecap="round"/>`;
  html+=`<line x1="${Tx}" y1="${Ty}" x2="${bTmax.x}" y2="${bTmax.y}" stroke="rgba(59,130,246,.22)" stroke-width="${2.5*fS}" stroke-linecap="round"/>`;
  html+=`<circle cx="${Hnx}" cy="${Hny}" r="${2.5*fS}" fill="none" stroke="rgba(245,158,11,.45)" stroke-width="${0.7*fS}"/>`;
  html+=`<circle cx="${Hxx}" cy="${Hxy}" r="${2.5*fS}" fill="none" stroke="rgba(245,158,11,.45)" stroke-width="${0.7*fS}"/>`;
  // Active barrel at θ_mid
- const barTip={x:px(Lh*1.5*Math.cos(rad(elMid))),y:py(Lh*1.5*Math.sin(rad(elMid)))};
+ const barTip={x:px(Lh*1.1*Math.cos(rad(elMid))),y:py(Lh*1.1*Math.sin(rad(elMid)))};
  html+=`<line x1="${Tx}" y1="${Ty}" x2="${barTip.x}" y2="${barTip.y}" stroke="#3b82f6" stroke-width="${4*fS}" stroke-linecap="round" opacity=".92"/>`;
  // L_h label perpendicular to barrel midpoint
  const bdx=Hmx-Tx,bdy=Hmy-Ty,blen=Math.sqrt(bdx*bdx+bdy*bdy)||1;
