@@ -235,15 +235,16 @@ input[type="number"]{-moz-appearance:textfield;box-sizing:border-box}input::-web
 <div class="pr elev-only"><span class="pl" data-tip="Fully extended actuator length (cylinder + max rod stroke). Defines maximum geometric reach.">L<sub>max</sub> (extended)</span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.actLmax" step="10" min="100"><span class="pu">mm</span></div></div>
 <div class="pr elev-only"><span class="pl" data-tip="Minimum elevation angle the barrel travels to (e.g. depression). Used for animation sweep range.">Elev θ<sub>min</sub></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.elevMin" step="1"><span class="pu u-click u-ang" onclick="tglUnit('ang')">deg</span></div></div>
 <div class="pr elev-only"><span class="pl" data-tip="Maximum elevation angle (max barrel up). Animation sweeps from θ_min to θ_max.">Elev θ<sub>max</sub></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.elevMax" step="1"><span class="pu u-click u-ang" onclick="tglUnit('ang')">deg</span></div></div>
-<div class="sl trav-only" style="border-top:none;margin-top:0">Ring Gear &amp; Pinion (any 2 of 3 — auto-linked: d = z·m)</div>
-<div class="pr trav-only"><span class="pl" data-tip="Modül — meshing dişlilerde ortak. d = z·m (mm). Modülü değiştirirsen z sabit tutulur, d'ler yeniden hesaplanır.">Modül<span class="ps">m</span></span><div class="flex items-center gap-1"><input type="number" class="inp gear-link" data-key="mechanical.gearModule" data-gear-role="m" step="0.1" min="0.1"><span class="pu">mm</span></div></div>
-<div class="pr trav-only"><span class="pl" data-tip="Ring (taç dişli) bölüm dairesi çapı. d₁ = z₁·m. Modül sabit kalır, z₁ otomatik hesaplanır.">Ring Pitch ⌀<span class="ps">d<sub>1</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp gear-link" data-key="mechanical.ringPitchDia" data-gear-role="d1" step="1" min="1"><span class="pu">mm</span></div></div>
-<div class="pr trav-only"><span class="pl" data-tip="Ring (taç dişli) diş sayısı. z₁ = d₁/m. Direkt girilebilir veya çap+modülden türetilir.">Ring Teeth<span class="ps">z<sub>1</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp gear-link" data-key="mechanical.ringTeeth" data-gear-role="z1" step="1" min="1"><span class="pu">[-]</span></div></div>
-<div class="pr trav-only"><span class="pl" data-tip="Pinyon bölüm dairesi çapı. d₂ = z₂·m. Modül sabit kalır, z₂ otomatik hesaplanır.">Pinion Pitch ⌀<span class="ps">d<sub>2</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp gear-link" data-key="mechanical.pinionPitchDia" data-gear-role="d2" step="1" min="1"><span class="pu">mm</span></div></div>
-<div class="pr trav-only"><span class="pl" data-tip="Pinyon diş sayısı. z₂ = d₂/m. Direkt girilebilir veya çap+modülden türetilir.">Pinion Teeth<span class="ps">z<sub>2</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp gear-link" data-key="mechanical.pinionTeeth" data-gear-role="z2" step="1" min="1"><span class="pu">[-]</span></div></div>
-<div class="trav-only" id="gearRatioBox" style="padding:.4rem .35rem .35rem;background:rgba(59,130,246,.06);border-radius:.35rem;margin:.2rem 0 .15rem;border:1px solid rgba(59,130,246,.18)">
-<svg id="svgGearRatio" viewBox="0 0 240 110" style="width:100%;height:auto;max-height:120px"></svg>
-<div id="gearRatioTxt" style="font-family:'JetBrains Mono',monospace;font-size:.62rem;color:#94a3b8;text-align:center;margin-top:.15rem;line-height:1.4"></div>
+<div class="sl trav-only" style="border-top:none;margin-top:0">Internal Ring Gear &amp; Pinion (enter any 2 of 3 — auto-linked: d = z · m)</div>
+<div class="pr trav-only"><span class="pl" data-tip="Module — common to meshing gears. d = z·m (mm). Editing m holds tooth counts (z) constant and recomputes both pitch diameters.">Module<span class="ps">m</span></span><div class="flex items-center gap-1"><input type="number" class="inp gear-link" data-key="mechanical.gearModule" data-gear-role="m" step="0.1" min="0.1"><span class="pu">mm</span></div></div>
+<div class="pr trav-only"><span class="pl" data-tip="Ring (internal) gear pitch diameter. d₁ = z₁·m. Editing d₁ holds module constant and recomputes z₁ = round(d₁/m).">Ring Pitch ⌀<span class="ps">d<sub>1</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp gear-link" data-key="mechanical.ringPitchDia" data-gear-role="d1" step="1" min="1"><span class="pu">mm</span></div></div>
+<div class="pr trav-only"><span class="pl" data-tip="Ring (internal) gear tooth count. z₁ = d₁/m. Can be entered directly or derived from pitch diameter and module.">Ring Teeth<span class="ps">z<sub>1</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp gear-link" data-key="mechanical.ringTeeth" data-gear-role="z1" step="1" min="1"><span class="pu">[-]</span></div></div>
+<div class="pr trav-only"><span class="pl" data-tip="Pinion (driving) pitch diameter. d₂ = z₂·m. Editing d₂ holds module constant and recomputes z₂ = round(d₂/m).">Pinion Pitch ⌀<span class="ps">d<sub>2</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp gear-link" data-key="mechanical.pinionPitchDia" data-gear-role="d2" step="1" min="1"><span class="pu">mm</span></div></div>
+<div class="pr trav-only"><span class="pl" data-tip="Pinion (driving) tooth count. z₂ = d₂/m. Can be entered directly or derived from pitch diameter and module.">Pinion Teeth<span class="ps">z<sub>2</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp gear-link" data-key="mechanical.pinionTeeth" data-gear-role="z2" step="1" min="1"><span class="pu">[-]</span></div></div>
+<div class="trav-only" id="gearRatioBox" onclick="openGearRatioModal()" title="Click to enlarge" style="cursor:zoom-in;padding:.4rem .35rem .35rem;background:rgba(59,130,246,.06);border-radius:.35rem;margin:.2rem 0 .15rem;border:1px solid rgba(59,130,246,.18);position:relative">
+<svg id="svgGearRatio" viewBox="0 0 280 140" style="width:100%;height:auto;max-height:150px;pointer-events:none"></svg>
+<div id="gearRatioTxt" style="font-family:'JetBrains Mono',monospace;font-size:.62rem;color:#94a3b8;text-align:center;margin-top:.15rem;line-height:1.4;pointer-events:none"></div>
+<div style="position:absolute;bottom:3px;right:6px;font-size:.55rem;color:#475569;letter-spacing:.05em;pointer-events:none">↗ click to enlarge</div>
 </div>
 <div class="sl trav-only">Gearbox &amp; Mesh</div>
 <div class="pr trav-only"><span class="pl" data-tip="Pre-reduction gearbox ratio between motor and pinion. i_tot = (z1/z2)·i_gb.">Gearbox Ratio<span class="ps">i<sub>gb</sub></span></span><div class="flex items-center gap-1"><input type="number" class="inp" data-key="mechanical.gearboxRatio" step="1" min="1"><span class="pu">[-]</span></div></div>
@@ -1466,45 +1467,89 @@ function onGearLinkInput(el){
  });
 }
 
-// === Live proportional ring/pinion visual (pitch circles sized by d) ===
-function drawGearRatio(){
+// === Live ring/pinion visual — internal mesh, split panel (info left, gears right) ===
+// Draws ring as internal gear (teeth point INWARD) with pinion meshing inside.
+// Pitch circles are tangent at the left mesh point; pinion center sits at distance (R_inner − r_pin) left of ring center.
+function drawGearRatio(targetId,vbW,vbH,txtId){
  if(ax!=='traverse')return;
- const svg=document.getElementById('svgGearRatio');if(!svg)return;
+ targetId=targetId||'svgGearRatio';vbW=vbW||280;vbH=vbH||140;txtId=txtId||'gearRatioTxt';
+ const svg=document.getElementById(targetId);if(!svg)return;
  const mm=AP.traverse.mechanical;
  const z1=Math.max(mm.ringTeeth||1,1),z2=Math.max(mm.pinionTeeth||1,1);
  const d1=Math.max(mm.ringPitchDia||1,1),d2=Math.max(mm.pinionPitchDia||1,1);
  const mod=Math.max(mm.gearModule||1,.01);
  const igb=Math.max(mm.gearboxRatio||1,1);
- const maxR=42,r1=maxR,r2=Math.max(maxR*(d2/Math.max(d1,d2)),3);
- const cyMid=58;
- const cx1=240-maxR-8,cy1=cyMid;
- const cx2=cx1-r1-r2-3,cy2=cyMid;
+ // Layout: left info column (~38% of width), right visual column
+ const infoW=vbW*0.36;
+ const visX0=infoW+vbW*0.02,visW=vbW-visX0-vbW*0.03;
+ const cyMid=vbH*0.5;
+ const R_outer=Math.min(vbH*0.42,visW*0.46);
+ const R_inner=R_outer*0.86;
+ const r_pin=Math.max(R_inner*(d2/Math.max(d1,d2)),3);
+ const ringCx=visX0+visW*0.5,ringCy=cyMid;
+ const pinCx=ringCx-(R_inner-r_pin),pinCy=cyMid;
+ // Consistency check
  const d1ok=Math.abs(d1-z1*mod)/Math.max(d1,1)<0.02;
  const d2ok=Math.abs(d2-z2*mod)/Math.max(d2,1)<0.02;
  const ok=d1ok&&d2ok;
+ // Font sizes scale with viewBox width (relative to base 280)
+ const fS=vbW/280;
+ const fHdr=Math.max(8.5,9*fS),fLab=Math.max(7.5,8.5*fS),fBig=Math.max(8.5,10*fS),fSm=Math.max(7,8*fS);
  let html='';
- html+=`<rect x="0" y="0" width="240" height="110" fill="transparent"/>`;
- html+=`<text x="10" y="13" font-family="Inter" font-size="8.5" font-weight="700" fill="#94a3b8" letter-spacing="1">RING ↔ PINION (PITCH CIRCLES, TO SCALE)</text>`;
- // Ring (annulus look)
- html+=`<circle cx="${cx1}" cy="${cy1}" r="${r1}" fill="rgba(59,130,246,.18)" stroke="#3b82f6" stroke-width="1.5"/>`;
- html+=`<circle cx="${cx1}" cy="${cy1}" r="${Math.max(r1-5,2)}" fill="rgba(12,18,34,.85)" stroke="rgba(96,165,250,.4)" stroke-width="1" stroke-dasharray="2 2"/>`;
- html+=`<text x="${cx1}" y="${cy1+3}" text-anchor="middle" font-family="JetBrains Mono" font-size="9" font-weight="700" fill="#93c5fd">z₁=${z1}</text>`;
- html+=`<text x="${cx1}" y="${cy1+r1+9}" text-anchor="middle" font-family="JetBrains Mono" font-size="7" fill="#64748b">d₁=${f(d1,1)}</text>`;
- // Pinion
- html+=`<circle cx="${cx2}" cy="${cy2}" r="${r2}" fill="rgba(245,158,11,.22)" stroke="#f59e0b" stroke-width="1.5"/>`;
- if(r2>=11)html+=`<text x="${cx2}" y="${cy2+3}" text-anchor="middle" font-family="JetBrains Mono" font-size="9" font-weight="700" fill="#fbbf24">z₂=${z2}</text>`;
- else html+=`<text x="${cx2}" y="${cy2-r2-3}" text-anchor="middle" font-family="JetBrains Mono" font-size="8" font-weight="700" fill="#fbbf24">z₂=${z2}</text>`;
- html+=`<text x="${cx2}" y="${cy2+r2+9}" text-anchor="middle" font-family="JetBrains Mono" font-size="7" fill="#64748b">d₂=${f(d2,1)}</text>`;
- // Center line
- html+=`<line x1="${cx2+r2}" y1="${cy2}" x2="${cx1-r1}" y2="${cy1}" stroke="rgba(71,85,105,.5)" stroke-width="1" stroke-dasharray="2 2"/>`;
- // Module marker
- html+=`<text x="10" y="100" font-family="JetBrains Mono" font-size="8" fill="#64748b">m = ${f(mod,2)} mm</text>`;
- // Status badge
+ html+=`<rect x="0" y="0" width="${vbW}" height="${vbH}" fill="transparent"/>`;
+ // === Header ===
+ html+=`<text x="${vbW*0.03}" y="${fHdr*1.3}" font-family="Inter" font-size="${fHdr}" font-weight="700" fill="#94a3b8" letter-spacing="1">INTERNAL RING ↔ PINION (PITCH CIRCLES, TO SCALE)</text>`;
+ // Status badge top-right
  const badgeCol=ok?'#22c55e':'#f59e0b';
- html+=`<circle cx="228" cy="11" r="3.5" fill="${badgeCol}"/>`;
- html+=`<text x="221" y="13.5" text-anchor="end" font-family="JetBrains Mono" font-size="7.5" font-weight="700" fill="${badgeCol}">${ok?'LINKED':'CHECK'}</text>`;
+ const badgeTxt=ok?'LINKED':'CHECK';
+ html+=`<circle cx="${vbW-vbW*0.06-fLab*4}" cy="${fHdr*1.1}" r="${fLab*0.45}" fill="${badgeCol}"/>`;
+ html+=`<text x="${vbW-vbW*0.03}" y="${fHdr*1.3}" text-anchor="end" font-family="JetBrains Mono" font-size="${fLab}" font-weight="700" fill="${badgeCol}">${badgeTxt}</text>`;
+ // === Info column (left) ===
+ const ix=vbW*0.03;let iy=fHdr*2.6;const dy=fLab*1.6;
+ html+=`<text x="${ix}" y="${iy}" font-family="Inter" font-size="${fLab*0.95}" font-weight="700" fill="#3b82f6" letter-spacing=".5">RING (internal)</text>`;iy+=dy;
+ html+=`<text x="${ix}" y="${iy}" font-family="JetBrains Mono" font-size="${fBig}" fill="#e2e8f0">z₁ = <tspan font-weight="700" fill="#93c5fd">${z1}</tspan></text>`;iy+=dy*0.92;
+ html+=`<text x="${ix}" y="${iy}" font-family="JetBrains Mono" font-size="${fLab}" fill="#94a3b8">d₁ = <tspan font-weight="700" fill="#cbd5e1">${f(d1,1)}</tspan> mm</text>`;iy+=dy*1.15;
+ html+=`<text x="${ix}" y="${iy}" font-family="Inter" font-size="${fLab*0.95}" font-weight="700" fill="#f59e0b" letter-spacing=".5">PINION (drive)</text>`;iy+=dy;
+ html+=`<text x="${ix}" y="${iy}" font-family="JetBrains Mono" font-size="${fBig}" fill="#e2e8f0">z₂ = <tspan font-weight="700" fill="#fbbf24">${z2}</tspan></text>`;iy+=dy*0.92;
+ html+=`<text x="${ix}" y="${iy}" font-family="JetBrains Mono" font-size="${fLab}" fill="#94a3b8">d₂ = <tspan font-weight="700" fill="#cbd5e1">${f(d2,1)}</tspan> mm</text>`;iy+=dy*1.25;
+ html+=`<text x="${ix}" y="${iy}" font-family="JetBrains Mono" font-size="${fLab}" fill="#64748b">m = <tspan fill="#a78bfa" font-weight="700">${f(mod,2)}</tspan> mm</text>`;
+ // === Visual column (right) ===
+ // Ring outer body (annulus)
+ html+=`<circle cx="${ringCx}" cy="${ringCy}" r="${R_outer}" fill="rgba(59,130,246,.18)" stroke="#3b82f6" stroke-width="${1.2*fS}"/>`;
+ // Ring inner cavity boundary (pitch circle reference — dashed)
+ html+=`<circle cx="${ringCx}" cy="${ringCy}" r="${R_inner}" fill="rgba(12,18,34,.92)" stroke="rgba(96,165,250,.55)" stroke-width="${0.8*fS}" stroke-dasharray="${2*fS} ${2*fS}"/>`;
+ // Internal teeth marks (point INWARD from pitch toward center)
+ const nT_ring_show=Math.min(z1,Math.max(24,Math.floor(z1)));
+ const ringTipDepth=(R_outer-R_inner)*0.55;
+ for(let i=0;i<nT_ring_show;i++){
+  const a=i*2*Math.PI/nT_ring_show;
+  const x1=ringCx+R_inner*Math.cos(a),y1=ringCy+R_inner*Math.sin(a);
+  const x2=ringCx+(R_inner-ringTipDepth)*Math.cos(a),y2=ringCy+(R_inner-ringTipDepth)*Math.sin(a);
+  html+=`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="rgba(147,197,253,.7)" stroke-width="${1*fS}" stroke-linecap="round"/>`;
+ }
+ // Pinion body
+ html+=`<circle cx="${pinCx}" cy="${pinCy}" r="${r_pin}" fill="rgba(245,158,11,.25)" stroke="#f59e0b" stroke-width="${1.2*fS}"/>`;
+ // Pinion external teeth marks (point OUTWARD)
+ if(r_pin>=5){
+  const nT_pin_show=Math.min(z2,Math.max(10,Math.floor(z2)));
+  const pinTipDepth=r_pin*0.20;
+  for(let i=0;i<nT_pin_show;i++){
+   const a=i*2*Math.PI/nT_pin_show;
+   const x1=pinCx+r_pin*Math.cos(a),y1=pinCy+r_pin*Math.sin(a);
+   const x2=pinCx+(r_pin+pinTipDepth)*Math.cos(a),y2=pinCy+(r_pin+pinTipDepth)*Math.sin(a);
+   html+=`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="rgba(251,191,36,.85)" stroke-width="${0.9*fS}" stroke-linecap="round"/>`;
+  }
+ }
+ // Mesh point indicator
+ html+=`<circle cx="${ringCx-R_inner}" cy="${ringCy}" r="${3*fS}" fill="none" stroke="#22c55e" stroke-width="${1*fS}" stroke-dasharray="${2*fS} ${1.5*fS}"/>`;
+ html+=`<text x="${ringCx-R_inner-4*fS}" y="${ringCy-6*fS}" text-anchor="end" font-family="JetBrains Mono" font-size="${fSm*0.9}" fill="#4ade80">mesh</text>`;
+ // Centerline (ring centre ↔ pinion centre)
+ html+=`<line x1="${pinCx}" y1="${pinCy}" x2="${ringCx}" y2="${ringCy}" stroke="rgba(71,85,105,.55)" stroke-width="${0.7*fS}" stroke-dasharray="${1.5*fS} ${2*fS}"/>`;
+ html+=`<circle cx="${ringCx}" cy="${ringCy}" r="${2*fS}" fill="#475569"/>`;
+ html+=`<circle cx="${pinCx}" cy="${pinCy}" r="${1.8*fS}" fill="#475569"/>`;
  svg.innerHTML=html;
- const txt=document.getElementById('gearRatioTxt');
+ // === Bottom text strip ===
+ const txt=document.getElementById(txtId);
  if(txt){
   const ratio=z1/z2;
   let s=`<span style="color:#64748b">z₁/z₂ =</span> <b style="color:#93c5fd">${z1}/${z2} = ${f(ratio,2)}</b>`;
@@ -1512,6 +1557,15 @@ function drawGearRatio(){
   if(!ok)s+=` &nbsp;·&nbsp; <span style="color:#fbbf24">⚠ d ≠ z·m</span>`;
   txt.innerHTML=s;
  }
+}
+function openGearRatioModal(){
+ if(ax!=='traverse')return;
+ const m=document.getElementById('gearRatioModal');if(!m)return;
+ m.style.display='flex';
+ try{drawGearRatio('svgGearRatioBig',560,320,'gearRatioBigTxt')}catch(e){console.error('drawGearRatio(big):',e)}
+}
+function closeGearRatioModal(){
+ const m=document.getElementById('gearRatioModal');if(m)m.style.display='none';
 }
 function updStabVis(){const m=SM[ax];
  document.getElementById('sb-sine').style.display=m==='sine'?'block':'none';
@@ -1928,7 +1982,20 @@ document.addEventListener('DOMContentLoaded',()=>{
  }));
  setTimeout(()=>{try{drawProfPreview()}catch(e){console.error('drawProfPreview:',e)}try{drawInputsVisuals()}catch(e){console.error('drawInputsVisuals:',e)}},100);
 });
-document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();solve()}});
+document.addEventListener('keydown',e=>{
+ if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();solve()}
+ if(e.key==='Escape'){const m=document.getElementById('gearRatioModal');if(m&&m.style.display==='flex'){closeGearRatioModal()}}
+});
 window.addEventListener('resize',()=>setTimeout(resizeAll,100));
 </script>
+<!-- Gear ratio enlarge modal -->
+<div id="gearRatioModal" onclick="closeGearRatioModal()" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.88);justify-content:center;align-items:center;padding:2rem">
+ <div onclick="event.stopPropagation()" style="background:#0c1222;border:1px solid #3b82f6;border-radius:.7rem;padding:1.2rem 1.4rem 1rem;max-width:92vw;max-height:92vh;position:relative;box-shadow:0 30px 80px rgba(0,0,0,.7)">
+  <button onclick="closeGearRatioModal()" aria-label="Close" style="position:absolute;top:.45rem;right:.6rem;width:1.8rem;height:1.8rem;border-radius:50%;background:rgba(30,41,59,.7);color:#cbd5e1;font-size:1.1rem;line-height:1;display:flex;align-items:center;justify-content:center;border:1px solid rgba(71,85,105,.5)">×</button>
+  <div style="font-family:Inter,sans-serif;font-size:.7rem;font-weight:700;letter-spacing:.12em;color:#94a3b8;text-transform:uppercase;margin-bottom:.6rem">Ring &amp; Pinion — Pitch Circles (To Scale)</div>
+  <svg id="svgGearRatioBig" viewBox="0 0 560 320" style="width:min(82vw,880px);height:auto;background:#060A13;border-radius:.4rem;border:1px solid rgba(30,41,59,.7)"></svg>
+  <div id="gearRatioBigTxt" style="font-family:'JetBrains Mono',monospace;font-size:.78rem;color:#94a3b8;text-align:center;margin-top:.75rem;line-height:1.5"></div>
+  <div style="font-size:.6rem;color:#475569;text-align:right;margin-top:.4rem;letter-spacing:.05em">Esc or click outside to close</div>
+ </div>
+</div>
 </body></html>
