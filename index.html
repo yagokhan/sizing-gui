@@ -434,6 +434,13 @@ input[type="number"]{-moz-appearance:textfield;box-sizing:border-box}input::-web
 <div class="p-2"><div id="dcC" style="width:100%;height:340px"></div></div>
 </div>
 </div>
+
+<!-- Motor time-series row (gunlaying + stabilisation overlay) -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-3 mt-3">
+ <div class="card"><div class="ch"><h3 class="text-[9px] font-bold tracking-widest uppercase text-slate-400">Motor Speed vs Time</h3></div><div class="p-2"><div id="rpmTC" style="width:100%;height:280px"></div><div class="mt-2 px-3 py-2 text-[11px] leading-relaxed" style="background:rgba(30,41,59,.7);border-left:3px solid #3b82f6;border-radius:.3rem;color:#cbd5e1"><b class="text-blue-300">How to read:</b> Motor angular speed ω<sub>motor</sub> (rpm) over the duty cycle. Blue (filled) is the gun-laying profile, amber (dotted) is the stabilisation disturbance referred to the motor shaft. <b class="text-emerald-300">Target:</b> peak rpm stays below the no-load speed V<sub>dc</sub>/K<sub>e</sub>.</div></div></div>
+ <div class="card"><div class="ch"><h3 class="text-[9px] font-bold tracking-widest uppercase text-slate-400">Motor Current vs Time</h3></div><div class="p-2"><div id="ampTC" style="width:100%;height:280px"></div><div class="mt-2 px-3 py-2 text-[11px] leading-relaxed" style="background:rgba(30,41,59,.7);border-left:3px solid #3b82f6;border-radius:.3rem;color:#cbd5e1"><b class="text-blue-300">How to read:</b> Per-motor instantaneous current |I| = |T<sub>motor</sub>|/K<sub>t</sub> (A). Blue is gun-laying, amber is stabilisation. <b class="text-emerald-300">Target:</b> peak ≤ drive&apos;s peak-current rating; RMS sets motor/cable thermal sizing.</div></div></div>
+ <div class="card"><div class="ch"><h3 class="text-[9px] font-bold tracking-widest uppercase text-slate-400">Motor Power vs Time</h3></div><div class="p-2"><div id="pwrTC" style="width:100%;height:280px"></div><div class="mt-2 px-3 py-2 text-[11px] leading-relaxed" style="background:rgba(30,41,59,.7);border-left:3px solid #3b82f6;border-radius:.3rem;color:#cbd5e1"><b class="text-blue-300">How to read:</b> Per-motor electrical input power P<sub>elec</sub> = I²·R + K<sub>e</sub>·ω·I (W). Negative ⇒ regen. Blue: gun-laying, amber: stabilisation. <b class="text-emerald-300">Target:</b> peak ≤ drive headroom; significant regen ⇒ plan dump resistor / bus caps.</div></div></div>
+</div>
 </div><!-- /sub-overview -->
 
 <!-- ============== SUB: POWER & BANDWIDTH ============== -->
@@ -536,12 +543,6 @@ input[type="number"]{-moz-appearance:textfield;box-sizing:border-box}input::-web
 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
  <div class="card"><div class="ch"><h3 class="text-[9px] font-bold tracking-widest uppercase text-slate-400">Power – Speed Overlay (B3)</h3></div><div class="p-2"><div id="ps2C" style="width:100%;height:320px"></div><div class="mt-2 px-3 py-2 text-[11px] leading-relaxed" style="background:rgba(30,41,59,.7);border-left:3px solid #3b82f6;border-radius:.3rem;color:#cbd5e1"><b class="text-blue-300">How to read:</b> The blue curve is mechanical output power P<sub>mech</sub>(ω) = T(ω)·ω along the motor torque-speed envelope; the orange curve is electrical input P<sub>elec</sub>(ω) = P<sub>mech</sub>/η. Their vertical gap is instantaneous dissipation. The red cross marks the duty-cycle peak operating point. <b class="text-emerald-300">Target:</b> the cross should sit near the knee of the P<sub>mech</sub> curve (max power region) with room below rated power; far from the knee means the motor/ratio pairing wastes either torque or speed headroom.</div></div></div>
  <div class="card"><div class="ch"><h3 class="text-[9px] font-bold tracking-widest uppercase text-slate-400">Duty Cycle FFT (B5)</h3></div><div class="p-2"><div id="fftC" style="width:100%;height:320px"></div><div class="mt-2 px-3 py-2 text-[11px] leading-relaxed" style="background:rgba(30,41,59,.7);border-left:3px solid #3b82f6;border-radius:.3rem;color:#cbd5e1"><b class="text-blue-300">How to read:</b> Frequency-domain magnitude |T(f)| of the torque duty profile. Peaks at low frequencies are the fundamental slew and its harmonics; the dashed red line marks the mechanical bandwidth f<sub>m</sub>. <b class="text-emerald-300">Target:</b> significant torque content should fall well below f<sub>m</sub> — energy above f<sub>m</sub> is what the drive cannot physically track, producing lag/overshoot. If a strong peak straddles f<sub>m</sub>, either raise drive bandwidth (stiffer gearing / higher ω<sub>M</sub>) or lower commanded profile aggressiveness.</div></div></div>
-</div>
-<!-- Motor time-series row -->
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-3 mt-3">
- <div class="card"><div class="ch"><h3 class="text-[9px] font-bold tracking-widest uppercase text-slate-400">Motor Speed vs Time</h3></div><div class="p-2"><div id="rpmTC" style="width:100%;height:280px"></div><div class="mt-2 px-3 py-2 text-[11px] leading-relaxed" style="background:rgba(30,41,59,.7);border-left:3px solid #3b82f6;border-radius:.3rem;color:#cbd5e1"><b class="text-blue-300">How to read:</b> Motor angular speed (rpm) over the duty cycle. Blue is the gun-laying profile; amber (when present) is the stabilisation disturbance referred to the motor shaft. <b class="text-emerald-300">Target:</b> peak rpm stays below the no-load speed V<sub>dc</sub>/K<sub>e</sub>; otherwise the bus voltage cannot drive the back-EMF.</div></div></div>
- <div class="card"><div class="ch"><h3 class="text-[9px] font-bold tracking-widest uppercase text-slate-400">Motor Current vs Time</h3></div><div class="p-2"><div id="ampTC" style="width:100%;height:280px"></div><div class="mt-2 px-3 py-2 text-[11px] leading-relaxed" style="background:rgba(30,41,59,.7);border-left:3px solid #3b82f6;border-radius:.3rem;color:#cbd5e1"><b class="text-blue-300">How to read:</b> Per-motor instantaneous current |I| = |T<sub>motor</sub>|/K<sub>t</sub> (A), absolute value to keep magnitudes positive. Blue is gun-laying, amber is stabilisation. <b class="text-emerald-300">Target:</b> peak current must stay within the drive&apos;s peak-current rating; RMS current sets thermal sizing of motor and bus cabling.</div></div></div>
- <div class="card"><div class="ch"><h3 class="text-[9px] font-bold tracking-widest uppercase text-slate-400">Motor Power vs Time</h3></div><div class="p-2"><div id="pwrTC" style="width:100%;height:280px"></div><div class="mt-2 px-3 py-2 text-[11px] leading-relaxed" style="background:rgba(30,41,59,.7);border-left:3px solid #3b82f6;border-radius:.3rem;color:#cbd5e1"><b class="text-blue-300">How to read:</b> Per-motor electrical input power P<sub>elec</sub> = I²·R + K<sub>e</sub>·ω·I (W). Negative excursions indicate regenerative phases (load drives the motor). Blue is gun-laying, amber is stabilisation. <b class="text-emerald-300">Target:</b> peak P<sub>elec</sub> ≤ drive headroom; if regen is significant, plan dump-resistor or bus capacitance accordingly.</div></div></div>
 </div>
 </div><!-- /sub-charts -->
 
@@ -1236,7 +1237,9 @@ function drawPointCircle(r){
 
 
 function drawMotorTimeSeries(r){
- const Kt=r.Kt,R=r.R,Ke=r.Ke,n=r.n;
+ if(!document.getElementById('rpmTC')){console.warn('drawMotorTimeSeries: rpmTC div missing');return}
+ if(!r||!r.prof){console.warn('drawMotorTimeSeries: missing r.prof');return}
+ const Kt=Math.max(r.Kt||.001,.001),R=Math.max(r.R||.001,.001),Ke=Math.max(r.Ke||.001,.001),n=Math.max(r.n||1,1);
  const W2RPM=60/(2*Math.PI);
  // Gunlay duty profile (always exists)
  const pf=r.prof;
