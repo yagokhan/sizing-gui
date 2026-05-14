@@ -1205,43 +1205,69 @@ function drawMotorTimeSeries(r){
    }
   }
  }catch(e){console.warn('drawMotorTimeSeries stab series:',e);t_s=null}
- // Self-contained layout + config (no reliance on outer pltCommon/pltCfg)
+ // Per-motor reference limits — mirror the Torque-Speed Diagram envelope lines
+ const noLoadRpm=(r.wNL||r.Vb/Ke)*W2RPM;
+ const Ipk_mot=(r.Tpk||0)/Kt;
+ const Ico_mot=(r.Tco||0)/Kt;
+ const allT=t_s?t_g.concat(t_s):t_g.slice();
+ const tMax=allT.length?Math.max(...allT):1;
+ // Layout matches the Torque-Speed Diagram (uC): same margin / fonts / hovermode / legend
  const baseLay={
   paper_bgcolor:'rgba(0,0,0,0)',
   plot_bgcolor:'#080d1a',
   font:{family:'Inter',color:'#94a3b8',size:10},
-  margin:{t:18,r:18,b:42,l:60},
-  xaxis:{title:'time (s)',gridcolor:'rgba(30,41,59,.4)',tickfont:{family:'JetBrains Mono',size:9,color:'#64748b'}},
-  legend:{x:.01,y:.99,bgcolor:'rgba(12,18,34,.85)',bordercolor:'#1e293b',font:{size:9}},
-  hovermode:'x unified'
+  margin:{t:25,r:15,b:45,l:60},
+  xaxis:{title:'Time (s)',tickfont:{family:'JetBrains Mono',size:9,color:'#64748b'},gridcolor:'rgba(30,41,59,.4)',range:[0,tMax*1.02]},
+  legend:{x:.01,y:.99,bgcolor:'rgba(12,18,34,.85)',bordercolor:'#1e293b',font:{size:8}},
+  hovermode:'closest'
  };
  const cfg={responsive:true,displaylogo:false,modeBarButtonsToRemove:['lasso2d','select2d','autoScale2d']};
- const gunlayLine=(x,y,nm,col,fcol)=>({x:x,y:y,type:'scatter',mode:'lines',name:nm,line:{color:col,width:2},fill:'tozeroy',fillcolor:fcol});
- const stabLine=(x,y,nm)=>({x:x,y:y,type:'scatter',mode:'lines',name:nm,line:{color:'#f59e0b',width:1.5,dash:'dot'}});
- console.log('drawMotorTimeSeries: data ready — t_g.len=',t_g.length,'t_s.len=',(t_s?t_s.length:0),'_mtsInit=',_mtsInit);
- // Use newPlot the first time we ever render these IDs; Plotly.react afterwards.
+ // Filled gun-laying curve + dotted amber stab overlay (mirrors TS-diagram envelope/marker styling)
+ const gunLine=(x,y,nm)=>({x,y,type:'scatter',mode:'lines',name:nm,fill:'tozeroy',line:{color:'rgba(59,130,246,.85)',width:2},fillcolor:'rgba(59,130,246,.08)'});
+ const stabLine=(x,y,nm)=>({x,y,type:'scatter',mode:'lines',name:nm,line:{color:'#f59e0b',width:1.5,dash:'dot'}});
  const drawFn=_mtsInit?Plotly.react.bind(Plotly):Plotly.newPlot.bind(Plotly);
  _mtsInit=true;
- // Helper that calls Plotly and routes BOTH sync throws AND async Promise rejections to the visible fallback.
  const doPlot=(id,tr,lay)=>{
   try{
    const ret=drawFn(id,tr,lay,cfg);
-   if(ret&&typeof ret.then==='function'){
-    ret.then(()=>console.log(id+': Plotly resolved'))
-       .catch(err=>{console.error(id+' Plotly async:',err);try{_mtsPaintErr(id,id+' async failed: '+(err&&err.message||err))}catch(_){}});
-   }else{
-    console.log(id+': Plotly returned (no promise)');
-   }
-  }catch(e){console.error(id+' Plotly sync:',e);try{_mtsPaintErr(id,id+' sync failed: '+(e&&e.message||e))}catch(_){}}
+   if(ret&&typeof ret.then==='function')ret.catch(err=>{try{_mtsPaintErr(id,id+' async failed: '+(err&&err.message||err))}catch(_){}});
+  }catch(e){try{_mtsPaintErr(id,id+' sync failed: '+(e&&e.message||e))}catch(_){}}
  };
- const tr1=[gunlayLine(t_g,rpm_g,'Gunlay','#60a5fa','rgba(96,165,250,0.10)')];if(t_s)tr1.push(stabLine(t_s,rpm_s,'Stab'));
- doPlot('rpmTC',tr1,Object.assign({},baseLay,{yaxis:{title:'rpm',gridcolor:'rgba(30,41,59,.4)',tickfont:{family:'JetBrains Mono',size:9,color:'#64748b'}}}));
- const tr2=[gunlayLine(t_g,I_g,'Gunlay |I|','#60a5fa','rgba(96,165,250,0.10)')];if(t_s)tr2.push(stabLine(t_s,I_s,'Stab |I|'));
- doPlot('ampTC',tr2,Object.assign({},baseLay,{yaxis:{title:'|I| per motor (A)',gridcolor:'rgba(30,41,59,.4)',tickfont:{family:'JetBrains Mono',size:9,color:'#64748b'},rangemode:'tozero'}}));
- const tr3=[gunlayLine(t_g,Pe_g,'Gunlay P_elec','#86efac','rgba(134,239,172,0.10)')];if(t_s)tr3.push(stabLine(t_s,Pe_s,'Stab P_elec'));
- doPlot('pwrTC',tr3,Object.assign({},baseLay,{yaxis:{title:'P_elec per motor (W)',gridcolor:'rgba(30,41,59,.4)',tickfont:{family:'JetBrains Mono',size:9,color:'#64748b'}}}));
- // Force a resize once the deferred frame paints, in case the chart was drawn at zero size.
- setTimeout(()=>{['rpmTC','ampTC','pwrTC'].forEach(id=>{try{Plotly.Plots.resize(id);console.log(id+': resized')}catch(e){console.warn(id+' resize:',e)}})},150);
+ // RPM — no-load speed envelope line
+ const rpmDataMax=Math.max(0,...rpm_g.map(v=>Math.abs(v||0)),...(rpm_s?rpm_s.map(v=>Math.abs(v||0)):[0]));
+ const yRpmMax=Math.max(noLoadRpm*1.05,rpmDataMax*1.15,1);
+ const tr1=[gunLine(t_g,rpm_g,'Laying')];if(t_s)tr1.push(stabLine(t_s,rpm_s,'Stab'));
+ doPlot('rpmTC',tr1,Object.assign({},baseLay,{
+  yaxis:{title:'Motor Speed (rpm)',tickfont:{family:'JetBrains Mono',size:9,color:'#64748b'},gridcolor:'rgba(30,41,59,.4)',range:[0,yRpmMax]},
+  shapes:[{type:'line',x0:0,x1:tMax,y0:noLoadRpm,y1:noLoadRpm,line:{color:'rgba(239,68,68,.4)',width:1,dash:'dot'}}],
+  annotations:[{x:tMax*.98,y:noLoadRpm,text:'ω<sub>NL</sub> = '+fA(noLoadRpm)+' rpm',xanchor:'right',yanchor:'bottom',showarrow:false,font:{size:9,color:'#f87171',family:'JetBrains Mono'},bgcolor:'rgba(12,18,34,.8)',bordercolor:'rgba(239,68,68,.4)',borderwidth:1,borderpad:3}]
+ }));
+ // Current — peak + continuous limits as dashed reference lines
+ const iDataMax=Math.max(0,...I_g.map(v=>v||0),...(I_s?I_s.map(v=>v||0):[0]));
+ const yIMax=Math.max(Ipk_mot*1.15,iDataMax*1.25,1);
+ const tr2=[gunLine(t_g,I_g,'Laying |I|')];if(t_s)tr2.push(stabLine(t_s,I_s,'Stab |I|'));
+ doPlot('ampTC',tr2,Object.assign({},baseLay,{
+  yaxis:{title:'|I| per Motor (A)',tickfont:{family:'JetBrains Mono',size:9,color:'#64748b'},gridcolor:'rgba(30,41,59,.4)',range:[0,yIMax]},
+  shapes:[
+   {type:'line',x0:0,x1:tMax,y0:Ipk_mot,y1:Ipk_mot,line:{color:'rgba(239,68,68,.4)',width:1,dash:'dot'}},
+   {type:'line',x0:0,x1:tMax,y0:Ico_mot,y1:Ico_mot,line:{color:'rgba(96,165,250,.4)',width:1,dash:'dash'}}
+  ],
+  annotations:[
+   {x:tMax*.98,y:Ipk_mot,text:'I<sub>peak</sub> = '+fA(Ipk_mot)+' A',xanchor:'right',yanchor:'bottom',showarrow:false,font:{size:9,color:'#f87171',family:'JetBrains Mono'},bgcolor:'rgba(12,18,34,.8)',bordercolor:'rgba(239,68,68,.4)',borderwidth:1,borderpad:3},
+   {x:tMax*.98,y:Ico_mot,text:'I<sub>cont</sub> = '+fA(Ico_mot)+' A',xanchor:'right',yanchor:'bottom',showarrow:false,font:{size:9,color:'#60a5fa',family:'JetBrains Mono'},bgcolor:'rgba(12,18,34,.8)',bordercolor:'rgba(96,165,250,.4)',borderwidth:1,borderpad:3}
+  ]
+ }));
+ // Power — zero-axis baseline (regen below)
+ const peCat=Pe_g.concat(t_s?Pe_s:[]);
+ const peMin=peCat.length?Math.min(0,...peCat):0;
+ const peMax=peCat.length?Math.max(0,...peCat):1;
+ const padP=Math.max(Math.abs(peMin),Math.abs(peMax))*.15||1;
+ const tr3=[gunLine(t_g,Pe_g,'Laying P<sub>elec</sub>')];if(t_s)tr3.push(stabLine(t_s,Pe_s,'Stab P<sub>elec</sub>'));
+ doPlot('pwrTC',tr3,Object.assign({},baseLay,{
+  yaxis:{title:'P<sub>elec</sub> per Motor (W)',tickfont:{family:'JetBrains Mono',size:9,color:'#64748b'},gridcolor:'rgba(30,41,59,.4)',range:[peMin-padP,peMax+padP]},
+  shapes:[{type:'line',x0:0,x1:tMax,y0:0,y1:0,line:{color:'rgba(100,116,139,.45)',width:1}}]
+ }));
+ setTimeout(()=>{['rpmTC','ampTC','pwrTC'].forEach(id=>{try{Plotly.Plots.resize(id)}catch(e){}})},150);
 }
 
 function drawExtras(r){
