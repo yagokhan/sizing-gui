@@ -469,7 +469,7 @@ input[type="number"]{-moz-appearance:textfield;box-sizing:border-box}input::-web
 <!-- ============== SUB: PRECISION ============== -->
 <div id="sub-precision" class="subview" style="display:none">
 <div class="flex items-center justify-between mb-2 flex-wrap gap-2">
- <div class="text-[10px] font-bold tracking-widest uppercase text-slate-400">Pointing Resolution · Unit</div>
+ <div class="text-[10px] font-bold tracking-widest uppercase text-slate-400" data-tip="Pick the angular unit for the values on this tab. All angle-bearing fields below switch together. The linear range rows auto-scale by magnitude (μm / mm / cm / m) independently — they're a physical distance, not an angle.">Pointing Resolution · Unit</div>
  <div class="flex items-center gap-1" id="precUnitBar">
   <button onclick="setPrecUnit('mrad')" data-u="mrad" class="btn-sm bg-blue-600 text-white">mrad</button>
   <button onclick="setPrecUnit('urad')" data-u="urad" class="btn-sm bg-slate-700 text-slate-300">μrad</button>
@@ -479,20 +479,23 @@ input[type="number"]{-moz-appearance:textfield;box-sizing:border-box}input::-web
  </div>
 </div>
 <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-3">
- <div class="card px-3 py-3"><div class="text-[9px] font-bold tracking-widest uppercase text-slate-500 mb-1">Encoder Resolution</div><div class="text-lg font-bold font-mono" id="pr-cpr">--<span class="text-[10px] text-slate-500"> counts/rev</span></div></div>
- <div class="card px-3 py-3"><div class="text-[9px] font-bold tracking-widest uppercase text-slate-500 mb-1">Δθ at Motor</div><div class="text-lg font-bold font-mono text-blue-300"><span id="pr-dtm">--</span><span class="text-[10px] text-slate-500 pru"> mrad</span></div></div>
- <div class="card px-3 py-3"><div class="text-[9px] font-bold tracking-widest uppercase text-slate-500 mb-1">Δθ at Load</div><div class="text-lg font-bold font-mono text-emerald-300"><span id="pr-dtl">--</span><span class="text-[10px] text-slate-500 pru"> mrad</span></div></div>
- <div class="card px-3 py-3"><div class="text-[9px] font-bold tracking-widest uppercase text-slate-500 mb-1">Δθ at Load (alt ref)</div><div class="text-lg font-bold font-mono text-emerald-300"><span id="pr-dtlar">--</span><span class="text-[10px] text-slate-500 pru"> mrad</span></div></div>
+ <div class="card px-3 py-3"><div class="text-[9px] font-bold tracking-widest uppercase text-slate-500 mb-1" data-tip="Encoder counts per revolution. CPR = 2^N where N is the Encoder Bits input. Higher N ⇒ finer angular resolution.">Encoder Resolution</div><div class="text-lg font-bold font-mono" id="pr-cpr">--<span class="text-[10px] text-slate-500"> counts/rev</span></div></div>
+ <div class="card px-3 py-3"><div class="text-[9px] font-bold tracking-widest uppercase text-slate-500 mb-1" data-tip="Smallest distinguishable angle at the MOTOR shaft: Δθ_motor = 2π / CPR. One encoder LSB.">Δθ at Motor</div><div class="text-lg font-bold font-mono text-blue-300"><span id="pr-dtm">--</span><span class="text-[10px] text-slate-500 pru"> mrad</span></div></div>
+ <div class="card px-3 py-3"><div class="text-[9px] font-bold tracking-widest uppercase text-slate-500 mb-1" data-tip="Smallest distinguishable angle at the LOAD (barrel/turret), reflected through the gearing: Δθ_load = Δθ_motor / i_tot. This is the system's pointing quantum.">Δθ at Load</div><div class="text-lg font-bold font-mono text-emerald-300"><span id="pr-dtl">--</span><span class="text-[10px] text-slate-500 pru"> mrad</span></div></div>
+ <div class="card px-3 py-3"><div class="text-[9px] font-bold tracking-widest uppercase text-slate-500 mb-1" data-tip="Same Δθ at Load, shown in the selected unit as a cross-reference for the units selector. Matches the Δθ at Load card; provided so you can see both the primary card and its value in any unit side-by-side.">Δθ at Load (alt ref)</div><div class="text-lg font-bold font-mono text-emerald-300"><span id="pr-dtlar">--</span><span class="text-[10px] text-slate-500 pru"> mrad</span></div></div>
 </div>
 <div class="grid grid-cols-1 gap-3">
  <div class="card">
-  <div class="ch"><h3 class="text-[9px] font-bold tracking-widest uppercase text-slate-400">Pointing Accuracy (A5)</h3></div>
+  <div class="ch"><h3 class="text-[9px] font-bold tracking-widest uppercase text-slate-400" data-tip="Pointing accuracy detail: gearing reduction, linear miss-distance at common engagement ranges, and slew/quantization limits set by the encoder.">Pointing Accuracy (A5)</h3></div>
   <div class="px-3 py-1">
-   <div class="rr"><span class="rl">Total reduction i<sub>tot</sub></span><span><span class="rv text-violet-300" id="pr-itot">--</span></span></div>
-   <div class="rr"><span class="rl">Resolution @ 1 km range</span><span><span class="rv" id="pr-range1">--</span><span class="ru" id="pr-range1u">mm</span></span></div>
-   <div class="rr"><span class="rl">Resolution @ 4 km range</span><span><span class="rv" id="pr-range4">--</span><span class="ru" id="pr-range4u">mm</span></span></div>
-   <div class="rr"><span class="rl">Max slew rate (encoder limited)</span><span><span class="rv" id="pr-slew">--</span><span class="ru pru">mrad/s</span></span></div>
-   <div class="rr"><span class="rl">Quantization LSB at barrel</span><span><span class="rv" id="pr-lsb">--</span><span class="ru pru">mrad</span></span></div>
+   <div class="rr"><span class="rl" data-tip="Total motor-to-load reduction (i_tot). Larger i_tot makes the load-side angle finer (Δθ_load = Δθ_motor / i_tot) but reduces top speed at the load.">Total reduction i<sub>tot</sub></span><span><span class="rv text-violet-300" id="pr-itot">--</span></span></div>
+   <div class="rr"><span class="rl" data-tip="Linear miss-distance at 1 km range from one encoder LSB: Δθ_load · 1000 m. Linear unit auto-scales (μm/mm/cm/m).">Resolution @ 1 km range</span><span><span class="rv" id="pr-range1">--</span><span class="ru" id="pr-range1u">mm</span></span></div>
+   <div class="rr"><span class="rl" data-tip="Linear miss-distance at 2 km range: Δθ_load · 2000 m.">Resolution @ 2 km range</span><span><span class="rv" id="pr-range2">--</span><span class="ru" id="pr-range2u">mm</span></span></div>
+   <div class="rr"><span class="rl" data-tip="Linear miss-distance at 2.5 km range: Δθ_load · 2500 m.">Resolution @ 2.5 km range</span><span><span class="rv" id="pr-range25">--</span><span class="ru" id="pr-range25u">mm</span></span></div>
+   <div class="rr"><span class="rl" data-tip="Linear miss-distance at 3 km range: Δθ_load · 3000 m.">Resolution @ 3 km range</span><span><span class="rv" id="pr-range3">--</span><span class="ru" id="pr-range3u">mm</span></span></div>
+   <div class="rr"><span class="rl" data-tip="Linear miss-distance at 4 km range: Δθ_load · 4000 m.">Resolution @ 4 km range</span><span><span class="rv" id="pr-range4">--</span><span class="ru" id="pr-range4u">mm</span></span></div>
+   <div class="rr"><span class="rl" data-tip="Maximum angular speed in the selected unit (per second). Equals the required peak motor speed referred to the chosen angular unit; encoder counting rate must support this to track position without losing counts.">Max slew rate (encoder limited)</span><span><span class="rv" id="pr-slew">--</span><span class="ru pru">mrad/s</span></span></div>
+   <div class="rr"><span class="rl" data-tip="Quantization LSB at the barrel = Δθ_load. The smallest pointing step the system can command — sets the lower bound on closed-loop pointing accuracy.">Quantization LSB at barrel</span><span><span class="rv" id="pr-lsb">--</span><span class="ru pru">mrad</span></span></div>
   </div>
  </div>
 </div>
@@ -1829,7 +1832,7 @@ function pop(){const p=AP[ax];document.querySelectorAll('input.inp').forEach(e=>
  document.getElementById('profSel').value=PM[ax];updProfVis();
  const ss=document.getElementById('stabSel');if(ss){ss.value=SM[ax];updStabVis()}
  const gs=document.getElementById('gearSel');if(gs){gs.value=GM[ax];updGearVis()}}
-function rd(){const p=AP[ax];document.querySelectorAll('input.inp').forEach(e=>{if(e.offsetParent===null)return;const[c,k]=e.dataset.key.split('.');if(!p[c]||!p[c].hasOwnProperty(k))return;const v=parseFloat(e.value);if(!isNaN(v))p[c][k]=v})}
+function rd(){const p=AP[ax];document.querySelectorAll('input.inp').forEach(e=>{const[c,k]=e.dataset.key.split('.');if(!p[c]||!p[c].hasOwnProperty(k))return;const v=parseFloat(e.value);if(!isNaN(v))p[c][k]=v})}
 function rc(){rd();const r=calc(AP[ax],ax);uR(r);uC(r);uB(r.Jrat)}
 
 // === VIEW SWITCHING & SOLVE ===
@@ -2183,9 +2186,8 @@ function updatePrecDisplay(){
  // the number is always readable. Decoupled from the angular unit selector
  // (it's a physical distance — angular display doesn't change physics).
  const autoLin=m=>{const a=Math.abs(m);if(a>=1)return{v:m,u:'m',d:3};if(a>=.01)return{v:m*100,u:'cm',d:3};if(a>=.001)return{v:m*1e3,u:'mm',d:3};return{v:m*1e6,u:'μm',d:1}};
- const r1=autoLin(p.dthL_rad*1000),r4=autoLin(p.dthL_rad*4000);
- sT('pr-range1',f(r1.v,r1.d));sT('pr-range1u',r1.u);
- sT('pr-range4',f(r4.v,r4.d));sT('pr-range4u',r4.u);
+ const setRange=(id,dist)=>{const r=autoLin(p.dthL_rad*dist);sT('pr-range'+id,f(r.v,r.d));sT('pr-range'+id+'u',r.u)};
+ setRange('1',1000);setRange('2',2000);setRange('25',2500);setRange('3',3000);setRange('4',4000);
  // Unit labels — both per-input "pu" labels (kept untouched) and result-side "pru" labels (angle); slew row gets "<unit>/s"
  document.querySelectorAll('.pru').forEach(e=>{
   const base=(e.classList.contains('ru')?'':' ')+m.u;
