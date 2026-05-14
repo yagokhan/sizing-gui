@@ -1205,12 +1205,17 @@ function drawMotorTimeSeries(r){
    }
   }
  }catch(e){console.warn('drawMotorTimeSeries stab series:',e);t_s=null}
- // Per-motor reference limits — mirror the Torque-Speed Diagram envelope lines
- const noLoadRpm=(r.wNL||r.Vb/Ke)*W2RPM;
- const Ipk_mot=(r.Tpk||0)/Kt;
- const Ico_mot=(r.Tco||0)/Kt;
- const allT=t_s?t_g.concat(t_s):t_g.slice();
- const tMax=allT.length?Math.max(...allT):1;
+ // Fold-based extremes — robust to imported profiles with very large N (spread + Math.max can blow stack)
+ const finite=v=>Number.isFinite(v)?v:0;
+ const arrMax=(arr,seed)=>{let m=seed;if(!arr)return m;for(let i=0;i<arr.length;i++){const v=finite(arr[i]);if(v>m)m=v}return m};
+ const arrMin=(arr,seed)=>{let m=seed;if(!arr)return m;for(let i=0;i<arr.length;i++){const v=finite(arr[i]);if(v<m)m=v}return m};
+ // Per-motor reference limits — mirror the Torque-Speed Diagram envelope lines.
+ // Guard every division and produce finite fallbacks so a missing/zero motor param can't blank out the plot.
+ const noLoadRpm=finite((isFinite(r.wNL)?r.wNL:r.Vb/Ke)*W2RPM);
+ const Ipk_mot=finite((r.Tpk||0)/Kt);
+ const Ico_mot=finite((r.Tco||0)/Kt);
+ const tMax=Math.max(arrMax(t_g,0),arrMax(t_s,0),1);
+ console.log('drawMotorTimeSeries: tMax=',tMax,'noLoadRpm=',noLoadRpm,'Ipk_mot=',Ipk_mot,'Ico_mot=',Ico_mot,'t_g.len=',t_g.length,'t_s.len=',t_s?t_s.length:0);
  // Layout matches the Torque-Speed Diagram (uC): same margin / fonts / hovermode / legend
  const baseLay={
   paper_bgcolor:'rgba(0,0,0,0)',
@@ -1229,45 +1234,41 @@ function drawMotorTimeSeries(r){
  _mtsInit=true;
  const doPlot=(id,tr,lay)=>{
   try{
+   console.log(id+': calling Plotly with',tr.length,'trace(s)','yrange=',lay.yaxis&&lay.yaxis.range);
    const ret=drawFn(id,tr,lay,cfg);
-   if(ret&&typeof ret.then==='function')ret.catch(err=>{try{_mtsPaintErr(id,id+' async failed: '+(err&&err.message||err))}catch(_){}});
-  }catch(e){try{_mtsPaintErr(id,id+' sync failed: '+(e&&e.message||e))}catch(_){}}
+   if(ret&&typeof ret.then==='function')ret.then(()=>console.log(id+' resolved')).catch(err=>{console.error(id+' async:',err);try{_mtsPaintErr(id,id+' async failed: '+(err&&err.message||err))}catch(_){}});
+  }catch(e){console.error(id+' sync:',e);try{_mtsPaintErr(id,id+' sync failed: '+(e&&e.message||e))}catch(_){}}
  };
  // RPM — no-load speed envelope line
- const rpmDataMax=Math.max(0,...rpm_g.map(v=>Math.abs(v||0)),...(rpm_s?rpm_s.map(v=>Math.abs(v||0)):[0]));
+ const rpmDataMax=Math.max(arrMax(rpm_g.map(v=>Math.abs(finite(v))),0),arrMax(rpm_s?rpm_s.map(v=>Math.abs(finite(v))):null,0));
  const yRpmMax=Math.max(noLoadRpm*1.05,rpmDataMax*1.15,1);
  const tr1=[gunLine(t_g,rpm_g,'Laying')];if(t_s)tr1.push(stabLine(t_s,rpm_s,'Stab'));
  doPlot('rpmTC',tr1,Object.assign({},baseLay,{
   yaxis:{title:'Motor Speed (rpm)',tickfont:{family:'JetBrains Mono',size:9,color:'#64748b'},gridcolor:'rgba(30,41,59,.4)',range:[0,yRpmMax]},
-  shapes:[{type:'line',x0:0,x1:tMax,y0:noLoadRpm,y1:noLoadRpm,line:{color:'rgba(239,68,68,.4)',width:1,dash:'dot'}}],
-  annotations:[{x:tMax*.98,y:noLoadRpm,text:'ω<sub>NL</sub> = '+fA(noLoadRpm)+' rpm',xanchor:'right',yanchor:'bottom',showarrow:false,font:{size:9,color:'#f87171',family:'JetBrains Mono'},bgcolor:'rgba(12,18,34,.8)',bordercolor:'rgba(239,68,68,.4)',borderwidth:1,borderpad:3}]
+  shapes:noLoadRpm>0?[{type:'line',x0:0,x1:tMax,y0:noLoadRpm,y1:noLoadRpm,line:{color:'rgba(239,68,68,.4)',width:1,dash:'dot'}}]:[],
+  annotations:noLoadRpm>0?[{x:tMax*.98,y:noLoadRpm,text:'ω<sub>NL</sub> = '+fA(noLoadRpm)+' rpm',xanchor:'right',yanchor:'bottom',showarrow:false,font:{size:9,color:'#f87171',family:'JetBrains Mono'},bgcolor:'rgba(12,18,34,.8)',bordercolor:'rgba(239,68,68,.4)',borderwidth:1,borderpad:3}]:[]
  }));
  // Current — peak + continuous limits as dashed reference lines
- const iDataMax=Math.max(0,...I_g.map(v=>v||0),...(I_s?I_s.map(v=>v||0):[0]));
+ const iDataMax=Math.max(arrMax(I_g,0),arrMax(I_s,0));
  const yIMax=Math.max(Ipk_mot*1.15,iDataMax*1.25,1);
  const tr2=[gunLine(t_g,I_g,'Laying |I|')];if(t_s)tr2.push(stabLine(t_s,I_s,'Stab |I|'));
+ const ampShapes=[];const ampAnn=[];
+ if(Ipk_mot>0){ampShapes.push({type:'line',x0:0,x1:tMax,y0:Ipk_mot,y1:Ipk_mot,line:{color:'rgba(239,68,68,.4)',width:1,dash:'dot'}});ampAnn.push({x:tMax*.98,y:Ipk_mot,text:'I<sub>peak</sub> = '+fA(Ipk_mot)+' A',xanchor:'right',yanchor:'bottom',showarrow:false,font:{size:9,color:'#f87171',family:'JetBrains Mono'},bgcolor:'rgba(12,18,34,.8)',bordercolor:'rgba(239,68,68,.4)',borderwidth:1,borderpad:3})}
+ if(Ico_mot>0){ampShapes.push({type:'line',x0:0,x1:tMax,y0:Ico_mot,y1:Ico_mot,line:{color:'rgba(96,165,250,.4)',width:1,dash:'dash'}});ampAnn.push({x:tMax*.98,y:Ico_mot,text:'I<sub>cont</sub> = '+fA(Ico_mot)+' A',xanchor:'right',yanchor:'bottom',showarrow:false,font:{size:9,color:'#60a5fa',family:'JetBrains Mono'},bgcolor:'rgba(12,18,34,.8)',bordercolor:'rgba(96,165,250,.4)',borderwidth:1,borderpad:3})}
  doPlot('ampTC',tr2,Object.assign({},baseLay,{
   yaxis:{title:'|I| per Motor (A)',tickfont:{family:'JetBrains Mono',size:9,color:'#64748b'},gridcolor:'rgba(30,41,59,.4)',range:[0,yIMax]},
-  shapes:[
-   {type:'line',x0:0,x1:tMax,y0:Ipk_mot,y1:Ipk_mot,line:{color:'rgba(239,68,68,.4)',width:1,dash:'dot'}},
-   {type:'line',x0:0,x1:tMax,y0:Ico_mot,y1:Ico_mot,line:{color:'rgba(96,165,250,.4)',width:1,dash:'dash'}}
-  ],
-  annotations:[
-   {x:tMax*.98,y:Ipk_mot,text:'I<sub>peak</sub> = '+fA(Ipk_mot)+' A',xanchor:'right',yanchor:'bottom',showarrow:false,font:{size:9,color:'#f87171',family:'JetBrains Mono'},bgcolor:'rgba(12,18,34,.8)',bordercolor:'rgba(239,68,68,.4)',borderwidth:1,borderpad:3},
-   {x:tMax*.98,y:Ico_mot,text:'I<sub>cont</sub> = '+fA(Ico_mot)+' A',xanchor:'right',yanchor:'bottom',showarrow:false,font:{size:9,color:'#60a5fa',family:'JetBrains Mono'},bgcolor:'rgba(12,18,34,.8)',bordercolor:'rgba(96,165,250,.4)',borderwidth:1,borderpad:3}
-  ]
+  shapes:ampShapes,annotations:ampAnn
  }));
  // Power — zero-axis baseline (regen below)
- const peCat=Pe_g.concat(t_s?Pe_s:[]);
- const peMin=peCat.length?Math.min(0,...peCat):0;
- const peMax=peCat.length?Math.max(0,...peCat):1;
- const padP=Math.max(Math.abs(peMin),Math.abs(peMax))*.15||1;
- const tr3=[gunLine(t_g,Pe_g,'Laying P<sub>elec</sub>')];if(t_s)tr3.push(stabLine(t_s,Pe_s,'Stab P<sub>elec</sub>'));
+ const peMin=Math.min(arrMin(Pe_g,0),arrMin(Pe_s,0));
+ const peMax=Math.max(arrMax(Pe_g,0),arrMax(Pe_s,0));
+ const padP=Math.max(Math.abs(peMin),Math.abs(peMax),1)*.15;
+ const tr3=[gunLine(t_g,Pe_g,'Laying P_elec')];if(t_s)tr3.push(stabLine(t_s,Pe_s,'Stab P_elec'));
  doPlot('pwrTC',tr3,Object.assign({},baseLay,{
-  yaxis:{title:'P<sub>elec</sub> per Motor (W)',tickfont:{family:'JetBrains Mono',size:9,color:'#64748b'},gridcolor:'rgba(30,41,59,.4)',range:[peMin-padP,peMax+padP]},
+  yaxis:{title:'P_elec per Motor (W)',tickfont:{family:'JetBrains Mono',size:9,color:'#64748b'},gridcolor:'rgba(30,41,59,.4)',range:[peMin-padP,peMax+padP]},
   shapes:[{type:'line',x0:0,x1:tMax,y0:0,y1:0,line:{color:'rgba(100,116,139,.45)',width:1}}]
  }));
- setTimeout(()=>{['rpmTC','ampTC','pwrTC'].forEach(id=>{try{Plotly.Plots.resize(id)}catch(e){}})},150);
+ setTimeout(()=>{['rpmTC','ampTC','pwrTC'].forEach(id=>{try{Plotly.Plots.resize(id);console.log(id+' resized')}catch(e){console.warn(id+' resize:',e)}})},150);
 }
 
 function drawExtras(r){
