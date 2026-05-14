@@ -489,8 +489,8 @@ input[type="number"]{-moz-appearance:textfield;box-sizing:border-box}input::-web
   <div class="ch"><h3 class="text-[9px] font-bold tracking-widest uppercase text-slate-400">Pointing Accuracy (A5)</h3></div>
   <div class="px-3 py-1">
    <div class="rr"><span class="rl">Total reduction i<sub>tot</sub></span><span><span class="rv text-violet-300" id="pr-itot">--</span></span></div>
-   <div class="rr"><span class="rl">Resolution @ 1 km range</span><span><span class="rv" id="pr-range1">--</span><span class="ru">cm</span></span></div>
-   <div class="rr"><span class="rl">Resolution @ 4 km range</span><span><span class="rv" id="pr-range4">--</span><span class="ru">cm</span></span></div>
+   <div class="rr"><span class="rl">Resolution @ 1 km range</span><span><span class="rv" id="pr-range1">--</span><span class="ru" id="pr-range1u">mm</span></span></div>
+   <div class="rr"><span class="rl">Resolution @ 4 km range</span><span><span class="rv" id="pr-range4">--</span><span class="ru" id="pr-range4u">mm</span></span></div>
    <div class="rr"><span class="rl">Max slew rate (encoder limited)</span><span><span class="rv" id="pr-slew">--</span><span class="ru pru">mrad/s</span></span></div>
    <div class="rr"><span class="rl">Quantization LSB at barrel</span><span><span class="rv" id="pr-lsb">--</span><span class="ru pru">mrad</span></span></div>
   </div>
@@ -749,7 +749,7 @@ sT('p-kp',r.Kp_vel.toExponential(2));sT('p-ki',r.Ki_vel.toExponential(2));
 sT('pr-cpr',f(r.encCPR,0));
 window._lastPrec={dthM_rad:r.dthM,dthL_rad:r.dthL,dthL_arcsec:r.dthL_arcsec,lsb_mrad:r.lsb_mrad,slewMax_radps:r.slewMax};
 updatePrecDisplay();
-sT('pr-itot',f(r.iT,1));sT('pr-range1',f(r.res_1km,2));sT('pr-range4',f(r.res_4km,2));
+sT('pr-itot',f(r.iT,1));
 const ln=document.getElementById('layNote');if(ln)ln.textContent={trap:'Trapezoidal profile',sine:'Sinusoidal profile',import:'Imported data profile'}[r.mode];
 aB('bdg-inertia',gS(r.Jrat,5,10),f(r.Jrat,1)+':1','J<sub>eff</sub>='+r.Je.toExponential(3)+' i<sub>tot</sub>='+f(r.iT,1)+' n='+r.n);
 aB('bdg-voltage',gSH(r.vP,15,5),(r.vM>=0?'+':'')+f(r.vM,1)+'V',f(r.vP,1)+'% '+f(r.Vr,1)+'V/'+f(r.Vb,0)+'V');
@@ -2179,6 +2179,14 @@ function updatePrecDisplay(){
  sT('pr-dtlar',f(l.v,l.d));
  // Max slew rate: angular speed in chosen unit per second
  if(p.slewMax_radps!=null){const sl=conv(p.slewMax_radps,u);sT('pr-slew',f(sl.v,Math.max(0,(sl.d||2)-2)))}
+ // Range resolution — linear distance at range. Tie the linear unit to the chosen angular unit:
+ //   rad→m · mrad/mil→mm · μrad/arcsec→μm. The fixed cm display rounded to 0.00 for modern
+ //   encoders; this makes the row visibly respond to the selector with a useful scale.
+ const linU={rad:'m',mrad:'mm',mil:'mm',urad:'μm',arcsec:'μm'}[u]||'mm';
+ const linMul={m:1,mm:1e3,'μm':1e6}[linU];
+ const linDp=linU==='m'?4:linU==='mm'?3:1;
+ sT('pr-range1',f(p.dthL_rad*1000*linMul,linDp));sT('pr-range1u',linU);
+ sT('pr-range4',f(p.dthL_rad*4000*linMul,linDp));sT('pr-range4u',linU);
  // Unit labels — both per-input "pu" labels (kept untouched) and result-side "pru" labels (angle); slew row gets "<unit>/s"
  document.querySelectorAll('.pru').forEach(e=>{
   const base=(e.classList.contains('ru')?'':' ')+m.u;
